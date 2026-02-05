@@ -3,6 +3,14 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Seeks & Explore Brand Colors */
+  --color-sky: #96b0bb;
+  --color-cream: #efe9d4;
+  --color-sage: #6f856e;
+  --color-brown: #794d32;
+  --color-forest: #1b3a2e;
+  --color-accent: #ef904f;
 }
 
 @theme inline {
