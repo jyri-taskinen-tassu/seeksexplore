@@ -170,23 +170,57 @@ export default function LandingPage() {
     email: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
 
   const t = translations[language];
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { name, email, message } = contactForm;
-    const subject = encodeURIComponent(
-      language === "en"
-        ? "Contact from Seeks & Explore Landing Page"
-        : "Yhteydenotto Seeks & Explore -sivulta"
-    );
-    const body = encodeURIComponent(
-      language === "en"
-        ? `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
-        : `Nimi: ${name}\nSähköposti: ${email}\n\nViesti:\n${message}`
-    );
-    window.location.href = `mailto:hello@seeksexplore.com?subject=${subject}&body=${body}`;
+    e.stopPropagation();
+    
+    alert('Form submit started!'); // Debug
+    
+    if (!contactForm.name || !contactForm.email || !contactForm.message) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: contactForm.name,
+          email: contactForm.email,
+          message: contactForm.message,
+          language: language,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setContactForm({ name: '', email: '', message: '' });
+        setTimeout(() => setSubmitStatus(null), 5000);
+      } else {
+        setSubmitStatus('error');
+        console.error('API Error:', data);
+        alert('Error: ' + (data.error || 'Failed to send') + (data.details ? '\nDetails: ' + JSON.stringify(data.details) : ''));
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitStatus('error');
+      alert('Error: ' + (error instanceof Error ? error.message : 'Failed to send'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -248,7 +282,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[var(--color-cream)]/40 via-white to-white">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl sm:text-6xl font-bold text-[var(--color-forest)] mb-6 leading-tight">
             {t.hero.headline}
@@ -256,19 +290,19 @@ export default function LandingPage() {
           <p className="text-xl text-neutral-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             {t.hero.subhead}
           </p>
-          <p className="text-sm text-neutral-500 mb-10 italic">
+          <p className="text-sm text-[var(--color-sage)] mb-10 italic font-medium">
             {t.hero.tagline}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="#contact"
-              className="px-8 py-4 bg-[var(--color-forest)] text-white rounded-lg font-semibold hover:bg-[#0f2a1f] transition-colors shadow-sm"
+              className="px-8 py-4 bg-[var(--color-forest)] text-white rounded-lg font-semibold hover:bg-[#0f2a1f] transition-colors shadow-lg hover:shadow-xl"
             >
               {t.hero.ctaPrimary}
             </a>
             <a
               href="#contact"
-              className="px-8 py-4 bg-white text-[var(--color-forest)] border-2 border-[var(--color-forest)] rounded-lg font-semibold hover:bg-[var(--color-cream)] transition-colors"
+              className="px-8 py-4 bg-white text-[var(--color-forest)] border-2 border-[var(--color-forest)] rounded-lg font-semibold hover:bg-[var(--color-cream)] hover:border-[var(--color-sage)] transition-colors"
             >
               {t.hero.ctaSecondary}
             </a>
@@ -283,8 +317,8 @@ export default function LandingPage() {
             {t.features.title}
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 rounded-lg bg-[var(--color-sky)]/20 flex items-center justify-center mb-4">
+            <div className="bg-white rounded-xl p-8 shadow-sm border-2 border-[var(--color-sky)]/30 hover:border-[var(--color-sky)]/60 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--color-sky)]/30 to-[var(--color-sky)]/10 flex items-center justify-center mb-4">
                 <svg
                   className="w-6 h-6 text-[var(--color-sky)]"
                   fill="none"
@@ -307,8 +341,8 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 rounded-lg bg-[var(--color-sage)]/20 flex items-center justify-center mb-4">
+            <div className="bg-white rounded-xl p-8 shadow-sm border-2 border-[var(--color-sage)]/30 hover:border-[var(--color-sage)]/60 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--color-sage)]/30 to-[var(--color-sage)]/10 flex items-center justify-center mb-4">
                 <svg
                   className="w-6 h-6 text-[var(--color-sage)]"
                   fill="none"
@@ -331,8 +365,8 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-              <div className="w-12 h-12 rounded-lg bg-[var(--color-accent)]/20 flex items-center justify-center mb-4">
+            <div className="bg-white rounded-xl p-8 shadow-sm border-2 border-[var(--color-accent)]/30 hover:border-[var(--color-accent)]/60 hover:shadow-md transition-all">
+              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--color-accent)]/30 to-[var(--color-accent)]/10 flex items-center justify-center mb-4">
                 <svg
                   className="w-6 h-6 text-[var(--color-accent)]"
                   fill="none"
@@ -359,14 +393,14 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8">
+      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-[var(--color-cream)]/20">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-[var(--color-forest)] text-center mb-12">
             {t.howItWorks.title}
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-[var(--color-forest)] text-white flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-sky)] to-[var(--color-forest)] text-white flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg">
                 1
               </div>
               <h3 className="text-xl font-semibold text-[var(--color-forest)] mb-3">
@@ -378,7 +412,7 @@ export default function LandingPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-[var(--color-forest)] text-white flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-sage)] to-[var(--color-forest)] text-white flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg">
                 2
               </div>
               <h3 className="text-xl font-semibold text-[var(--color-forest)] mb-3">
@@ -390,7 +424,7 @@ export default function LandingPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-[var(--color-forest)] text-white flex items-center justify-center text-2xl font-bold mx-auto mb-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-forest)] text-white flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg">
                 3
               </div>
               <h3 className="text-xl font-semibold text-[var(--color-forest)] mb-3">
@@ -463,9 +497,9 @@ export default function LandingPage() {
       </section>
 
       {/* Social proof */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 border-y border-neutral-200">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 border-y border-[var(--color-cream)] bg-gradient-to-r from-[var(--color-cream)]/40 to-[var(--color-cream)]/20">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-lg text-neutral-600">
+          <p className="text-lg text-[var(--color-forest)] font-medium">
             {t.socialProof}
           </p>
         </div>
@@ -478,7 +512,11 @@ export default function LandingPage() {
             {t.contact.title}
           </h2>
           <div className="bg-white rounded-xl p-8 shadow-sm border border-neutral-200">
-            <form onSubmit={handleContactSubmit} className="space-y-6">
+            <form 
+              onSubmit={handleContactSubmit} 
+              className="space-y-6"
+              noValidate
+            >
               <div>
                 <label
                   htmlFor="name"
@@ -535,10 +573,37 @@ export default function LandingPage() {
               </div>
               <button
                 type="submit"
-                className="w-full px-8 py-4 bg-[var(--color-forest)] text-white rounded-lg font-semibold hover:bg-[#0f2a1f] transition-colors shadow-sm"
+                id="contact-submit-button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  alert('Button clicked!');
+                }}
+                className="w-full px-8 py-4 bg-[var(--color-forest)] text-white rounded-lg font-semibold hover:bg-[#0f2a1f] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ cursor: 'pointer' }}
               >
-                {t.contact.submit}
+                {isSubmitting 
+                  ? (language === 'en' ? 'Sending...' : 'Lähetetään...')
+                  : t.contact.submit
+                }
               </button>
+              
+              {submitStatus === 'success' && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+                  {language === 'en' 
+                    ? '✓ Message sent successfully! We\'ll get back to you within 48 hours.'
+                    : '✓ Viesti lähetetty onnistuneesti! Vastaamme sinulle 48 tunnin sisällä.'
+                  }
+                </div>
+              )}
+              
+              {submitStatus === 'error' && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+                  {language === 'en'
+                    ? '✗ Failed to send message. Please try again or email us directly at hello@seeksexplore.com'
+                    : '✗ Viestin lähetys epäonnistui. Yritä uudelleen tai lähetä sähköpostia suoraan osoitteeseen hello@seeksexplore.com'
+                  }
+                </div>
+              )}
             </form>
             <div className="mt-8 pt-8 border-t border-neutral-200 text-center">
               <p className="text-sm text-neutral-600 mb-2">

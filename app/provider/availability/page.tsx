@@ -208,71 +208,66 @@ function DayCell({
   const hasDepartures = day.departures.length > 0;
   const status = hasDepartures ? aggregateStatus(day.departures) : "ok";
   const inMonth = day.inMonth !== false;
-
   const totalDepartures = day.departures.length;
   const totalGuests = day.departures.reduce((sum, d) => sum + d.guestsBooked, 0);
+  const hasConflicts = day.summary?.conflicts && day.summary.conflicts.length > 0;
 
-  // Get resource totals from summary if available, otherwise calculate
-  const resources = day.summary
-    ? getDayCellResources(day.summary.resources)
-    : hasDepartures
-      ? {
-          SM: day.departures.reduce((sum, d) => sum + (d.resourceUse.SM?.used || 0), 0) || undefined,
-          "E-bike": day.departures.reduce((sum, d) => sum + (d.resourceUse["E-bike"]?.used || 0), 0) || undefined,
-        }
-      : {};
-
-  // Show first 2 departures, then "+x more" if there are more
-  const MAX_VISIBLE = 2;
-  const visibleDepartures = day.departures.slice(0, MAX_VISIBLE);
-  const hiddenCount = Math.max(0, totalDepartures - MAX_VISIBLE);
+  // Get unique activity types
+  const uniqueActivities = new Set(day.departures.map(d => d.title));
+  const activityCount = uniqueActivities.size;
 
   return (
     <button
       type="button"
       onClick={() => onSelect(day)}
       className={cx(
-        "relative w-full text-left p-3 min-h-[140px] border border-neutral-200 transition",
+        "relative w-full text-left p-3 min-h-[110px] border border-neutral-200 transition",
         inMonth ? "bg-white hover:bg-neutral-50" : "bg-neutral-50 text-neutral-400",
         selected && "ring-2 ring-neutral-900"
       )}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between mb-2">
         <div className={cx("text-sm font-medium", selected ? "text-neutral-900" : inMonth ? "text-neutral-800" : "text-neutral-400")}>
           {day.dayNumber}
         </div>
-        {hasDepartures && inMonth ? <StatusPill status={status} /> : null}
+        <div className="flex items-center gap-1.5">
+          {hasConflicts && inMonth && (
+            <span className="text-red-600 text-xs" title="Resource conflicts">
+              ⚠️
+            </span>
+          )}
+          {hasDepartures && inMonth && (
+            <span
+              className={cx(
+                "h-2 w-2 rounded-full",
+                status === "ok" && "bg-emerald-500",
+                status === "attention" && "bg-amber-500",
+                status === "problem" && "bg-red-500"
+              )}
+              title={status === "ok" ? "OK" : status === "attention" ? "Attention" : "Problem"}
+            />
+          )}
+        </div>
       </div>
 
       {hasDepartures && inMonth ? (
-        <div className="mt-2 space-y-2">
-          <div className="text-sm text-neutral-700">
-            <span className="font-medium">{totalDepartures}</span> departures <span className="text-neutral-400">•</span>{" "}
-            <span className="font-medium">{totalGuests}</span> guests
+        <div className="space-y-1.5">
+          <div className="text-xs font-medium text-neutral-900">
+            {totalDepartures} {totalDepartures === 1 ? "departure" : "departures"}
           </div>
-
-          <div className="space-y-1">
-            {visibleDepartures.map((dep) => (
-              <div key={dep.id} className="text-xs text-neutral-600">
-                <span className="font-medium text-neutral-900">{dep.time}</span> {dep.title}
-              </div>
-            ))}
-            {hiddenCount > 0 ? (
-              <div className="text-xs text-neutral-500">+{hiddenCount} more</div>
-            ) : null}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {resources.SM && (
-              <ResourceChip label="SM" used={resources.SM} cap={28} />
-            )}
-            {resources["E-bike"] && (
-              <ResourceChip label="E-bike" used={resources["E-bike"]} cap={20} />
-            )}
-          </div>
+          {activityCount > 0 && (
+            <div className="text-[11px] text-neutral-600">
+              {activityCount} {activityCount === 1 ? "activity" : "activities"}
+            </div>
+          )}
+          {totalGuests > 0 && (
+            <div className="text-[11px] text-neutral-600">
+              {totalGuests} {totalGuests === 1 ? "person" : "people"}
+            </div>
+          )}
         </div>
       ) : inMonth ? (
-        <div className="mt-6 text-xs text-neutral-400">No departures</div>
+        <div className="mt-4 text-xs text-neutral-400">No departures</div>
       ) : null}
     </button>
   );
@@ -632,11 +627,14 @@ export default function ProviderAvailabilityPage() {
 
               {/* Conflicts warning */}
               {conflicts.length > 0 && (
-                <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3">
-                  <div className="text-xs font-medium text-red-900">Resource conflicts:</div>
-                  <ul className="mt-1 space-y-1">
+                <div className="mt-4 rounded-lg border-2 border-red-300 bg-red-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-red-600 font-bold">⚠️</span>
+                    <div className="text-sm font-semibold text-red-900">Resource Conflicts</div>
+                  </div>
+                  <ul className="mt-2 space-y-1.5">
                     {conflicts.map((c, idx) => (
-                      <li key={idx} className="text-xs text-red-700">• {c}</li>
+                      <li key={idx} className="text-sm text-red-800">• {c}</li>
                     ))}
                   </ul>
                 </div>
@@ -684,18 +682,13 @@ export default function ProviderAvailabilityPage() {
                 )}
               </div>
 
-              <div className="mt-4 flex gap-2">
-                <button className="flex-1 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm hover:bg-neutral-50">
-                  Close day
-                </button>
-                <button className="flex-1 rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-800">
-                  Review issues
-                </button>
-              </div>
-
-              <div className="mt-4 text-xs text-neutral-500">
-                MVP note: editing departures can be a slide-over next (keep month view fast).
-              </div>
+              {conflicts.length > 0 && (
+                <div className="mt-4">
+                  <button className="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors">
+                    Review Issues
+                  </button>
+                </div>
+              )}
             </div>
           </aside>
         </div>
