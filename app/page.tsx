@@ -68,7 +68,7 @@ const translations = {
       },
       closing: "Whether your experience happens in the forest or indoors — the goal is the same: fewer moving parts, smoother days, and more sales.",
     },
-    socialProof: "Built in Finland. Provider-first. Designed for real operations.",
+    socialProof: "Built in Finland. Made with providers. Designed for real operations.",
     contact: {
       title: "Get in touch",
       name: "Name",
@@ -76,7 +76,9 @@ const translations = {
       message: "Message",
       submit: "Send message",
       directEmail: "Or email us directly:",
-      replyTime: "We reply within 48h.",
+      replyTime: "We reply within 24h.",
+      privacyConsent: "I agree to the",
+      privacyLink: "privacy policy",
     },
     footer: {
       copyright: "All rights reserved.",
@@ -146,7 +148,7 @@ const translations = {
       },
       closing: "Tapahtuuko elämyksesi metsässä vai sisätiloissa — tavoite on sama: vähemmän liikkuvia osia, sujuvammat päivät ja enemmän myyntiä.",
     },
-    socialProof: "Rakennettu Suomessa. Apuna yrityksille. Suunniteltu todelliseen tarpeeseen.",
+    socialProof: "Rakennettu Suomessa. Yhdessä yritysten kanssa. Suunniteltu todelliseen tarpeeseen.",
     contact: {
       title: "Ota yhteyttä",
       name: "Nimi",
@@ -154,7 +156,9 @@ const translations = {
       message: "Viesti",
       submit: "Lähetä viesti",
       directEmail: "Tai lähetä sähköpostia suoraan:",
-      replyTime: "Vastaamme 48 tunnin sisällä.",
+      replyTime: "Vastaamme 24 tunnin sisällä.",
+      privacyConsent: "Hyväksyn",
+      privacyLink: "tietosuojaselosteen",
     },
     footer: {
       copyright: "Kaikki oikeudet pidätetään.",
@@ -179,10 +183,7 @@ export default function LandingPage() {
     e.preventDefault();
     e.stopPropagation();
     
-    alert('Form submit started!'); // Debug
-    
     if (!contactForm.name || !contactForm.email || !contactForm.message) {
-      alert('Please fill all fields');
       return;
     }
 
@@ -212,12 +213,10 @@ export default function LandingPage() {
       } else {
         setSubmitStatus('error');
         console.error('API Error:', data);
-        alert('Error: ' + (data.error || 'Failed to send') + (data.details ? '\nDetails: ' + JSON.stringify(data.details) : ''));
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
-      alert('Error: ' + (error instanceof Error ? error.message : 'Failed to send'));
     } finally {
       setIsSubmitting(false);
     }
@@ -571,15 +570,25 @@ export default function LandingPage() {
                   required
                 />
               </div>
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="privacy-consent"
+                  required
+                  className="mt-1 w-4 h-4 text-[var(--color-forest)] border-neutral-300 rounded focus:ring-[var(--color-forest)]"
+                />
+                <label htmlFor="privacy-consent" className="text-sm text-neutral-600">
+                  {t.contact.privacyConsent}{" "}
+                  <a href="/privacy" className="text-[var(--color-forest)] hover:underline">
+                    {t.contact.privacyLink}
+                  </a>
+                </label>
+              </div>
               <button
                 type="submit"
                 id="contact-submit-button"
                 disabled={isSubmitting}
-                onClick={() => {
-                  alert('Button clicked!');
-                }}
                 className="w-full px-8 py-4 bg-[var(--color-forest)] text-white rounded-lg font-semibold hover:bg-[#0f2a1f] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ cursor: 'pointer' }}
               >
                 {isSubmitting 
                   ? (language === 'en' ? 'Sending...' : 'Lähetetään...')
@@ -629,6 +638,10 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm">
               © {new Date().getFullYear()} Seeks & Explore. {t.footer.copyright}
+              {" "}·{" "}
+              <a href="/privacy" className="hover:underline">
+                {language === 'en' ? 'Privacy Policy' : 'Tietosuojaseloste'}
+              </a>
             </div>
             <div className="text-sm">
               {t.footer.investor}{" "}
