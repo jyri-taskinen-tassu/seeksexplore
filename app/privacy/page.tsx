@@ -12,7 +12,7 @@ const translations = {
     sections: {
       dataCollection: {
         title: "Data We Collect",
-        content: "When you contact us through our contact form, we collect: your name, email address, and message content. This information is used solely to respond to your inquiry."
+        content: "When you contact us through our contact form, we collect: your name, email address, phone number (optional), and message content. This information is used solely to respond to your inquiry."
       },
       dataUse: {
         title: "How We Use Your Data",
@@ -39,7 +39,7 @@ const translations = {
     sections: {
       dataCollection: {
         title: "Keräämämme tiedot",
-        content: "Kun otat meihin yhteyttä lomakkeen kautta, keräämme: nimesi, sähköpostiosoitteesi ja viestisi sisällön. Näitä tietoja käytetään ainoastaan vastaamiseen."
+        content: "Kun otat meihin yhteyttä lomakkeen kautta, keräämme: nimesi, sähköpostiosoitteesi, puhelinnumerosi (valinnainen) ja viestisi sisällön. Näitä tietoja käytetään ainoastaan vastaamiseen."
       },
       dataUse: {
         title: "Tietojen käyttö",

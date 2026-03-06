@@ -14,11 +14,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, message, language } = await request.json();
+    const { name, email, phone, message, language } = await request.json();
 
     if (!name || !email || !message) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'All required fields are required' },
         { status: 400 }
       );
     }
@@ -28,8 +28,8 @@ export async function POST(request: Request) {
       : 'Yhteydenotto Seeks & Explore -sivulta';
 
     const emailBody = language === 'en'
-      ? `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
-      : `Nimi: ${name}\nSähköposti: ${email}\n\nViesti:\n${message}`;
+      ? `Name: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ''}\n\nMessage:\n${message}`
+      : `Nimi: ${name}\nSähköposti: ${email}${phone ? `\nPuhelin: ${phone}` : ''}\n\nViesti:\n${message}`;
 
     const { data, error } = await resend.emails.send({
       from: 'Seeks & Explore <onboarding@resend.dev>', // Käytä testi-domainia aluksi

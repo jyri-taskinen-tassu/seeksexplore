@@ -73,6 +73,7 @@ const translations = {
       title: "Get in touch",
       name: "Name",
       email: "Email",
+      phone: "Phone (optional)",
       message: "Message",
       submit: "Send message",
       directEmail: "Or email us directly:",
@@ -153,6 +154,7 @@ const translations = {
       title: "Ota yhteyttä",
       name: "Nimi",
       email: "Sähköposti",
+      phone: "Puhelin (valinnainen)",
       message: "Viesti",
       submit: "Lähetä viesti",
       directEmail: "Tai lähetä sähköpostia suoraan:",
@@ -172,6 +174,7 @@ export default function LandingPage() {
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
+    phone: "",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -199,6 +202,7 @@ export default function LandingPage() {
         body: JSON.stringify({
           name: contactForm.name,
           email: contactForm.email,
+          phone: contactForm.phone,
           message: contactForm.message,
           language: language,
         }),
@@ -208,7 +212,7 @@ export default function LandingPage() {
 
       if (response.ok) {
         setSubmitStatus('success');
-        setContactForm({ name: '', email: '', message: '' });
+        setContactForm({ name: '', email: '', phone: '', message: '' });
         setTimeout(() => setSubmitStatus(null), 5000);
       } else {
         setSubmitStatus('error');
@@ -550,6 +554,23 @@ export default function LandingPage() {
                   }
                   className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[var(--color-forest)] focus:border-transparent outline-none"
                   required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-neutral-700 mb-2"
+                >
+                  {t.contact.phone}
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={contactForm.phone}
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, phone: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-[var(--color-forest)] focus:border-transparent outline-none"
                 />
               </div>
               <div>
