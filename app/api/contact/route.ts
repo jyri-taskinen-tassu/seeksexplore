@@ -31,9 +31,10 @@ export async function POST(request: Request) {
       ? `Name: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ''}\n\nMessage:\n${message}`
       : `Nimi: ${name}\nSähköposti: ${email}${phone ? `\nPuhelin: ${phone}` : ''}\n\nViesti:\n${message}`;
 
+    // Domain on vahvistettu Resendissä, käytetään hello@seeksexplore.com
     const { data, error } = await resend.emails.send({
-      from: 'Seeks & Explore <onboarding@resend.dev>', // Käytä testi-domainia aluksi
-      to: [email], // Lähetä testissä lähettäjälle itselleen
+      from: 'Seeks & Explore <hello@seeksexplore.com>',
+      to: ['hello@seeksexplore.com'],
       subject: subject,
       text: emailBody,
       replyTo: email,
@@ -41,6 +42,11 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Resend error:', error);
+      // Jos domain ei ole verified, Resend palauttaa virheen
+      // Tarkista Resendissä että seeksexplore.com on verified
+      if (error.message?.includes('domain') || error.message?.includes('verified')) {
+        console.error('Domain verification error - check Resend dashboard');
+      }
       return NextResponse.json(
         { error: 'Failed to send email', details: error },
         { status: 500 }
