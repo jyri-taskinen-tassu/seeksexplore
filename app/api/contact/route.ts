@@ -31,10 +31,14 @@ export async function POST(request: Request) {
       ? `Name: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ''}\n\nMessage:\n${message}`
       : `Nimi: ${name}\nSähköposti: ${email}${phone ? `\nPuhelin: ${phone}` : ''}\n\nViesti:\n${message}`;
 
-    // Domain on vahvistettu Resendissä, käytetään hello@seeksexplore.com
+    // Domain on vahvistettu Resendissä, käytetään hello@seeksexplore.com lähettämiseen
+    // Vastaanotetaan suoraan omaan sähköpostiin (email-forwarding hoitaa hello@seeksexplore.com -> oma sähköposti)
+    // Voit vaihtaa tämän osoitteen haluamaksesi
+    const recipientEmail = 'jyri.taskinen@tassuconsulting.com'; // Vaihda tarvittaessa
+    
     const { data, error } = await resend.emails.send({
       from: 'Seeks & Explore <hello@seeksexplore.com>',
-      to: ['hello@seeksexplore.com'],
+      to: [recipientEmail], // Vastaanotetaan suoraan omaan sähköpostiin
       subject: subject,
       text: emailBody,
       replyTo: email,
