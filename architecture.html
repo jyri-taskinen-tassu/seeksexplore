@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SeeksExplore — System Architecture</title>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'base',
+      themeVariables: {
+        primaryColor:        '#d4e8df',
+        primaryTextColor:    '#1b3a2e',
+        primaryBorderColor:  '#6f856e',
+        lineColor:           '#6f856e',
+        secondaryColor:      '#dce8ec',
+        tertiaryColor:       '#f5f2e8',
+        background:          '#ffffff',
+        mainBkg:             '#d4e8df',
+        nodeBorder:          '#6f856e',
+        clusterBkg:          '#f5f2e8',
+        clusterBorder:       '#a0b89e',
+        titleColor:          '#1b3a2e',
+        edgeLabelBackground: '#ffffff',
+        actorBkg:            '#d4e8df',
+        actorBorder:         '#6f856e',
+        actorTextColor:      '#1b3a2e',
+        activationBkgColor:  '#efe9d4',
+        activationBorderColor: '#6f856e',
+        signalColor:         '#1b3a2e',
+        signalTextColor:     '#1b3a2e',
+        labelBoxBkgColor:    '#d4e8df',
+        labelBoxBorderColor: '#6f856e',
+        labelTextColor:      '#1b3a2e',
+        loopTextColor:       '#1b3a2e',
+        noteBorderColor:     '#ef904f',
+        noteBkgColor:        '#fdf3eb',
+        noteTextColor:       '#794d32',
+        taskBorderColor:     '#6f856e',
+        taskBkgColor:        '#d4e8df',
+        taskTextColor:       '#1b3a2e',
+        taskTextLightColor:  '#1b3a2e',
+        taskTextOutsideColor:'#1b3a2e',
+        gridColor:           '#e8e8e8',
+        section0:            '#d4e8df',
+        section1:            '#dce8ec',
+        section2:            '#efe9d4',
+        section3:            '#fdf3eb',
+        fillType0:           '#d4e8df',
+        fillType1:           '#dce8ec',
+        fillType2:           '#efe9d4',
+        fillType3:           '#fdf3eb',
+        fillType4:           '#d4e8df',
+        fillType5:           '#dce8ec',
+        fillType6:           '#efe9d4',
+        fillType7:           '#fdf3eb',
+      },
+      flowchart: { curve: 'basis', padding: 20 },
+      sequence:  { actorMargin: 60, width: 160, height: 50, boxMargin: 10, useMaxWidth: true },
+      gantt:     { axisFormat: '%b %d', barHeight: 22, barGap: 6, topPadding: 40, leftPadding: 180 },
+      er:        { diagramPadding: 30, layoutDirection: 'TB', minEntityWidth: 100 },
+    });
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --forest:  #1b3a2e;
+      --cream:   #efe9d4;
+      --sage:    #6f856e;
+      --sky:     #96b0bb;
+      --accent:  #ef904f;
+      --brown:   #794d32;
+      --bg:      #f9f8f4;
+      --surface: #ffffff;
+      --border:  #ddd8c4;
+      --text:    #1b3a2e;
+      --muted:   #6f856e;
+      --sidebar-w: 260px;
+    }
+
+    html { scroll-behavior: smooth; font-size: 15px; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--forest);
+      color: var(--cream);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-header .logo {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .sidebar-header .subtitle {
+      font-size: 11px;
+      color: rgba(239,233,212,0.6);
+      margin-top: 3px;
+    }
+
+    .nav-group { padding: 12px 0 4px; }
+    .nav-group-label {
+      padding: 4px 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(239,233,212,0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .level-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .l0 .level-dot { background: var(--accent); }
+    .l1 .level-dot { background: var(--sage); }
+    .l2 .level-dot { background: var(--sky); }
+    .l3 .level-dot { background: var(--brown); }
+
+    .nav-link {
+      display: block;
+      padding: 7px 20px 7px 32px;
+      font-size: 12.5px;
+      color: rgba(239,233,212,0.75);
+      text-decoration: none;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+      margin-left: -1px;
+    }
+    .nav-link:hover {
+      color: var(--cream);
+      background: rgba(255,255,255,0.06);
+      border-left-color: var(--sage);
+    }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 0 40px 80px;
+      max-width: 1100px;
+    }
+
+    .page-title {
+      padding: 48px 0 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+    .page-title h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--forest);
+    }
+    .page-title p {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* ── Diagram Section ── */
+    .diagram-section {
+      margin-bottom: 64px;
+      scroll-margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .level-badge {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      padding: 3px 7px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+    .badge-l0 { background: var(--accent);  color: #fff; }
+    .badge-l1 { background: var(--forest);  color: var(--cream); }
+    .badge-l2 { background: var(--sky);     color: var(--forest); }
+    .badge-l3 { background: var(--brown);   color: #fff; }
+
+    .section-header-text h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--forest);
+    }
+    .section-header-text p {
+      margin-top: 5px;
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 680px;
+    }
+
+    .crumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .crumb span { color: var(--forest); font-weight: 600; }
+    .crumb-sep { opacity: 0.4; }
+
+    .diagram-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .diagram-card-inner {
+      padding: 28px;
+      overflow-x: auto;
+    }
+    .diagram-card-inner .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+
+    .zoom-links {
+      padding: 12px 20px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .zoom-link {
+      font-size: 12px;
+      color: var(--forest);
+      text-decoration: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+    .zoom-link:hover { opacity: 1; }
+    .zoom-link::before { content: '↓'; font-size: 11px; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 56px 0;
+    }
+
+    .group-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .group-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* responsive */
+    @media (max-width: 860px) {
+      .sidebar { width: 200px; }
+      .main { margin-left: 200px; padding: 0 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">SeeksExplore</div>
+    <div class="subtitle">System Architecture</div>
+  </div>
+
+  <div class="nav-group l0">
+    <div class="nav-group-label"><span class="level-dot"></span>Level 0 — Overview</div>
+    <a class="nav-link" href="#overview">Platform Overview</a>
+  </div>
+
+  <div class="nav-group l1">
+    <div class="nav-group-label"><span class="level-dot"></span>Level 1 — Infrastructure</div>
+    <a class="nav-link" href="#monorepo">Monorepo Structure</a>
+    <a class="nav-link" href="#environments">Environments</a>
+    <a class="nav-link" href="#git-workflow">Git Branch Model</a>
+    <a class="nav-link" href="#cicd">CI/CD Pipeline</a>
+    <a class="nav-link" href="#database-overview">Database Overview</a>
+  </div>
+
+  <div class="nav-group l2">
+    <div class="nav-group-label"><span class="level-dot"></span>Level 2 — Data Layer</div>
+    <a class="nav-link" href="#public-schema">Public Schema ERD</a>
+    <a class="nav-link" href="#tenant-schema">Tenant Schema ERD</a>
+    <a class="nav-link" href="#marketplace-flow">Marketplace Publish Flow</a>
+    <a class="nav-link" href="#request-flow">Request Lifecycle</a>
+  </div>
+
+  <div class="nav-group l3">
+    <div class="nav-group-label"><span class="level-dot"></span>Level 3 — Specific Flows</div>
+    <a class="nav-link" href="#cross-schema">Cross-Schema Queries</a>
+    <a class="nav-link" href="#ai-features">AI Feature Flows</a>
+    <a class="nav-link" href="#roadmap">Feature Roadmap</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+  <div class="page-title">
+    <h1>System Architecture</h1>
+    <p>Diagrams are structured from highest level down. Start at Level 0 for the full picture, then drill into each area. Each section links to the diagrams below it that zoom in further.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       L0 — PLATFORM OVERVIEW
+  ══════════════════════════════════════ -->
+  <section id="overview" class="diagram-section">
+    <div class="section-header">
+      <span class="level-badge badge-l0">L0</span>
+      <div class="section-header-text">
+        <h2>Platform Overview</h2>
+        <p>Everything in one view — the three apps, shared packages, deployment targets, database layer, and where the future marketplace sits.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+flowchart TD
+  subgraph Browser["Browser"]
+    PU["Provider User"]
+    CU["Customer\n(Future)"]
+  end
+
+  subgraph NX["NX Monorepo — seeksexplore/"]
+    subgraph Apps["apps/"]
+      WEB["apps/web\nNext.js 16"]
+      API["apps/api\nHono"]
+      WRK["apps/worker\nNode.js"]
+    end
+    subgraph Pkgs["packages/"]
+      TYP["types"]
+      CON["constants"]
+      UTL["utils"]
+      DB["db"]
+    end
+  end
+
+  subgraph Deploy["Deployment"]
+    VCL["Vercel\nweb hosting"]
+    RLW["Railway\nAPI + Worker"]
+  end
+
+  subgraph Data["Data Layer"]
+    SB["Supabase\nPostgreSQL"]
+    subgraph Schemas["Schemas"]
+      PUB["public schema\ntenants · users · categories"]
+      T1["tenant_arcticfox"]
+      T2["tenant_laplandrides"]
+      TN["tenant_..."]
+    end
+    ML["marketplace_listings\n(future)"]
+  end
+
+  PU -->|"HTTPS"| WEB
+  WEB -->|"API calls"| API
+  WEB -->|"deploys to"| VCL
+  API -->|"deploys to"| RLW
+  WRK -->|"deploys to"| RLW
+  API -->|"queries"| SB
+  WRK -->|"syncs"| ML
+  SB --> PUB
+  SB --> T1
+  SB --> T2
+  SB --> TN
+  WEB -.->|"imports"| TYP
+  WEB -.->|"imports"| CON
+  API -.->|"imports"| TYP
+  API -.->|"imports"| DB
+  CU -.->|"Future marketplace"| WEB
+        </div>
+      </div>
+      <div class="zoom-links">
+        <a class="zoom-link" href="#monorepo">Monorepo detail</a>
+        <a class="zoom-link" href="#environments">Deployment environments</a>
+        <a class="zoom-link" href="#database-overview">Database schemas</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════
+       L1 — INFRASTRUCTURE
+  ══════════════════════════════════════ -->
+  <div class="group-title">Level 1 — Infrastructure</div>
+
+  <!-- Monorepo -->
+  <section id="monorepo" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>Monorepo Structure</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l1">L1</span>
+      <div class="section-header-text">
+        <h2>NX Monorepo Structure</h2>
+        <p>One repo, three deployable apps, four shared packages. Shared types and constants are imported with <code>@seeksexplore/*</code> path aliases — type drift between frontend and API is impossible.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+flowchart TD
+  ROOT["seeksexplore/\nnx.json · package.json · tsconfig.base.json"]
+
+  subgraph APPS["apps/  —  deployable applications"]
+    WEB["web/\nNext.js 16\n→ Vercel"]
+    API["api/\nHono\n→ Railway"]
+    WRK["worker/\nNode.js\n→ Railway cron"]
+  end
+
+  subgraph PKGS["packages/  —  shared libraries"]
+    TYP["types/\nProduct · Booking · Tenant\nResourceVariant · Departure"]
+    CON["constants/\nCURRENCIES · POLICIES\nBOOKING_SOURCES · STATUSES"]
+    UTL["utils/\nformatDeparture()\ncalculateBookingTotal()\nformatCurrency()"]
+    DBP["db/\ncreateBrowserClient()\ncreateServerClient()\nDatabase types (generated)"]
+    UI["ui/\nButton · Input · Badge\n⚠ skip until 2nd frontend"]
+  end
+
+  ROOT --> APPS
+  ROOT --> PKGS
+
+  WEB -->|"@seeksexplore/types"| TYP
+  WEB -->|"@seeksexplore/constants"| CON
+  WEB -->|"@seeksexplore/db"| DBP
+  WEB -->|"@seeksexplore/utils"| UTL
+
+  API -->|"@seeksexplore/types"| TYP
+  API -->|"@seeksexplore/constants"| CON
+  API -->|"@seeksexplore/db"| DBP
+  API -->|"@seeksexplore/utils"| UTL
+
+  WRK -->|"@seeksexplore/types"| TYP
+  WRK -->|"@seeksexplore/db"| DBP
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Environments -->
+  <section id="environments" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>Environments</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l1">L1</span>
+      <div class="section-header-text">
+        <h2>Environments &amp; Deployment</h2>
+        <p>Three fully isolated environments. Staging and production use separate Vercel projects, separate Railway services, and separate Supabase projects — no shared infrastructure, no risk of data bleed.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+flowchart LR
+  subgraph LOCAL["Local Development"]
+    direction TB
+    LW["localhost:3000\napps/web"]
+    LA["localhost:3001\napps/api"]
+    LS["Supabase local\nDocker"]
+    LW --- LA --- LS
+  end
+
+  subgraph STAGING["Staging  ·  staging branch"]
+    direction TB
+    SW["staging.seeksexplore.com\nVercel project: seeksexplore-staging"]
+    SA["api-staging.seeksexplore.com\nRailway staging service"]
+    SS["Supabase: seeksexplore-staging\nIsolated project"]
+    SW --- SA --- SS
+  end
+
+  subgraph PROD["Production  ·  main branch"]
+    direction TB
+    PW["app.seeksexplore.com\nVercel project: seeksexplore-prod"]
+    PA["api.seeksexplore.com\nRailway prod service"]
+    PS["Supabase: seeksexplore-prod\nIsolated project"]
+    PW --- PA --- PS
+  end
+
+  LOCAL -->|"PR → staging branch"| STAGING
+  STAGING -->|"PR → main branch\n+ manual approval"| PROD
+        </div>
+      </div>
+      <div class="zoom-links">
+        <a class="zoom-link" href="#cicd">CI/CD pipeline detail</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Git Workflow -->
+  <section id="git-workflow" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>Git Branch Model</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l1">L1</span>
+      <div class="section-header-text">
+        <h2>Git Branch Model</h2>
+        <p>Five branch types. Features branch off <code>develop</code>, never directly off <code>staging</code> or <code>main</code>. Merges to protected branches always require a PR — no direct pushes.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+gitGraph
+  commit id: "repo init"
+  branch develop
+  checkout develop
+  commit id: "Phase 0: NX setup"
+  branch feat/auth
+  checkout feat/auth
+  commit id: "auth pages"
+  commit id: "middleware"
+  checkout develop
+  merge feat/auth id: "✓ auth"
+  branch feat/products-crud
+  checkout feat/products-crud
+  commit id: "products list"
+  commit id: "create/edit form"
+  commit id: "pricing tiers"
+  checkout develop
+  merge feat/products-crud id: "✓ products"
+  branch fix/booking-timezone
+  checkout fix/booking-timezone
+  commit id: "fix offset bug"
+  checkout develop
+  merge fix/booking-timezone id: "✓ fix"
+  branch staging
+  checkout staging
+  merge develop id: "staging deploy"
+  checkout main
+  merge staging id: "v0.1 prod" tag: "v0.1"
+  checkout develop
+  commit id: "Phase 1 continues..."
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CI/CD -->
+  <section id="cicd" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> Environments <span class="crumb-sep">›</span> <span>CI/CD Pipeline</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l1">L1</span>
+      <div class="section-header-text">
+        <h2>CI/CD Pipeline</h2>
+        <p>Every PR runs lint, type-check, and build before merge. Staging deploys automatically on merge. Production requires a manual approval gate.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+flowchart TD
+  PR["Pull Request opened"]
+  CI["GitHub Actions: ci.yml"]
+
+  subgraph Checks["Status Checks — must all pass"]
+    L["npm run lint\nESLint across all apps + packages"]
+    T["tsc --noEmit\nType-check all workspaces"]
+    B["nx affected --target=build\nBuild only changed apps"]
+  end
+
+  REVIEW["Peer Review\n1 approval required\n(2 for main)"]
+  MERGE["Merge to branch"]
+
+  subgraph AutoDeploy["Auto Deploy — deploy-staging.yml"]
+    DS["Vercel: staging deploy\napps/web"]
+    DAS["Railway: staging deploy\napps/api + worker"]
+  end
+
+  subgraph ProdDeploy["Production Deploy — deploy-prod.yml"]
+    GATE["Manual approval gate\n(GitHub Environment protection)"]
+    DP["Vercel: prod deploy\napps/web"]
+    DAP["Railway: prod deploy\napps/api + worker"]
+  end
+
+  PR --> CI
+  CI --> L & T & B
+  L & T & B -->|"all green"| REVIEW
+  REVIEW -->|"approved"| MERGE
+  MERGE -->|"→ staging branch"| AutoDeploy
+  MERGE -->|"→ main branch"| ProdDeploy
+  GATE --> DP & DAP
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Database Overview -->
+  <section id="database-overview" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>Database Overview</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l1">L1</span>
+      <div class="section-header-text">
+        <h2>Database — Schema-per-Tenant</h2>
+        <p>One PostgreSQL database, multiple schemas. Each tenant gets their own isolated schema with identical table structure. The <code>public</code> schema holds only platform-level shared data. The schema boundary is the isolation — no <code>tenant_id</code> filtering needed.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+flowchart TD
+  PG["PostgreSQL Database\nSupabase"]
+
+  subgraph PUB["public schema  —  platform data"]
+    T["tenants"]
+    U["users"]
+    C["categories"]
+    L["locations"]
+    ML["marketplace_listings\nfuture marketplace"]
+  end
+
+  subgraph TA["tenant_arcticfox  —  Arctic Fox Safaris"]
+    TA_P["products"]
+    TA_B["bookings"]
+    TA_D["departures"]
+    TA_R["resources + variants"]
+    TA_C["customers"]
+  end
+
+  subgraph TB["tenant_laplandrides  —  Lapland Rides"]
+    TB_P["products"]
+    TB_B["bookings"]
+    TB_D["departures"]
+    TB_R["resources + variants"]
+    TB_C["customers"]
+  end
+
+  TN["tenant_... \nprovisioned on signup\nsame table structure"]
+
+  PG --> PUB
+  PG --> TA
+  PG --> TB
+  PG --> TN
+
+  T -. "schema_name lookup" .-> TA
+  T -. "schema_name lookup" .-> TB
+  TA_P -. "category_id FK" .-> C
+  TA_P -. "location_id FK" .-> L
+  TA_P -. "publishes to" .-> ML
+        </div>
+      </div>
+      <div class="zoom-links">
+        <a class="zoom-link" href="#public-schema">Public schema ERD</a>
+        <a class="zoom-link" href="#tenant-schema">Tenant schema ERD</a>
+        <a class="zoom-link" href="#marketplace-flow">Marketplace publish flow</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════
+       L2 — DATA LAYER
+  ══════════════════════════════════════ -->
+  <div class="group-title">Level 2 — Data Layer</div>
+
+  <!-- Public Schema ERD -->
+  <section id="public-schema" class="diagram-section">
+    <div class="crumb">Database Overview <span class="crumb-sep">›</span> <span>Public Schema ERD</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l2">L2</span>
+      <div class="section-header-text">
+        <h2>Public Schema — ERD</h2>
+        <p>Shared platform data. <code>tenants</code> and <code>users</code> are the identity layer. <code>categories</code> and <code>locations</code> are reference data shared across all tenants. <code>marketplace_listings</code> is the denormalized bridge to the future marketplace.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+erDiagram
+  tenants {
+    uuid id PK
+    string slug
+    string name
+    string schema_name
+    string plan
+    timestamp created_at
+  }
+  users {
+    uuid id PK
+    uuid tenant_id FK
+    string role
+    string full_name
+    string email
+  }
+  categories {
+    uuid id PK
+    string name
+    string slug
+    uuid parent_id FK
+    string icon
+  }
+  locations {
+    uuid id PK
+    string name
+    string country_code
+    string region
+    point coordinates
+  }
+  marketplace_listings {
+    uuid id PK
+    uuid tenant_id FK
+    uuid product_id
+    uuid category_id FK
+    uuid location_id FK
+    string title
+    string short_description
+    numeric price_from
+    string currency
+    array languages
+    string status
+    timestamp last_synced_at
+  }
+
+  tenants      ||--o{ users                 : "has"
+  tenants      ||--o{ marketplace_listings  : "publishes"
+  categories   ||--o{ marketplace_listings  : "categorizes"
+  categories   ||--o{ categories            : "parent of"
+  locations    ||--o{ marketplace_listings  : "locates"
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tenant Schema ERD -->
+  <section id="tenant-schema" class="diagram-section">
+    <div class="crumb">Database Overview <span class="crumb-sep">›</span> <span>Tenant Schema ERD</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l2">L2</span>
+      <div class="section-header-text">
+        <h2>Tenant Schema — ERD</h2>
+        <p>Every tenant schema contains these identical tables. No <code>tenant_id</code> columns — the schema boundary provides full isolation. <code>category_id</code> and <code>location_id</code> are cross-schema FKs pointing into <code>public</code>.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+erDiagram
+  products {
+    uuid id PK
+    string title
+    string short_description
+    string description
+    uuid category_id
+    uuid location_id
+    string location_name
+    string address
+    int duration_minutes
+    string meeting_point
+    string currency
+    string capacity_mode
+    int capacity_max
+    array languages
+    string cancellation_policy
+    string status
+    timestamp created_at
+    timestamp updated_at
+  }
+  pricing_tiers {
+    uuid id PK
+    uuid product_id FK
+    string label
+    numeric price
+  }
+  resources {
+    uuid id PK
+    string name
+    string description
+  }
+  resource_variants {
+    uuid id PK
+    uuid resource_id FK
+    string name
+    int capacity_per_unit
+    string unit_label
+    int total_units
+    int buffer_units
+    string status
+  }
+  product_resource_rules {
+    uuid id PK
+    uuid product_id FK
+    uuid resource_variant_id FK
+    int units_per_booking
+  }
+  departures {
+    uuid id PK
+    uuid product_id FK
+    date date
+    time start_time
+    int capacity_override
+    string status
+  }
+  bookings {
+    uuid id PK
+    uuid product_id FK
+    uuid departure_id FK
+    string customer_name
+    string customer_email
+    string customer_phone
+    int guests
+    string status
+    numeric total_price
+    string currency
+    timestamp booked_at
+    string source
+  }
+  booking_items {
+    uuid id PK
+    uuid booking_id FK
+    uuid pricing_tier_id FK
+    int quantity
+    numeric unit_price
+  }
+  customers {
+    uuid id PK
+    string email
+    string name
+    string phone
+    timestamp created_at
+  }
+
+  products             ||--o{ pricing_tiers          : "has"
+  products             ||--o{ product_resource_rules  : "requires"
+  products             ||--o{ departures              : "schedules"
+  products             ||--o{ bookings                : "booked as"
+  resources            ||--o{ resource_variants       : "has"
+  resource_variants    ||--o{ product_resource_rules  : "used in"
+  departures           ||--o{ bookings                : "contains"
+  bookings             ||--o{ booking_items           : "has items"
+  pricing_tiers        ||--o{ booking_items           : "priced by"
+  customers            ||--o{ bookings                : "makes"
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marketplace Flow -->
+  <section id="marketplace-flow" class="diagram-section">
+    <div class="crumb">Database Overview <span class="crumb-sep">›</span> <span>Marketplace Publish Flow</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l2">L2</span>
+      <div class="section-header-text">
+        <h2>Marketplace Publish Flow</h2>
+        <p>Tenants publish products to the marketplace via a DB trigger. The marketplace only ever queries <code>public.marketplace_listings</code> — it never touches individual tenant schemas. Booking crosses back into the tenant schema.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+sequenceDiagram
+  participant PV as Provider
+  participant TP as tenant_arcticfox.products
+  participant TR as DB Trigger
+  participant ML as public.marketplace_listings
+  participant CU as Customer Browser
+  participant BK as tenant_arcticfox.bookings
+
+  PV->>TP: UPDATE products SET status = 'published'
+  TP->>TR: AFTER UPDATE fires sync_to_marketplace()
+  TR->>ML: UPSERT — title, price_from, category, location, languages
+
+  Note over ML: Denormalized snapshot<br/>No cross-schema join needed
+
+  CU->>ML: GET /marketplace?location=Rovaniemi&category=snowmobile
+  ML-->>CU: Returns matching listings (flat query, always fast)
+
+  CU->>TP: GET /book/arcticfox/{product-id}
+  Note over TP: search_path = tenant_arcticfox, public
+  TP-->>CU: Returns departures, pricing tiers, availability
+
+  CU->>BK: POST /book — guest details, departure, pricing tier
+  BK-->>CU: Booking confirmation + booking ID
+        </div>
+      </div>
+      <div class="zoom-links">
+        <a class="zoom-link" href="#cross-schema">Cross-schema query pattern</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Request Lifecycle -->
+  <section id="request-flow" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>Request Lifecycle</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l2">L2</span>
+      <div class="section-header-text">
+        <h2>Request Lifecycle — Provider App</h2>
+        <p>How a provider request flows from browser through Next.js middleware, to the Hono API, and into the correct tenant schema. The tenant schema is resolved once in middleware and passed via request context — never from user input.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+sequenceDiagram
+  participant B as Browser
+  participant MW as Next.js Middleware
+  participant P as Next.js Page / API Route
+  participant A as apps/api (Hono)
+  participant DB as Supabase
+
+  B->>MW: GET /provider/products
+  MW->>MW: Verify Supabase session cookie
+  MW->>DB: SELECT tenant_id FROM public.users WHERE id = auth.uid()
+  DB-->>MW: { tenant_id, schema_name: 'tenant_arcticfox' }
+  MW->>P: Pass request + tenant context in headers
+
+  P->>A: GET /api/products (with Authorization header)
+  A->>A: Verify JWT, extract tenant slug
+  A->>DB: SET search_path = tenant_arcticfox, public
+  A->>DB: SELECT * FROM products ORDER BY created_at DESC
+  DB-->>A: Product rows (no tenant_id filter needed)
+  A-->>P: JSON response
+  P-->>B: Rendered page
+
+  Note over B,DB: Tenant schema is set once per request.<br/>All subsequent queries in that request<br/>use it automatically via search_path.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ══════════════════════════════════════
+       L3 — SPECIFIC FLOWS
+  ══════════════════════════════════════ -->
+  <div class="group-title">Level 3 — Specific Flows</div>
+
+  <!-- Cross-Schema -->
+  <section id="cross-schema" class="diagram-section">
+    <div class="crumb">Database Overview <span class="crumb-sep">›</span> Marketplace Flow <span class="crumb-sep">›</span> <span>Cross-Schema Queries</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l3">L3</span>
+      <div class="section-header-text">
+        <h2>Cross-Schema Queries in Code</h2>
+        <p>For admin dashboards and platform analytics only — never on the provider or booking hot path. The <code>queryAllTenants()</code> helper fetches all schema names, builds a <code>UNION ALL</code>, and fires it through a single <code>SECURITY DEFINER</code> RPC.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+sequenceDiagram
+  participant AD as Admin Dashboard
+  participant QT as queryAllTenants()
+  participant RG as public.tenants (registry)
+  participant RPC as run_cross_schema_query RPC
+  participant S1 as tenant_arcticfox
+  participant S2 as tenant_laplandrides
+  participant SN as tenant_...
+
+  AD->>QT: queryAllTenants(schema => `SELECT SUM(total_price) FROM ${schema}.bookings`)
+  QT->>RG: SELECT schema_name FROM public.tenants
+  RG-->>QT: ['tenant_arcticfox', 'tenant_laplandrides', ...]
+
+  QT->>QT: Build UNION ALL from schema list
+  Note over QT: (SELECT 'tenant_arcticfox', SUM(total_price)<br/>FROM tenant_arcticfox.bookings)<br/>UNION ALL<br/>(SELECT 'tenant_laplandrides', SUM(...)...)<br/>UNION ALL ...
+
+  QT->>RPC: rpc('run_cross_schema_query', { sql: unionSql })
+  RPC->>RPC: Check caller is service_role
+  RPC->>S1: Query tenant_arcticfox
+  RPC->>S2: Query tenant_laplandrides
+  RPC->>SN: Query remaining schemas
+  S1-->>RPC: Revenue row
+  S2-->>RPC: Revenue row
+  SN-->>RPC: Revenue rows
+  RPC-->>QT: jsonb merged result
+  QT-->>AD: RevenueRow[] — one row per tenant
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Features -->
+  <section id="ai-features" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>AI Feature Flows</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l3">L3</span>
+      <div class="section-header-text">
+        <h2>AI Feature Flows</h2>
+        <p>Four AI-assisted features, all routed through <code>apps/api</code> to avoid Vercel's 10s timeout. Structured outputs use <code>tool_use</code>. Description writer streams. All system prompts are cached with <code>cache_control: ephemeral</code>.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+flowchart TD
+  PV["Provider Browser"]
+
+  subgraph API["apps/api — AI Endpoints\n(Railway — no timeout limit)"]
+    CP["/ai/create-product\nExtract full ProductDraft from\nfree-text description"]
+    GD["/ai/generate-description\nPolished markdown description\n+ short description"]
+    PS["/ai/suggest-pricing\nPricing tiers with rationale"]
+    AS["/ai/suggest-availability\nOptimal departure times from\nbooking pattern analysis"]
+  end
+
+  subgraph Claude["Anthropic API"]
+    MODEL["claude-sonnet-4-6"]
+    CACHE["Prompt Cache\ncache_control: ephemeral\n~80% token cost reduction on repeats"]
+  end
+
+  DB[("Supabase\ntenant schema\nbookings history")]
+
+  PV -->|"Plain text description"| CP
+  PV -->|"Title · category · duration · included"| GD
+  PV -->|"Product type · location · duration"| PS
+  DB -->|"Booking patterns\n28-day history"| AS
+
+  CP -->|"System: schema definition\n+ few-shot examples\nMethod: tool_use → structured JSON"| CACHE
+  GD -->|"Method: stream: true\n→ typing effect in UI"| MODEL
+  PS -->|"Method: tool_use\n→ PricingTier[]"| CACHE
+  AS -->|"Booking data as context\nMethod: tool_use"| CACHE
+
+  CACHE --> MODEL
+
+  MODEL -->|"ProductDraft JSON"| CP
+  MODEL -->|"Streaming markdown"| GD
+  MODEL -->|"PricingTier[] + rationale"| PS
+  MODEL -->|"Suggested time slots"| AS
+
+  CP -->|"Populated form fields"| PV
+  GD -->|"Streamed text rendered live"| PV
+  PS -->|"Suggestion card — accept / modify"| PV
+  AS -->|"Slot recommendations"| PV
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roadmap -->
+  <section id="roadmap" class="diagram-section">
+    <div class="crumb">Platform Overview <span class="crumb-sep">›</span> <span>Feature Roadmap</span></div>
+    <div class="section-header">
+      <span class="level-badge badge-l3">L3</span>
+      <div class="section-header-text">
+        <h2>Feature Roadmap — Gantt</h2>
+        <p>Six phases from foundation to AI. Each phase is an independent PR stream. Phase 0 must complete before any product features begin — getting auth and the DB wired end-to-end is the only real blocker.</p>
+      </div>
+    </div>
+
+    <div class="diagram-card">
+      <div class="diagram-card-inner">
+        <div class="mermaid">
+gantt
+  title SeeksExplore — Provider MVP Roadmap
+  dateFormat  YYYY-MM-DD
+  axisFormat  %b %d
+
+  section Phase 0 · Foundation
+    NX monorepo setup          :p0a, 2026-04-14, 3d
+    Supabase projects + migrations  :p0b, after p0a, 4d
+    Auth pages + middleware    :p0c, after p0b, 3d
+    CI/CD pipelines            :p0d, after p0c, 2d
+    Vercel + Railway staging   :p0e, after p0d, 2d
+
+  section Phase 1 · Products
+    Products list from DB      :p1a, after p0e, 2d
+    Create + edit product form :p1b, after p1a, 3d
+    Pricing tiers in DB        :p1c, after p1b, 2d
+    Resource rules linked      :p1d, after p1c, 2d
+    Publish / archive toggle   :p1e, after p1d, 1d
+
+  section Phase 2 · Resources & Availability
+    Resources CRUD             :p2a, after p1e, 3d
+    Departure scheduling       :p2b, after p2a, 3d
+    Availability calendar      :p2c, after p2b, 2d
+    Close / cancel departure   :p2d, after p2c, 1d
+
+  section Phase 3 · Bookings
+    Bookings list from DB      :p3a, after p2d, 2d
+    Manual booking form        :p3b, after p3a, 2d
+    Status updates + email     :p3c, after p3b, 2d
+    Customers table            :p3d, after p3c, 1d
+
+  section Phase 4 · Analytics
+    SQL aggregates             :p4a, after p3d, 2d
+    Revenue + occupancy charts :p4b, after p4a, 3d
+
+  section Phase 5 · AI Features
+    AI product creation        :p5a, after p4b, 3d
+    AI description writer      :p5b, after p5a, 2d
+    AI pricing suggester       :p5c, after p5b, 2d
+    Smart availability hints   :p5d, after p5c, 3d
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

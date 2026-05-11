@@ -301,6 +301,13 @@ export default function LandingPage() {
                   FI
                 </button>
               </div>
+              {/* Login */}
+              <a
+                href="/auth/login"
+                className="ml-3 px-4 py-1.5 rounded-lg text-sm font-semibold border-2 border-[var(--color-forest)] text-[var(--color-forest)] hover:bg-[var(--color-forest)] hover:text-white transition-colors"
+              >
+                Login
+              </a>
             </div>
           </div>
         </div>

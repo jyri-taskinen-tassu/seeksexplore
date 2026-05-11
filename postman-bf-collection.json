@@ -1,0 +1,37 @@
+{
+  "info": {
+    "name": "Business Finland API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Import Company - Tahko Adventure Oy",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "User-Agent", "value": "Mozilla/5.0" }
+        ],
+        "url": {
+          "raw": "https://api.businessfinland.fi/traveldatahub?subscription-key=f2b65d6fa6d547a08cd0457eaa841df1",
+          "protocol": "https",
+          "host": ["api", "businessfinland", "fi"],
+          "path": ["traveldatahub"],
+          "query": [
+            {
+              "key": "subscription-key",
+              "value": "f2b65d6fa6d547a08cd0457eaa841df1"
+            }
+          ]
+        },
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query ImportCompany($id: uuid!) {\n  companyByPk(id: $id) {\n    id\n    businessEntity { id }\n    officialName\n    businessName\n    description\n    websiteUrl\n    webshopUrl\n    logoUrl\n    logoThumbnailUrl\n    socialMediaLinks { linkType url }\n    contactDetails(limit: 1) { email phone }\n    postalAddresses(limit: 1) {\n      streetName\n      city\n      postalCode\n      location\n    }\n    products {\n      id\n      type\n      accessible\n      externalSource\n      urlPrimary\n      webshopUrlPrimary\n      productInformations { language name description url webshopUrl }\n      productPricings { fromPrice toPrice pricingUnit }\n      productDuration { days hours minutes }\n      productCapacities { min max }\n      productImages {\n        largeUrl\n        thumbnailUrl\n        originalUrl\n        altText\n        copyright\n        coverPhoto\n        orientation\n        orderIndex\n      }\n      productTags { tag }\n      productTargetGroups { targetGroupId }\n      productCertificates { certificate certificateDetails { name description logoUrl websiteUrl } }\n      productAvailabilities {\n        startDate\n        endDate\n        startTime\n        endTime\n        doorsOpenAt\n        nroOfTickets\n      }\n      productAvailableMonths { month }\n      postalAddresses(limit: 1) {\n        streetName\n        city\n        postalCode\n        location\n      }\n    }\n  }\n}",
+            "variables": "{\n  \"id\": \"2f8f21bd-0d5c-4c14-b476-e746295fd726\"\n}"
+          }
+        }
+      }
+    }
+  ]
+}

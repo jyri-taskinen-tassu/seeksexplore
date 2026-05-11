@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   getSettings,
   updateCompanySettings,
@@ -22,6 +22,31 @@ export default function ProviderSettingsPage() {
   const [settings, setSettings] = useState<Settings>(getSettings());
   const [activeTab, setActiveTab] = useState<"company" | "notifications" | "integrations" | "localization" | "pricing">("company");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/provider/me")
+      .then((r) => r.json())
+      .then(({ provider }) => {
+        if (!provider) return;
+        const current = getSettings();
+        updateCompanySettings({
+          ...current.company,
+          companyName: provider.business_name ?? provider.official_name ?? current.company.companyName,
+          legalName: provider.official_name ?? current.company.legalName,
+          email: provider.email ?? current.company.email,
+          phone: provider.phone ?? current.company.phone,
+          website: provider.website_url ?? current.company.website,
+          address: {
+            street: provider.street_name ?? current.company.address?.street ?? "",
+            city: provider.city ?? current.company.address?.city ?? "",
+            postalCode: provider.postal_code ?? current.company.address?.postalCode ?? "",
+            country: current.company.address?.country ?? "Finland",
+          },
+        });
+        setSettings(getSettings());
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSave = () => {
     // In a real app, this would save to backend

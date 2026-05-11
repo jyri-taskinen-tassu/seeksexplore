@@ -1,59 +1,25 @@
-"use client";
-
-import React from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getProviderForUser } from "@/lib/supabase/getProviderData";
 
-function cx(...classes: Array<string | false | undefined | null>) {
-  return classes.filter(Boolean).join(" ");
-}
+const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
-// Mock products data (in a real app, this would come from a store)
-const mockProducts = [
-  {
-    id: "prod-snowmobile-safari",
-    title: "Snowmobile Safari – Sport & Touring",
-    shortDescription: "Experience the thrill of snowmobiling through pristine winter landscapes.",
-    category: "Outdoor / Snowmobile",
-    priceFrom: 149,
-    currency: "EUR",
-    status: "published",
-    publishedAt: "2025-01-01",
-  },
-  {
-    id: "prod-hiking",
-    title: "Guided Hiking Tour – Nuuksio National Park",
-    shortDescription: "Explore the beautiful trails of Nuuksio National Park with an experienced guide.",
-    category: "Outdoor / Hiking",
-    priceFrom: 45,
-    currency: "EUR",
-    status: "published",
-    publishedAt: "2025-01-02",
-  },
-  {
-    id: "prod-ebike-tour",
-    title: "E-bike Tour",
-    shortDescription: "Discover the city on an electric bike with a local guide.",
-    category: "Outdoor / Cycling",
-    priceFrom: 65,
-    currency: "EUR",
-    status: "published",
-    publishedAt: "2025-01-03",
-  },
-];
+export default async function ProviderProductsPage() {
+  const provider = await getProviderForUser();
+  const supabase = await createClient();
 
-function formatCurrency(value: number, currency: string = "EUR"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+  const products = provider
+    ? await supabase
+        .schema(SCHEMA)
+        .from("products")
+        .select("*, product_information(*), product_images(*), product_tags(*)")
+        .eq("provider_id", (provider as { id: string }).id)
+        .order("created_at")
+        .then((r) => r.data ?? [])
+    : [];
 
-export default function ProviderProductsPage() {
   return (
     <div className="flex-1 flex flex-col bg-white">
-      {/* Header */}
       <header className="border-b border-neutral-200 bg-white px-6 py-4 sticky top-0 z-10">
         <div className="flex w-full items-center justify-between">
           <div>
@@ -80,16 +46,15 @@ export default function ProviderProductsPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto px-6 py-6">
-        {/* Products List */}
         <section className="rounded-xl border border-neutral-200 bg-white shadow-sm">
           <div className="border-b border-neutral-200 px-6 py-4">
-            <div className="text-base font-semibold text-neutral-900">Published Products</div>
+            <div className="text-base font-semibold text-neutral-900">Products</div>
             <div className="mt-1 text-sm text-neutral-500">
-              {mockProducts.length} product{mockProducts.length !== 1 ? "s" : ""}
+              {products.length} product{products.length !== 1 ? "s" : ""}
             </div>
           </div>
           <div className="divide-y divide-neutral-100">
-            {mockProducts.length === 0 ? (
+            {products.length === 0 ? (
               <div className="p-12 text-center">
                 <div className="text-sm text-neutral-500 mb-4">No products yet</div>
                 <Link
@@ -100,49 +65,94 @@ export default function ProviderProductsPage() {
                 </Link>
               </div>
             ) : (
-              mockProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="p-6 hover:bg-neutral-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-base font-semibold text-neutral-900">
-                          {product.title}
-                        </h3>
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
-                          {product.status}
-                        </span>
+              products.map((product) => {
+                type InfoRow = { language: string; name: string | null; description: string | null };
+                type ImgRow = { thumbnail_url: string | null; large_url: string; is_cover: boolean };
+                type TagRow = { tag: string };
+                const infos = product.product_information as InfoRow[];
+                const enInfo = infos?.find((i) => i.language === "en") ?? infos?.[0];
+                const coverImg = (product.product_images as ImgRow[])?.find((i) => i.is_cover) ?? (product.product_images as ImgRow[])?.[0];
+                const tags = (product.product_tags as TagRow[]) ?? [];
+
+                return (
+                  <div key={product.id} className="p-6 hover:bg-neutral-50 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex gap-4 flex-1">
+                        {coverImg && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={coverImg.thumbnail_url ?? coverImg.large_url}
+                            alt={enInfo?.name ?? ""}
+                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-base font-semibold text-neutral-900">
+                              {enInfo?.name ?? product.type}
+                            </h3>
+                            <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+                              {product.type}
+                            </span>
+                            {product.accessible && (
+                              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                                Accessible
+                              </span>
+                            )}
+                          </div>
+                          {enInfo?.description && (
+                            <p className="text-sm text-neutral-600 mb-2 line-clamp-2">
+                              {enInfo.description}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                            {product.price_from != null && (
+                              <span>
+                                From €{product.price_from}
+                                {product.price_to ? `–€${product.price_to}` : ""}
+                                {product.pricing_unit ? ` / ${product.pricing_unit}` : ""}
+                              </span>
+                            )}
+                            {(product.duration_hours != null || product.duration_days != null) && (
+                              <span>
+                                {[
+                                  product.duration_days && `${product.duration_days}d`,
+                                  product.duration_hours && `${product.duration_hours}h`,
+                                  product.duration_minutes && `${product.duration_minutes}m`,
+                                ].filter(Boolean).join(" ")}
+                              </span>
+                            )}
+                            {product.available_months?.length > 0 && (
+                              <span>
+                                {(product.available_months as string[]).map((m: string) => m.slice(0, 3)).join(", ")}
+                              </span>
+                            )}
+                            {tags.slice(0, 3).map((t) => (
+                              <span key={t.tag} className="rounded-full border border-neutral-200 px-2 py-0.5">
+                                {t.tag.replace(/_/g, " ")}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-neutral-600 mb-2">
-                        {product.shortDescription}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-neutral-500">
-                        <span>{product.category}</span>
-                        <span>•</span>
-                        <span>From {formatCurrency(product.priceFrom, product.currency)}</span>
-                        <span>•</span>
-                        <span>Published {product.publishedAt}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Link
+                          href={`/provider/products/${product.id}`}
+                          className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                        >
+                          View
+                        </Link>
+                        <Link
+                          href={`/provider/products/${product.id}/edit`}
+                          className="rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                        >
+                          Edit
+                        </Link>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                      >
-                        View
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </section>

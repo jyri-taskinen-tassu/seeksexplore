@@ -1,5 +1,8 @@
-// app/provider/page.tsx
 import Link from "next/link";
+import { getProviderForUser } from "@/lib/supabase/getProviderData";
+import { createClient } from "@/lib/supabase/server";
+
+const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
 type BadgeTone = "ok" | "attention" | "problem";
 
@@ -197,12 +200,22 @@ function Progress({ value }: { value: number }) {
   );
 }
 
-export default function ProviderDashboardPage() {
+export default async function ProviderDashboardPage() {
+  const provider = await getProviderForUser();
+  const supabase = await createClient();
+  const productCount = provider
+    ? await supabase
+        .schema(SCHEMA)
+        .from("products")
+        .select("id", { count: "exact", head: true })
+        .eq("provider_id", (provider as { id: string }).id)
+        .then((r) => r.count ?? 0)
+    : 0;
+
   const totalDepartures = 6;
   const totalGuests = 42;
   const guidesActive = { used: 8, total: 12 };
 
-  // Equipment example: show warning if used > available
   const equipment = { used: 32, available: 28 };
   const equipmentTone: BadgeTone =
     equipment.used > equipment.available ? "problem" : equipment.used / equipment.available >= 0.85 ? "attention" : "ok";
@@ -220,10 +233,10 @@ export default function ProviderDashboardPage() {
             </div>
             <div>
               <div className="text-lg font-semibold tracking-tight text-neutral-900">
-                Provider Dashboard
+                {(provider as { official_name?: string } | null)?.official_name ?? "Provider Dashboard"}
               </div>
               <div className="text-sm text-neutral-500">
-                Today: Monday, January 20, 2025
+                {new Date().toLocaleDateString("en-FI", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
               </div>
             </div>
           </div>
@@ -264,11 +277,11 @@ export default function ProviderDashboardPage() {
             tone="ok"
           />
           <Card
-            title="Guides active"
-            value={`${guidesActive.used} / ${guidesActive.total}`}
-            hint="Assigned vs available"
-            icon={<IconUsers />}
-            tone={guidesActive.used / guidesActive.total >= 0.85 ? "attention" : "ok"}
+            title="Products"
+            value={`${productCount}`}
+            hint="Imported from Business Finland"
+            icon={<IconTool />}
+            tone="ok"
           />
           <Card
             title="Equipment used"
