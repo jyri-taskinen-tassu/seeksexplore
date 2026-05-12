@@ -654,10 +654,10 @@ export default function LandingPage() {
                 {t.contact.directEmail}
               </p>
               <a
-                href="mailto:hello@seeksexplore.com"
+                href="mailto:jyri.taskinen@tassuconsulting.com"
                 className="text-[var(--color-forest)] hover:underline font-medium"
               >
-                hello@seeksexplore.com
+                jyri.taskinen@tassuconsulting.com
               </a>
               <p className="text-xs text-neutral-500 mt-4">
                 {t.contact.replyTime}
@@ -682,10 +682,10 @@ export default function LandingPage() {
               <span>
                 {t.footer.investor}{" "}
                 <a
-                  href="mailto:hello@seeksexplore.com"
+                  href="mailto:jyri.taskinen@tassuconsulting.com"
                   className="hover:underline"
                 >
-                  hello@seeksexplore.com
+                  jyri.taskinen@tassuconsulting.com
                 </a>
               </span>
             </div>
