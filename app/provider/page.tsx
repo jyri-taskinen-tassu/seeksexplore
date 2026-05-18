@@ -296,7 +296,7 @@ export default async function ProviderDashboardPage() {
               type="button"
               className="inline-flex items-center justify-center rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800"
             >
-              Add departure
+              Add booking
             </button>
           </div>
         </div>
@@ -345,7 +345,7 @@ export default async function ProviderDashboardPage() {
                   Today’s activities
                 </div>
                 <div className="text-sm text-neutral-500">
-                  One view for departures, fill and issues.
+                  {"Today's bookings and resource usage at a glance."}
                 </div>
               </div>
 
@@ -570,7 +570,7 @@ export default async function ProviderDashboardPage() {
                   href="/provider/availability"
                   className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
                 >
-                  Availability & departures
+                  Availability
                 </Link>
                 <Link
                   href="/provider/bookings"

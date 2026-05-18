@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import {
+  NewBookingModal,
+  type NewBookingResult,
+} from "@/app/components/provider/NewBookingModal";
 
 export type BookingStatus = "confirmed" | "pending" | "cancelled";
 
 export type Booking = {
   id: string;
+  provider_id?: string;
+  product_id?: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
@@ -274,275 +280,6 @@ function ConfirmActionDialog({
   );
 }
 
-// ---- New Booking Modal (SEE-19, SEE-37) ----
-const FALLBACK_PRODUCT_NAMES = [
-  "Snowmobile Safari (Sport)",
-  "Snowmobile Safari (Touring)",
-  "E-bike Tour",
-  "Northern Lights Tour",
-  "Ice Fishing Experience",
-  "Reindeer Sleigh Ride",
-  "Guided Hiking Tour",
-];
-
-function NewBookingModal({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: (booking: Booking) => void;
-}) {
-  const [productNames, setProductNames] = useState<string[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [form, setForm] = useState({
-    customer_name: "",
-    customer_email: "",
-    customer_phone: "",
-    product_name: "",
-    booking_date: "",
-    booking_time: "09:00",
-    guests: 1,
-    notes: "",
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/provider/products")
-      .then((r) => r.json())
-      .then((data) => {
-        const names: string[] = Array.isArray(data.products)
-          ? data.products.map((p: { name: string }) => p.name).filter(Boolean)
-          : [];
-        const list = names.length > 0 ? names : FALLBACK_PRODUCT_NAMES;
-        setProductNames(list);
-        setForm((prev) => ({ ...prev, product_name: list[0] }));
-      })
-      .catch(() => {
-        setProductNames(FALLBACK_PRODUCT_NAMES);
-        setForm((prev) => ({
-          ...prev,
-          product_name: FALLBACK_PRODUCT_NAMES[0],
-        }));
-      })
-      .finally(() => setLoadingProducts(false));
-  }, []);
-
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "guests" ? parseInt(value, 10) || 1 : value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/provider/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j.error ?? "Failed to create booking");
-      }
-      const { booking } = await res.json();
-      onCreated(booking);
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-          <h2 className="text-lg font-semibold text-neutral-900">
-            New Booking
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 transition-colors"
-            aria-label="Close"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-5 h-5"
-            >
-              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-            </svg>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-          {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Guest Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="customer_name"
-                value={form.customer_name}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
-                placeholder="Full name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="customer_email"
-                type="email"
-                value={form.customer_email}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
-                placeholder="email@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Phone
-              </label>
-              <input
-                name="customer_phone"
-                type="tel"
-                value={form.customer_phone}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
-                placeholder="+358 40 000 0000"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Activity <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="product_name"
-                value={form.product_name}
-                onChange={handleChange}
-                required
-                disabled={loadingProducts}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)] bg-white disabled:opacity-60"
-              >
-                {loadingProducts ? (
-                  <option value="">Loading activities…</option>
-                ) : (
-                  productNames.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="booking_date"
-                type="date"
-                value={form.booking_date}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Time <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="booking_time"
-                type="time"
-                value={form.booking_time}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Guests <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="guests"
-                type="number"
-                min={1}
-                max={20}
-                value={form.guests}
-                onChange={handleChange}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
-              />
-            </div>
-
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Notes
-              </label>
-              <textarea
-                name="notes"
-                value={form.notes}
-                onChange={handleChange}
-                rows={3}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)] resize-none"
-                placeholder="Special requests, dietary requirements…"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3 justify-end pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-lg bg-[var(--color-forest)] px-4 py-2 text-sm font-medium text-white hover:bg-[#14301f] transition-colors disabled:opacity-50"
-            >
-              {submitting ? "Creating…" : "Create Booking"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ---- Booking Card ----
 function BookingCard({
   booking,
@@ -717,7 +454,7 @@ export default function BookingsClient({
     );
   };
 
-  const handleNewBooking = (booking: Booking) => {
+  const handleNewBooking = (booking: NewBookingResult) => {
     setBookings((prev) => [booking, ...prev]);
   };
 
