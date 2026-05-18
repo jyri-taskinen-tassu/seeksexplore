@@ -51,7 +51,17 @@ npx prettier --write "<file1>" "<file2>" ...
 
 Must run before committing. No exceptions.
 
-### 6. Create branch
+### 6. Lint and fix
+
+```bash
+npm run lint
+```
+
+- If errors: fix every one before proceeding. Do not suppress with eslint-disable unless unavoidable — fix the root cause.
+- Re-run lint after fixes to confirm clean.
+- Warnings are acceptable; errors are not.
+
+### 7. Create branch
 
 ```bash
 git checkout -b feat/<short-name>/<issue-id>
@@ -61,7 +71,7 @@ If multiple issues: `feat/<short-name>/<id1>-<id2>`
 
 Branch off `exploring`, not `main`.
 
-### 7. Commit
+### 8. Commit
 
 Conventional commits format:
 ```
@@ -74,7 +84,7 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 Stage only relevant files — never `git add -A` blindly.
 
-### 8. Push and create PR
+### 9. Push and create PR
 
 ```bash
 git push -u origin <branch>
@@ -87,7 +97,7 @@ PR body must include:
 - Issue references: `Closes SEE-XX`
 - Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
-### 9. Report back
+### 10. Report back
 
 After PR is created, output:
 - PR URL
@@ -104,5 +114,6 @@ After PR is created, output:
 - Prettier on every changed file before commit
 - RLS on every new DB table in exposed schema
 - Auth check on every API route
+- Lint must pass (`npm run lint`) before commit — fix errors, don't suppress
 - Never mark Linear issues Done — only In Progress while working
 - Use `mcp__supabase__execute_sql` for DB iteration; `apply_migration` only for final DDL
