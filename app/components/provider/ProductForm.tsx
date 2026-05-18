@@ -20,8 +20,15 @@ export function ProductForm() {
     updateResourceRule,
     removeResourceRule,
   } = useProductDraft();
-  const { categories, variants, getVariantsByCategory } = useResourceInventory();
-  const [selectedCategoryForRule, setSelectedCategoryForRule] = useState<string | null>(null);
+  const {
+    categories,
+    variants,
+    loading: resourcesLoading,
+    getVariantsByCategory,
+  } = useResourceInventory();
+  const [selectedCategoryForRule, setSelectedCategoryForRule] = useState<
+    string | null
+  >(null);
 
   function addCustomerType() {
     const newTier: PricingTier = {
@@ -64,7 +71,12 @@ export function ProductForm() {
         <input
           type="number"
           value={draft.durationMinutes ?? ""}
-          onChange={(e) => setField("durationMinutes", e.target.value ? Number(e.target.value) : null)}
+          onChange={(e) =>
+            setField(
+              "durationMinutes",
+              e.target.value ? Number(e.target.value) : null,
+            )
+          }
           placeholder="e.g., 120"
           className="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
         />
@@ -78,7 +90,12 @@ export function ProductForm() {
         <input
           type="number"
           value={draft.capacityMax ?? ""}
-          onChange={(e) => setField("capacityMax", e.target.value ? Number(e.target.value) : null)}
+          onChange={(e) =>
+            setField(
+              "capacityMax",
+              e.target.value ? Number(e.target.value) : null,
+            )
+          }
           placeholder="e.g., 10"
           className="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
         />
@@ -100,7 +117,9 @@ export function ProductForm() {
 
       {/* Meeting point */}
       <div>
-        <label className="block text-sm font-medium text-neutral-900">Meeting point</label>
+        <label className="block text-sm font-medium text-neutral-900">
+          Meeting point
+        </label>
         <input
           type="text"
           value={draft.meetingPoint}
@@ -112,7 +131,9 @@ export function ProductForm() {
 
       {/* Short description */}
       <div>
-        <label className="block text-sm font-medium text-neutral-900">Short description</label>
+        <label className="block text-sm font-medium text-neutral-900">
+          Short description
+        </label>
         <input
           type="text"
           value={draft.shortDescription}
@@ -124,7 +145,9 @@ export function ProductForm() {
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-neutral-900">Description</label>
+        <label className="block text-sm font-medium text-neutral-900">
+          Description
+        </label>
         <textarea
           value={draft.description}
           onChange={(e) => setField("description", e.target.value)}
@@ -155,24 +178,37 @@ export function ProductForm() {
             </div>
           ) : (
             draft.pricingTiers.map((tier) => (
-              <div key={tier.id} className="rounded-lg border border-neutral-200 bg-white p-4">
+              <div
+                key={tier.id}
+                className="rounded-lg border border-neutral-200 bg-white p-4"
+              >
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
                   <div className="md:col-span-6">
-                    <label className="block text-xs font-medium text-neutral-700">Label</label>
+                    <label className="block text-xs font-medium text-neutral-700">
+                      Label
+                    </label>
                     <input
                       type="text"
                       value={tier.label}
-                      onChange={(e) => updateCustomerType(tier.id, { label: e.target.value })}
+                      onChange={(e) =>
+                        updateCustomerType(tier.id, { label: e.target.value })
+                      }
                       placeholder="e.g., One person, Two people"
                       className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     />
                   </div>
                   <div className="md:col-span-4">
-                    <label className="block text-xs font-medium text-neutral-700">Price (EUR)</label>
+                    <label className="block text-xs font-medium text-neutral-700">
+                      Price (EUR)
+                    </label>
                     <input
                       type="number"
                       value={tier.price}
-                      onChange={(e) => updateCustomerType(tier.id, { price: Number(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        updateCustomerType(tier.id, {
+                          price: Number(e.target.value) || 0,
+                        })
+                      }
                       placeholder="149"
                       className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     />
@@ -192,16 +228,20 @@ export function ProductForm() {
           )}
         </div>
         <div className="mt-2 text-xs text-neutral-500">
-          Each pricing tier defines a customer type and price. Resource rules can be added separately.
+          Each pricing tier defines a customer type and price. Resource rules
+          can be added separately.
         </div>
       </div>
 
       {/* Resource requirements (optional) */}
       <div className="rounded-xl border border-neutral-200 bg-white p-6">
         <div className="mb-4">
-          <div className="text-sm font-medium text-neutral-900">Resource requirements (optional)</div>
+          <div className="text-sm font-medium text-neutral-900">
+            Resource requirements (optional)
+          </div>
           <div className="mt-1 text-sm text-neutral-600">
-            Select resource variants from your inventory that this product requires per booking.
+            Select resource variants from your inventory that this product
+            requires per booking.
           </div>
         </div>
 
@@ -214,10 +254,17 @@ export function ProductForm() {
               </label>
               <select
                 value={selectedCategoryForRule || ""}
-                onChange={(e) => setSelectedCategoryForRule(e.target.value || null)}
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                onChange={(e) =>
+                  setSelectedCategoryForRule(e.target.value || null)
+                }
+                disabled={resourcesLoading}
+                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
               >
-                <option value="">Select category...</option>
+                <option value="">
+                  {resourcesLoading
+                    ? "Loading resources…"
+                    : "Select category..."}
+                </option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -240,7 +287,9 @@ export function ProductForm() {
                     const variant = variants.find((v) => v.id === variantId);
                     if (!variant) return;
 
-                    const category = categories.find((c) => c.id === variant.categoryId);
+                    const category = categories.find(
+                      (c) => c.id === variant.categoryId,
+                    );
                     const newRule: ResourceRule = {
                       id: `rule-${Date.now()}`,
                       resourceType:
@@ -260,16 +309,20 @@ export function ProductForm() {
                     addResourceRule(newRule);
                     setSelectedCategoryForRule(null);
                     // Reset select
-                    const select = document.getElementById("variant-select") as HTMLSelectElement;
+                    const select = document.getElementById(
+                      "variant-select",
+                    ) as HTMLSelectElement;
                     if (select) select.value = "";
                   }}
                 >
                   <option value="">Select variant...</option>
-                  {getVariantsByCategory(selectedCategoryForRule).map((variant) => (
-                    <option key={variant.id} value={variant.id}>
-                      {variant.name} ({getAvailableUnits(variant)} available)
-                    </option>
-                  ))}
+                  {getVariantsByCategory(selectedCategoryForRule).map(
+                    (variant) => (
+                      <option key={variant.id} value={variant.id}>
+                        {variant.name} ({getAvailableUnits(variant)} available)
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
             )}
@@ -278,7 +331,9 @@ export function ProductForm() {
           {/* Existing requirements */}
           {draft.resourceRules.length > 0 && (
             <div className="space-y-3">
-              <div className="text-xs font-medium text-neutral-700">Required resources per booking:</div>
+              <div className="text-xs font-medium text-neutral-700">
+                Required resources per booking:
+              </div>
               {draft.resourceRules.map((rule) => {
                 const variant = variants.find((v) => v.id === rule.variantId);
                 return (
@@ -288,14 +343,19 @@ export function ProductForm() {
                   >
                     <div className="flex-1">
                       <div className="text-sm font-medium text-neutral-900">
-                        {rule.variantLabel || variant?.name || "Unknown variant"}
+                        {rule.variantLabel ||
+                          variant?.name ||
+                          "Unknown variant"}
                       </div>
                       <div className="mt-1 text-xs text-neutral-600">
-                        {rule.capacityPerUnit ? `${rule.capacityPerUnit} ppl / unit` : "1 ppl / unit"} •{" "}
-                        {rule.unitsPerBooking || 1} unit(s) per booking
+                        {rule.capacityPerUnit
+                          ? `${rule.capacityPerUnit} ppl / unit`
+                          : "1 ppl / unit"}{" "}
+                        • {rule.unitsPerBooking || 1} unit(s) per booking
                         {variant && (
                           <span className="ml-2">
-                            ({getAvailableUnits(variant)} available in inventory)
+                            ({getAvailableUnits(variant)} available in
+                            inventory)
                           </span>
                         )}
                       </div>

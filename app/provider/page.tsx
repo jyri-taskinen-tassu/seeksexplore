@@ -6,13 +6,7 @@ const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
 type BadgeTone = "ok" | "attention" | "problem";
 
-function Badge({
-  tone,
-  label,
-}: {
-  tone: BadgeTone;
-  label: string;
-}) {
+function Badge({ tone, label }: { tone: BadgeTone; label: string }) {
   const styles: Record<BadgeTone, string> = {
     ok: "border-emerald-200 bg-emerald-50 text-emerald-800",
     attention: "border-amber-200 bg-amber-50 text-amber-800",
@@ -68,7 +62,18 @@ function Card({
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          {tone ? <Badge tone={tone} label={tone === "ok" ? "OK" : tone === "attention" ? "Attention" : "Problem"} /> : null}
+          {tone ? (
+            <Badge
+              tone={tone}
+              label={
+                tone === "ok"
+                  ? "OK"
+                  : tone === "attention"
+                    ? "Attention"
+                    : "Problem"
+              }
+            />
+          ) : null}
           <div className="grid h-10 w-10 place-items-center rounded-lg bg-neutral-100 text-neutral-700">
             {icon}
           </div>
@@ -80,7 +85,13 @@ function Card({
 
 function IconCalendar() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M8 2v3M16 2v3M3.5 9h17M5 5h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
         stroke="currentColor"
@@ -93,7 +104,13 @@ function IconCalendar() {
 
 function IconUsers() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0ZM4 20a8 8 0 0 1 16 0"
         stroke="currentColor"
@@ -106,7 +123,13 @@ function IconUsers() {
 
 function IconTool() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M14.7 6.3a5 5 0 0 0-6.4 6.4L3 18l3 3 5.3-5.3a5 5 0 0 0 6.4-6.4l-3 3-2-2 3-3Z"
         stroke="currentColor"
@@ -119,7 +142,13 @@ function IconTool() {
 
 function IconMessage() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <path
         d="M21 14a4 4 0 0 1-4 4H9l-6 3V6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z"
         stroke="currentColor"
@@ -208,7 +237,7 @@ export default async function ProviderDashboardPage() {
         .schema(SCHEMA)
         .from("products")
         .select("id", { count: "exact", head: true })
-        .eq("provider_id", (provider as { id: string }).id)
+        .eq("provider_id", (provider as unknown as { id: string }).id)
         .then((r) => r.count ?? 0)
     : 0;
 
@@ -218,9 +247,14 @@ export default async function ProviderDashboardPage() {
 
   const equipment = { used: 32, available: 28 };
   const equipmentTone: BadgeTone =
-    equipment.used > equipment.available ? "problem" : equipment.used / equipment.available >= 0.85 ? "attention" : "ok";
+    equipment.used > equipment.available
+      ? "problem"
+      : equipment.used / equipment.available >= 0.85
+        ? "attention"
+        : "ok";
 
-  const statusSummary: BadgeTone = equipmentTone === "problem" ? "attention" : "ok";
+  const statusSummary: BadgeTone =
+    equipmentTone === "problem" ? "attention" : "ok";
 
   return (
     <div className="min-h-screen bg-white">
@@ -233,16 +267,25 @@ export default async function ProviderDashboardPage() {
             </div>
             <div>
               <div className="text-lg font-semibold tracking-tight text-neutral-900">
-                {(provider as { official_name?: string } | null)?.official_name ?? "Provider Dashboard"}
+                {(provider as { official_name?: string } | null)
+                  ?.official_name ?? "Provider Dashboard"}
               </div>
               <div className="text-sm text-neutral-500">
-                {new Date().toLocaleDateString("en-FI", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                {new Date().toLocaleDateString("en-FI", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge tone={statusSummary} label={statusSummary === "ok" ? "All good" : "Needs attention"} />
+            <Badge
+              tone={statusSummary}
+              label={statusSummary === "ok" ? "All good" : "Needs attention"}
+            />
             <Link
               href="/provider/availability"
               className="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
@@ -341,7 +384,9 @@ export default async function ProviderDashboardPage() {
             <div className="divide-y divide-neutral-200">
               {demoDepartures.map((d) => {
                 const pct =
-                  d.capacity > 0 ? Math.round((d.booked / d.capacity) * 100) : 0;
+                  d.capacity > 0
+                    ? Math.round((d.booked / d.capacity) * 100)
+                    : 0;
 
                 return (
                   <div
@@ -350,7 +395,16 @@ export default async function ProviderDashboardPage() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="mt-1">
-                        <Badge tone={d.status} label={d.status === "ok" ? "OK" : d.status === "attention" ? "Attention" : "Problem"} />
+                        <Badge
+                          tone={d.status}
+                          label={
+                            d.status === "ok"
+                              ? "OK"
+                              : d.status === "attention"
+                                ? "Attention"
+                                : "Problem"
+                          }
+                        />
                       </div>
 
                       <div>
