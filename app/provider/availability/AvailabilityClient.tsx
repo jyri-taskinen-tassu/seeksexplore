@@ -4,76 +4,60 @@ import React from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type DbDeparture = {
+export type DbBooking = {
   id: string;
   provider_id: string;
   product_id: string | null;
-  title: string;
-  departure_date: string; // YYYY-MM-DD
-  start_time: string; // HH:MM:SS
-  duration_minutes: number | null;
-  guest_capacity: number | null;
-  guests_booked: number;
-  status: string;
-  guide_name: string | null;
+  customer_name: string;
+  customer_email: string;
+  product_name: string;
+  booking_date: string; // YYYY-MM-DD
+  booking_time: string; // HH:MM
+  guests: number;
+  status: "pending" | "confirmed" | "cancelled";
+  total_price: number;
+  currency: string;
   notes: string | null;
-  resources: {
-    snowmobiles?: Record<string, number>;
-    ebikes?: Record<string, number>;
-    guides?: number;
-  };
-  created_at: string;
-  updated_at: string;
+  cancelled_reason: string | null;
+  product_capacity: number | null;
+};
+
+type ResourceAvailability = {
+  category_id: string;
+  category_name: string;
+  variant_id: string;
+  variant_name: string;
+  total_units: number;
+  booked_units: number;
+};
+
+type ResourceByCategory = {
+  category_id: string;
+  category_name: string;
+  variants: ResourceAvailability[];
+  hasConflict: boolean;
 };
 
 type UiStatus = "ok" | "attention" | "problem";
 
-type UiDeparture = {
+type UiBooking = {
   id: string;
-  title: string;
+  title: string; // product_name
   time: string; // HH:MM
   guestsBooked: number;
   guestsCap: number;
   status: UiStatus;
-  resourceUse: {
-    SM?: { used: number; cap: number };
-    "E-bike"?: { used: number; cap: number };
-    Guides?: { used: number; cap: number };
-  };
+  customerName: string;
   notes: string | null;
-  hasEbikes: boolean;
-  raw: DbDeparture;
+  raw: DbBooking;
 };
 
 type DayData = {
   date: string;
   dayNumber: number;
-  departures: UiDeparture[];
+  bookings: UiBooking[];
   inMonth: boolean;
-  conflicts: string[];
 };
-
-// Resource capacities
-const CAPACITY = { snowmobiles: 28, ebikes: 20, guides: 12 } as const;
-
-const ACTIVITY_OPTIONS = [
-  "Snowmobile Safari (Sport)",
-  "Snowmobile Safari (Touring)",
-  "E-bike Tour",
-  "Northern Lights Tour",
-  "Husky Safari",
-  "Reindeer Farm Visit",
-  "Ice Fishing Experience",
-  "Snowshoe Hike",
-  "Aurora Photography Tour",
-  "Sauna & Ice Swimming",
-  "City Walk (English)",
-  "City Walk (Finnish)",
-  "Reindeer Sleigh Ride",
-  "Evening Sauna Experience",
-  "Cross-Country Skiing",
-  "Food Market Experience",
-];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -95,90 +79,24 @@ function formatMonthTitle(year: number, monthIndex0: number): string {
   });
 }
 
-function parseTime(t: string): string {
-  // DB returns "HH:MM:SS", normalise to "HH:MM"
-  return t.slice(0, 5);
-}
-
-function computeStatus(dep: DbDeparture): UiStatus {
-  const fillRate = dep.guest_capacity
-    ? dep.guests_booked / dep.guest_capacity
-    : 0;
-  if (dep.status === "cancelled") return "problem";
-  if (
-    (dep.notes?.toLowerCase().includes("conflict") ||
-      dep.notes?.toLowerCase().includes("exceeds")) &&
-    dep.status !== "scheduled"
-  )
-    return "problem";
-  if (fillRate < 0.3 && dep.guest_capacity && dep.guest_capacity > 0)
-    return "attention";
-  if (dep.guest_capacity && dep.guests_booked >= dep.guest_capacity)
-    return "attention";
+function computeStatus(b: DbBooking): UiStatus {
+  if (b.status === "cancelled") return "problem";
+  if (b.status === "pending") return "attention";
   return "ok";
 }
 
-function toUiDeparture(dep: DbDeparture): UiDeparture {
-  const status = computeStatus(dep);
-  const resourceUse: UiDeparture["resourceUse"] = {};
-
-  const smTotal = dep.resources.snowmobiles
-    ? Object.values(dep.resources.snowmobiles).reduce((s, n) => s + (n || 0), 0)
-    : 0;
-  if (smTotal > 0)
-    resourceUse.SM = { used: smTotal, cap: CAPACITY.snowmobiles };
-
-  const ebikeTotal = dep.resources.ebikes
-    ? Object.values(dep.resources.ebikes).reduce((s, n) => s + (n || 0), 0)
-    : 0;
-  const hasEbikes = ebikeTotal > 0;
-  if (hasEbikes)
-    resourceUse["E-bike"] = { used: ebikeTotal, cap: CAPACITY.ebikes };
-
-  const guides = dep.resources.guides ?? 0;
-  if (guides > 0) resourceUse.Guides = { used: guides, cap: CAPACITY.guides };
-
+function toUiBooking(b: DbBooking): UiBooking {
   return {
-    id: dep.id,
-    title: dep.title,
-    time: parseTime(dep.start_time),
-    guestsBooked: dep.guests_booked,
-    guestsCap: dep.guest_capacity ?? 0,
-    status,
-    resourceUse,
-    notes: dep.notes,
-    hasEbikes,
-    raw: dep,
+    id: b.id,
+    title: b.product_name,
+    time: b.booking_time.slice(0, 5),
+    guestsBooked: b.guests,
+    guestsCap: b.product_capacity ?? 0,
+    status: computeStatus(b),
+    customerName: b.customer_name,
+    notes: b.notes,
+    raw: b,
   };
-}
-
-function computeConflicts(departures: UiDeparture[]): string[] {
-  let totalSM = 0;
-  let totalEbike = 0;
-  let totalGuides = 0;
-
-  for (const d of departures) {
-    totalSM += d.resourceUse.SM?.used ?? 0;
-    totalEbike += d.resourceUse["E-bike"]?.used ?? 0;
-    totalGuides += d.resourceUse.Guides?.used ?? 0;
-  }
-
-  const conflicts: string[] = [];
-  if (totalSM > CAPACITY.snowmobiles)
-    conflicts.push(
-      `Snowmobiles: ${totalSM}/${CAPACITY.snowmobiles} — over capacity`,
-    );
-  if (totalEbike > CAPACITY.ebikes)
-    conflicts.push(`E-bikes: ${totalEbike}/${CAPACITY.ebikes} — over capacity`);
-  if (totalGuides > CAPACITY.guides)
-    conflicts.push(`Guides: ${totalGuides}/${CAPACITY.guides} — over capacity`);
-  return conflicts;
-}
-
-function aggregateStatus(departures: UiDeparture[]): UiStatus {
-  if (departures.some((d) => d.status === "problem")) return "problem";
-  if (departures.some((d) => d.status === "attention")) return "attention";
-  return "ok";
 }
 
 function generateMonthGrid(year: number, monthIndex0: number) {
@@ -186,7 +104,7 @@ function generateMonthGrid(year: number, monthIndex0: number) {
   const startDow = (first.getDay() + 6) % 7;
   const startDate = new Date(year, monthIndex0, 1 - startDow);
   const grid: Array<{ date: Date; dayNumber: number; inMonth: boolean }> = [];
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 35; i++) {
     const d = new Date(startDate);
     d.setDate(startDate.getDate() + i);
     grid.push({
@@ -211,6 +129,26 @@ function getWeekDates(anchorDate: Date): string[] {
   return dates;
 }
 
+function groupByCategory(
+  resources: ResourceAvailability[],
+): ResourceByCategory[] {
+  const map = new Map<string, ResourceByCategory>();
+  for (const r of resources) {
+    if (!map.has(r.category_id)) {
+      map.set(r.category_id, {
+        category_id: r.category_id,
+        category_name: r.category_name,
+        variants: [],
+        hasConflict: false,
+      });
+    }
+    const cat = map.get(r.category_id)!;
+    cat.variants.push(r);
+    if (r.booked_units > r.total_units) cat.hasConflict = true;
+  }
+  return Array.from(map.values());
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusPill({ status }: { status: UiStatus }) {
@@ -220,7 +158,11 @@ function StatusPill({ status }: { status: UiStatus }) {
     problem: "bg-red-50 text-red-700 ring-red-200",
   } as const;
   const label =
-    status === "ok" ? "OK" : status === "attention" ? "Attention" : "Problem";
+    status === "ok"
+      ? "Confirmed"
+      : status === "attention"
+        ? "Pending"
+        : "Cancelled";
   return (
     <span
       className={cx(
@@ -241,28 +183,117 @@ function StatusPill({ status }: { status: UiStatus }) {
   );
 }
 
-function ResourceChip({
-  label,
-  used,
-  cap,
+// ─── ResourceSummaryBar ───────────────────────────────────────────────────────
+
+function ResourceSummaryBar({
+  categories,
+  loading,
 }: {
-  label: string;
-  used: number;
-  cap: number;
+  categories: ResourceByCategory[];
+  loading: boolean;
 }) {
-  const over = used > cap;
+  if (loading) {
+    return (
+      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-500">
+        Loading resource summary…
+      </div>
+    );
+  }
+
+  const active = categories.filter((c) =>
+    c.variants.some((v) => v.total_units > 0),
+  );
+
+  if (active.length === 0) {
+    return (
+      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-center text-xs text-neutral-500">
+        No resources configured
+      </div>
+    );
+  }
+
   return (
-    <span
-      className={cx(
-        "inline-flex items-center rounded-lg px-3 py-1 text-xs ring-1",
-        over
-          ? "bg-red-50 text-red-700 ring-red-200"
-          : "bg-neutral-50 text-neutral-700 ring-neutral-200",
-      )}
-      title={`${label} ${used}/${cap}`}
-    >
-      {label} {used}/{cap}
-    </span>
+    <div className="space-y-2">
+      {active.map((cat) => {
+        const totalBooked = cat.variants.reduce(
+          (s, v) => s + v.booked_units,
+          0,
+        );
+        const totalCap = cat.variants.reduce((s, v) => s + v.total_units, 0);
+        const pct =
+          totalCap > 0 ? Math.min((totalBooked / totalCap) * 100, 100) : 0;
+        const over = cat.hasConflict;
+
+        return (
+          <div
+            key={cat.category_id}
+            className={cx(
+              "rounded-lg border p-3",
+              over ? "border-red-200 bg-red-50" : "border-neutral-200 bg-white",
+            )}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <div
+                className={cx(
+                  "text-xs font-medium",
+                  over ? "text-red-800" : "text-neutral-700",
+                )}
+              >
+                {cat.category_name}
+                {over && (
+                  <span className="ml-1.5 text-red-600 font-bold">⚠</span>
+                )}
+              </div>
+              <div
+                className={cx(
+                  "text-xs font-mono",
+                  over ? "text-red-700 font-semibold" : "text-neutral-600",
+                )}
+              >
+                {totalBooked}/{totalCap}
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="h-1.5 w-full rounded-full bg-neutral-200 overflow-hidden">
+              <div
+                className={cx(
+                  "h-full rounded-full transition-all",
+                  over
+                    ? "bg-red-500"
+                    : pct >= 80
+                      ? "bg-amber-400"
+                      : "bg-emerald-500",
+                )}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+
+            {/* Variant detail (shown if > 1 variant) */}
+            {cat.variants.length > 1 && (
+              <div className="mt-2 space-y-0.5">
+                {cat.variants.map((v) => (
+                  <div
+                    key={v.variant_id}
+                    className="flex items-center justify-between text-[11px] text-neutral-500"
+                  >
+                    <span>{v.variant_name}</span>
+                    <span
+                      className={cx(
+                        v.booked_units > v.total_units &&
+                          "text-red-600 font-medium",
+                      )}
+                    >
+                      {v.booked_units}/{v.total_units}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -277,19 +308,24 @@ function DayCell({
   selected: boolean;
   onSelect: (d: DayData) => void;
 }) {
-  const hasDepartures = day.departures.length > 0;
-  const status = hasDepartures ? aggregateStatus(day.departures) : "ok";
+  const hasBookings = day.bookings.length > 0;
   const inMonth = day.inMonth;
-  const totalGuests = day.departures.reduce((s, d) => s + d.guestsBooked, 0);
-  const activityCount = new Set(day.departures.map((d) => d.title)).size;
-  const hasConflicts = day.conflicts.length > 0;
+  const totalGuests = day.bookings.reduce((s, b) => s + b.guestsBooked, 0);
+  const hasPending = day.bookings.some((b) => b.status === "attention");
+  const hasCancelled = day.bookings.some((b) => b.status === "problem");
+
+  const dotColor = hasCancelled
+    ? "bg-red-500"
+    : hasPending
+      ? "bg-amber-500"
+      : "bg-emerald-500";
 
   return (
     <button
       type="button"
       onClick={() => onSelect(day)}
       className={cx(
-        "relative w-full text-left p-3 min-h-[110px] border border-neutral-200 transition",
+        "relative w-full text-left p-3 min-h-[100px] border border-neutral-200 transition",
         inMonth
           ? "bg-white hover:bg-neutral-50"
           : "bg-neutral-50 text-neutral-400",
@@ -309,62 +345,43 @@ function DayCell({
         >
           {day.dayNumber}
         </div>
-        <div className="flex items-center gap-1.5">
-          {hasConflicts && inMonth && (
-            <span className="text-red-600 text-xs" title="Resource conflicts">
-              ⚠️
-            </span>
-          )}
-          {hasDepartures && inMonth && (
-            <span
-              className={cx(
-                "h-2 w-2 rounded-full",
-                status === "ok" && "bg-emerald-500",
-                status === "attention" && "bg-amber-500",
-                status === "problem" && "bg-red-500",
-              )}
-            />
-          )}
-        </div>
+        {hasBookings && inMonth && (
+          <span className={cx("h-2 w-2 rounded-full", dotColor)} />
+        )}
       </div>
 
-      {hasDepartures && inMonth ? (
-        <div className="space-y-1.5">
+      {hasBookings && inMonth ? (
+        <div className="space-y-1">
           <div className="text-xs font-medium text-neutral-900">
-            {day.departures.length}{" "}
-            {day.departures.length === 1 ? "departure" : "departures"}
+            {day.bookings.length}{" "}
+            {day.bookings.length === 1 ? "booking" : "bookings"}
           </div>
-          {activityCount > 0 && (
-            <div className="text-[11px] text-neutral-600">
-              {activityCount} {activityCount === 1 ? "activity" : "activities"}
-            </div>
-          )}
           {totalGuests > 0 && (
             <div className="text-[11px] text-neutral-600">
-              {totalGuests} {totalGuests === 1 ? "person" : "people"}
+              {totalGuests} {totalGuests === 1 ? "guest" : "guests"}
             </div>
           )}
         </div>
       ) : inMonth ? (
-        <div className="mt-4 text-xs text-neutral-400">No departures</div>
+        <div className="mt-4 text-xs text-neutral-400">No bookings</div>
       ) : null}
     </button>
   );
 }
 
-// ─── DepartureRow ─────────────────────────────────────────────────────────────
+// ─── BookingRow ───────────────────────────────────────────────────────────────
 
-function DepartureRow({
-  d,
+function BookingRow({
+  b,
   onClick,
 }: {
-  d: UiDeparture;
-  onClick: (dep: UiDeparture) => void;
+  b: UiBooking;
+  onClick: (b: UiBooking) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onClick(d)}
+      onClick={() => onClick(b)}
       className="w-full text-left rounded-lg border border-neutral-200 bg-white p-4 hover:border-neutral-400 hover:bg-neutral-50 transition"
     >
       <div className="flex items-start justify-between gap-4">
@@ -373,73 +390,24 @@ function DepartureRow({
             <span
               className={cx(
                 "h-2.5 w-2.5 rounded-full shrink-0",
-                d.status === "ok" && "bg-emerald-500",
-                d.status === "attention" && "bg-amber-500",
-                d.status === "problem" && "bg-red-500",
+                b.status === "ok" && "bg-emerald-500",
+                b.status === "attention" && "bg-amber-500",
+                b.status === "problem" && "bg-red-500",
               )}
             />
-            <div className="font-medium text-neutral-900">{d.title}</div>
+            <div className="font-medium text-neutral-900">{b.title}</div>
           </div>
           <div className="mt-1 text-sm text-neutral-600">
-            {d.time} • {d.guestsBooked}/{d.guestsCap} guests
-            {d.hasEbikes && (
-              <span className="ml-2 text-xs text-neutral-500">(3h buffer)</span>
+            {b.time} · {b.guestsBooked} guest{b.guestsBooked !== 1 ? "s" : ""}
+            {b.guestsCap > 0 && (
+              <span className="text-neutral-400"> / {b.guestsCap} cap</span>
             )}
           </div>
-          {d.notes && (
-            <div
-              className={cx(
-                "mt-2 text-sm",
-                d.notes.toLowerCase().includes("conflict") ||
-                  d.notes.toLowerCase().includes("exceeds")
-                  ? "text-red-600 font-medium"
-                  : "text-neutral-500",
-              )}
-            >
-              {d.notes}
-            </div>
-          )}
+          <div className="mt-0.5 text-xs text-neutral-500">
+            {b.customerName}
+          </div>
         </div>
-        <span
-          className={cx(
-            "shrink-0 rounded-full px-3 py-1 text-xs font-medium ring-1",
-            d.status === "ok" &&
-              "bg-emerald-50 text-emerald-700 ring-emerald-200",
-            d.status === "attention" &&
-              "bg-amber-50 text-amber-700 ring-amber-200",
-            d.status === "problem" && "bg-red-50 text-red-700 ring-red-200",
-          )}
-        >
-          {d.status === "ok"
-            ? "OK"
-            : d.status === "attention"
-              ? "Attention"
-              : "Problem"}
-        </span>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {d.resourceUse.SM && (
-          <ResourceChip
-            label="SM"
-            used={d.resourceUse.SM.used}
-            cap={d.resourceUse.SM.cap}
-          />
-        )}
-        {d.resourceUse["E-bike"] && (
-          <ResourceChip
-            label="E-bike"
-            used={d.resourceUse["E-bike"].used}
-            cap={d.resourceUse["E-bike"].cap}
-          />
-        )}
-        {d.resourceUse.Guides && (
-          <ResourceChip
-            label="Guides"
-            used={d.resourceUse.Guides.used}
-            cap={d.resourceUse.Guides.cap}
-          />
-        )}
+        <StatusPill status={b.status} />
       </div>
     </button>
   );
@@ -449,25 +417,25 @@ function DepartureRow({
 
 function WeekView({
   weekDates,
-  allDepartures,
+  allBookings,
   selectedDate,
   onSelectDay,
-  onDepartureClick,
+  onBookingClick,
 }: {
   weekDates: string[];
-  allDepartures: DbDeparture[];
+  allBookings: DbBooking[];
   selectedDate: string;
   onSelectDay: (date: string) => void;
-  onDepartureClick: (dep: UiDeparture) => void;
+  onBookingClick: (b: UiBooking) => void;
 }) {
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
     <div className="grid grid-cols-7 gap-2">
       {weekDates.map((date, idx) => {
-        const deps = allDepartures
-          .filter((d) => d.departure_date === date)
-          .map(toUiDeparture)
+        const bookings = allBookings
+          .filter((b) => b.booking_date === date)
+          .map(toUiBooking)
           .sort((a, b) => a.time.localeCompare(b.time));
         const dayNum = new Date(date + "T00:00:00").getDate();
 
@@ -486,34 +454,39 @@ function WeekView({
               <div className="text-xs font-normal">{dayNum}</div>
             </div>
             <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto">
-              {deps.length === 0 ? (
+              {bookings.length === 0 ? (
                 <div className="text-xs text-neutral-400 text-center py-4">
-                  No departures
+                  No bookings
                 </div>
               ) : (
-                deps.map((dep) => (
+                bookings.map((b) => (
                   <button
-                    key={dep.id}
+                    key={b.id}
                     onClick={() => {
                       onSelectDay(date);
-                      onDepartureClick(dep);
+                      onBookingClick(b);
                     }}
                     className="w-full text-left p-2 rounded border border-neutral-200 hover:bg-neutral-50 transition"
                   >
-                    <div className="text-xs font-medium text-neutral-900">
-                      {dep.time}
-                    </div>
-                    <div className="text-xs text-neutral-600 mt-0.5">
-                      {dep.title}
-                    </div>
-                    <div className="text-xs text-neutral-500 mt-1">
-                      {dep.guestsBooked}/{dep.guestsCap} guests
-                    </div>
-                    {dep.hasEbikes && (
-                      <div className="text-[10px] text-neutral-400 mt-1">
-                        +3h buffer
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={cx(
+                          "h-1.5 w-1.5 rounded-full shrink-0",
+                          b.status === "ok" && "bg-emerald-500",
+                          b.status === "attention" && "bg-amber-500",
+                          b.status === "problem" && "bg-red-500",
+                        )}
+                      />
+                      <div className="text-xs font-medium text-neutral-900 truncate">
+                        {b.time}
                       </div>
-                    )}
+                    </div>
+                    <div className="text-xs text-neutral-600 mt-0.5 truncate">
+                      {b.title}
+                    </div>
+                    <div className="text-xs text-neutral-500 mt-0.5">
+                      {b.guestsBooked} guest{b.guestsBooked !== 1 ? "s" : ""}
+                    </div>
                   </button>
                 ))
               )}
@@ -525,53 +498,49 @@ function WeekView({
   );
 }
 
-// ─── AddDepartureModal (SEE-14) ───────────────────────────────────────────────
+// ─── AddBookingModal ──────────────────────────────────────────────────────────
 
-function AddDepartureModal({
+function AddBookingModal({
   prefilledDate,
+  productOptions,
   onClose,
   onSaved,
 }: {
   prefilledDate: string;
+  productOptions: { id: string; name: string }[];
   onClose: () => void;
-  onSaved: (dep: DbDeparture) => void;
+  onSaved: (b: DbBooking) => void;
 }) {
-  const [title, setTitle] = React.useState(ACTIVITY_OPTIONS[0]);
+  const [productId, setProductId] = React.useState(productOptions[0]?.id ?? "");
   const [date, setDate] = React.useState(prefilledDate);
-  const [startTime, setStartTime] = React.useState("09:00");
-  const [durationMinutes, setDurationMinutes] = React.useState(150);
-  const [guestCapacity, setGuestCapacity] = React.useState(10);
-  const [guideName, setGuideName] = React.useState("");
+  const [time, setTime] = React.useState("09:00");
+  const [guests, setGuests] = React.useState(2);
+  const [customerName, setCustomerName] = React.useState("");
+  const [customerEmail, setCustomerEmail] = React.useState("");
   const [notes, setNotes] = React.useState("");
-  const [snowmobiles, setSnowmobiles] = React.useState(0);
-  const [ebikes, setEbikes] = React.useState(0);
-  const [guides, setGuides] = React.useState(1);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  const selectedProduct = productOptions.find((p) => p.id === productId);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
 
-    const resources: DbDeparture["resources"] = {};
-    if (snowmobiles > 0) resources.snowmobiles = { sport_1seat: snowmobiles };
-    if (ebikes > 0) resources.ebikes = { standard: ebikes };
-    if (guides > 0) resources.guides = guides;
-
     try {
-      const res = await fetch("/api/provider/departures", {
+      const res = await fetch("/api/provider/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          departure_date: date,
-          start_time: startTime,
-          duration_minutes: durationMinutes,
-          guest_capacity: guestCapacity,
-          guide_name: guideName || null,
+          product_id: productId || null,
+          product_name: selectedProduct?.name ?? "",
+          customer_name: customerName,
+          customer_email: customerEmail,
+          booking_date: date,
+          booking_time: time,
+          guests,
           notes: notes || null,
-          resources,
         }),
       });
       if (!res.ok) {
@@ -579,7 +548,7 @@ function AddDepartureModal({
         throw new Error(j.error ?? "Failed to save");
       }
       const j = await res.json();
-      onSaved(j.departure as DbDeparture);
+      onSaved(j.booking as DbBooking);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -592,7 +561,7 @@ function AddDepartureModal({
       <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
           <h2 className="text-base font-semibold text-neutral-900">
-            Add Departure
+            Add Booking
           </h2>
           <button
             onClick={onClose}
@@ -606,22 +575,28 @@ function AddDepartureModal({
           onSubmit={handleSubmit}
           className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto"
         >
-          {/* Activity */}
+          {/* Product */}
           <div>
             <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Activity
+              Product
             </label>
-            <select
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-            >
-              {ACTIVITY_OPTIONS.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
+            {productOptions.length > 0 ? (
+              <select
+                value={productId}
+                onChange={(e) => setProductId(e.target.value)}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              >
+                {productOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="text-sm text-neutral-500 italic">
+                No products available
+              </div>
+            )}
           </div>
 
           {/* Date + Time */}
@@ -640,107 +615,60 @@ function AddDepartureModal({
             </div>
             <div>
               <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Start time
+                Time
               </label>
               <input
                 type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
                 required
                 className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
               />
             </div>
           </div>
 
-          {/* Duration + Capacity */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Duration (min)
-              </label>
-              <input
-                type="number"
-                min={15}
-                max={720}
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Guest capacity
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={200}
-                value={guestCapacity}
-                onChange={(e) => setGuestCapacity(Number(e.target.value))}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              />
-            </div>
-          </div>
-
-          {/* Guide */}
+          {/* Guests */}
           <div>
             <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Guide name
+              Guests
             </label>
             <input
-              type="text"
-              value={guideName}
-              onChange={(e) => setGuideName(e.target.value)}
-              placeholder="e.g. Mikko Virtanen"
+              type="number"
+              min={1}
+              max={200}
+              value={guests}
+              onChange={(e) => setGuests(Number(e.target.value))}
               className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
             />
           </div>
 
-          {/* Resource allocation */}
-          <div>
-            <div className="text-xs font-medium text-neutral-700 mb-2">
-              Resource allocation
+          {/* Customer */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1">
+                Customer name
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                required
+                placeholder="e.g. Anna Smith"
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              />
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] text-neutral-500 mb-1">
-                  Snowmobiles (cap 28)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={28}
-                  value={snowmobiles}
-                  onChange={(e) => setSnowmobiles(Number(e.target.value))}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-500 mb-1">
-                  E-bikes (cap 20)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={20}
-                  value={ebikes}
-                  onChange={(e) => setEbikes(Number(e.target.value))}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-neutral-500 mb-1">
-                  Guides (cap 12)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={12}
-                  value={guides}
-                  onChange={(e) => setGuides(Number(e.target.value))}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-neutral-700 mb-1">
+                Customer email
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                required
+                placeholder="e.g. anna@example.com"
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+              />
             </div>
           </div>
 
@@ -753,7 +681,7 @@ function AddDepartureModal({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              placeholder="Optional notes..."
+              placeholder="Optional notes…"
               className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
             />
           </div>
@@ -777,7 +705,7 @@ function AddDepartureModal({
               disabled={saving}
               className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition disabled:opacity-50"
             >
-              {saving ? "Saving…" : "Save departure"}
+              {saving ? "Saving…" : "Save booking"}
             </button>
           </div>
         </form>
@@ -786,73 +714,38 @@ function AddDepartureModal({
   );
 }
 
-// ─── DepartureSlideOver (SEE-15) ──────────────────────────────────────────────
+// ─── BookingSlideOver ─────────────────────────────────────────────────────────
 
-function DepartureSlideOver({
-  departure,
+function BookingSlideOver({
+  booking,
   onClose,
   onSaved,
-  onDeleted,
 }: {
-  departure: UiDeparture;
+  booking: UiBooking;
   onClose: () => void;
-  onSaved: (dep: DbDeparture) => void;
-  onDeleted: (id: string) => void;
+  onSaved: (b: DbBooking) => void;
 }) {
   const [editing, setEditing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = React.useState(false);
 
-  // Editable fields
-  const [title, setTitle] = React.useState(departure.title);
-  const [startTime, setStartTime] = React.useState(departure.time);
-  const [durationMinutes, setDurationMinutes] = React.useState(
-    departure.raw.duration_minutes ?? 150,
-  );
-  const [guestCapacity, setGuestCapacity] = React.useState(departure.guestsCap);
-  const [guestsBooked, setGuestsBooked] = React.useState(
-    departure.guestsBooked,
-  );
-  const [guideName, setGuideName] = React.useState(
-    departure.raw.guide_name ?? "",
-  );
-  const [notes, setNotes] = React.useState(departure.raw.notes ?? "");
-  const [status, setStatus] = React.useState(departure.raw.status);
-
-  const [snowmobiles, setSnowmobiles] = React.useState(
-    departure.resourceUse.SM?.used ?? 0,
-  );
-  const [ebikes, setEbikes] = React.useState(
-    departure.resourceUse["E-bike"]?.used ?? 0,
-  );
-  const [guides, setGuides] = React.useState(
-    departure.resourceUse.Guides?.used ?? 0,
+  const [status, setStatus] = React.useState(booking.raw.status);
+  const [notes, setNotes] = React.useState(booking.raw.notes ?? "");
+  const [cancelledReason, setCancelledReason] = React.useState(
+    booking.raw.cancelled_reason ?? "",
   );
 
   async function handleSave() {
     setSaving(true);
     setError(null);
-
-    const resources: DbDeparture["resources"] = {};
-    if (snowmobiles > 0) resources.snowmobiles = { sport_1seat: snowmobiles };
-    if (ebikes > 0) resources.ebikes = { standard: ebikes };
-    if (guides > 0) resources.guides = guides;
-
     try {
-      const res = await fetch(`/api/provider/departures/${departure.id}`, {
+      const res = await fetch(`/api/provider/bookings/${booking.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          start_time: startTime,
-          duration_minutes: durationMinutes,
-          guest_capacity: guestCapacity,
-          guests_booked: guestsBooked,
-          guide_name: guideName || null,
-          notes: notes || null,
           status,
-          resources,
+          notes: notes || null,
+          cancelled_reason: cancelledReason || null,
         }),
       });
       if (!res.ok) {
@@ -860,7 +753,7 @@ function DepartureSlideOver({
         throw new Error(j.error ?? "Save failed");
       }
       const j = await res.json();
-      onSaved(j.departure as DbDeparture);
+      onSaved(j.booking as DbBooking);
       setEditing(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -869,21 +762,9 @@ function DepartureSlideOver({
     }
   }
 
-  async function handleDelete() {
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/provider/departures/${departure.id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok && res.status !== 204) {
-        throw new Error("Delete failed");
-      }
-      onDeleted(departure.id);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-      setSaving(false);
-    }
-  }
+  const raw = booking.raw;
+  const price =
+    raw.total_price > 0 ? `${raw.total_price} ${raw.currency}` : null;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -893,10 +774,10 @@ function DepartureSlideOver({
         <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 shrink-0">
           <div>
             <h2 className="text-base font-semibold text-neutral-900">
-              {editing ? "Edit Departure" : "Departure Details"}
+              {editing ? "Edit Booking" : "Booking Details"}
             </h2>
             <div className="text-xs text-neutral-500 mt-0.5">
-              {departure.raw.departure_date} · {departure.time}
+              {raw.booking_date} · {booking.time}
             </div>
           </div>
           <button
@@ -910,239 +791,104 @@ function DepartureSlideOver({
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           {!editing ? (
-            // ─ View mode ─
             <>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-neutral-900 text-base">
-                  {departure.title}
+                  {raw.product_name}
                 </h3>
-                <StatusPill status={departure.status} />
+                <StatusPill status={booking.status} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-neutral-500">Start time</div>
+                  <div className="text-xs text-neutral-500">Customer</div>
                   <div className="text-sm font-medium text-neutral-900 mt-0.5">
-                    {departure.time}
+                    {raw.customer_name}
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-0.5">
+                    {raw.customer_email}
                   </div>
                 </div>
-                {departure.raw.duration_minutes && (
-                  <div>
-                    <div className="text-xs text-neutral-500">Duration</div>
-                    <div className="text-sm font-medium text-neutral-900 mt-0.5">
-                      {departure.raw.duration_minutes} min
-                    </div>
-                  </div>
-                )}
                 <div>
-                  <div className="text-xs text-neutral-500">
-                    Guests booked / capacity
-                  </div>
+                  <div className="text-xs text-neutral-500">Guests</div>
                   <div className="text-sm font-medium text-neutral-900 mt-0.5">
-                    {departure.guestsBooked} / {departure.guestsCap}
+                    {raw.guests}
+                    {raw.product_capacity && (
+                      <span className="text-neutral-400">
+                        {" "}
+                        / {raw.product_capacity} cap
+                      </span>
+                    )}
                   </div>
                 </div>
-                {departure.raw.guide_name && (
+                <div>
+                  <div className="text-xs text-neutral-500">Time</div>
+                  <div className="text-sm font-medium text-neutral-900 mt-0.5">
+                    {booking.time}
+                  </div>
+                </div>
+                {price && (
                   <div>
-                    <div className="text-xs text-neutral-500">Guide</div>
+                    <div className="text-xs text-neutral-500">Total</div>
                     <div className="text-sm font-medium text-neutral-900 mt-0.5">
-                      {departure.raw.guide_name}
+                      {price}
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Resources */}
-              <div>
-                <div className="text-xs font-medium text-neutral-700 mb-2">
-                  Assigned resources
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {departure.resourceUse.SM ? (
-                    <ResourceChip
-                      label="Snowmobiles"
-                      used={departure.resourceUse.SM.used}
-                      cap={departure.resourceUse.SM.cap}
-                    />
-                  ) : null}
-                  {departure.resourceUse["E-bike"] ? (
-                    <ResourceChip
-                      label="E-bikes"
-                      used={departure.resourceUse["E-bike"].used}
-                      cap={departure.resourceUse["E-bike"].cap}
-                    />
-                  ) : null}
-                  {departure.resourceUse.Guides ? (
-                    <ResourceChip
-                      label="Guides"
-                      used={departure.resourceUse.Guides.used}
-                      cap={departure.resourceUse.Guides.cap}
-                    />
-                  ) : null}
-                  {!departure.resourceUse.SM &&
-                    !departure.resourceUse["E-bike"] &&
-                    !departure.resourceUse.Guides && (
-                      <span className="text-sm text-neutral-500">None</span>
-                    )}
-                </div>
-              </div>
-
-              {/* Notes */}
-              {departure.notes && (
+              {raw.notes && (
                 <div>
                   <div className="text-xs font-medium text-neutral-700 mb-1">
                     Notes
                   </div>
-                  <p className="text-sm text-neutral-600">{departure.notes}</p>
+                  <p className="text-sm text-neutral-600">{raw.notes}</p>
+                </div>
+              )}
+
+              {raw.cancelled_reason && (
+                <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+                  <div className="text-xs font-medium text-red-700 mb-1">
+                    Cancellation reason
+                  </div>
+                  <p className="text-sm text-red-800">{raw.cancelled_reason}</p>
                 </div>
               )}
             </>
           ) : (
-            // ─ Edit mode ─
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
-                  Activity
-                </label>
-                <select
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                >
-                  {ACTIVITY_OPTIONS.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Start time
-                  </label>
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Duration (min)
-                  </label>
-                  <input
-                    type="number"
-                    min={15}
-                    value={durationMinutes}
-                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Guests booked
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={guestsBooked}
-                    onChange={(e) => setGuestsBooked(Number(e.target.value))}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Guest capacity
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={guestCapacity}
-                    onChange={(e) => setGuestCapacity(Number(e.target.value))}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
-                  Guide
-                </label>
-                <input
-                  type="text"
-                  value={guideName}
-                  onChange={(e) => setGuideName(e.target.value)}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                />
-              </div>
-
-              <div>
-                <div className="text-xs font-medium text-neutral-700 mb-2">
-                  Resources
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] text-neutral-500 mb-1">
-                      Snowmobiles
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={28}
-                      value={snowmobiles}
-                      onChange={(e) => setSnowmobiles(Number(e.target.value))}
-                      className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-neutral-500 mb-1">
-                      E-bikes
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={20}
-                      value={ebikes}
-                      onChange={(e) => setEbikes(Number(e.target.value))}
-                      className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-neutral-500 mb-1">
-                      Guides
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={12}
-                      value={guides}
-                      onChange={(e) => setGuides(Number(e.target.value))}
-                      className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div>
                 <label className="block text-xs font-medium text-neutral-700 mb-1">
                   Status
                 </label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={(e) =>
+                    setStatus(
+                      e.target.value as "pending" | "confirmed" | "cancelled",
+                    )
+                  }
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
                 >
-                  <option value="scheduled">Scheduled</option>
+                  <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
+
+              {status === "cancelled" && (
+                <div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1">
+                    Cancellation reason
+                  </label>
+                  <input
+                    type="text"
+                    value={cancelledReason}
+                    onChange={(e) => setCancelledReason(e.target.value)}
+                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-xs font-medium text-neutral-700 mb-1">
@@ -1168,33 +914,7 @@ function DepartureSlideOver({
         {/* Footer */}
         <div className="border-t border-neutral-200 px-6 py-4 shrink-0">
           {!editing ? (
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => {
-                  if (confirmDelete) {
-                    handleDelete();
-                  } else {
-                    setConfirmDelete(true);
-                  }
-                }}
-                disabled={saving}
-                className={cx(
-                  "rounded-lg px-4 py-2 text-sm font-medium transition",
-                  confirmDelete
-                    ? "bg-red-600 text-white hover:bg-red-700"
-                    : "border border-neutral-200 text-neutral-700 hover:bg-neutral-50",
-                )}
-              >
-                {confirmDelete ? "Confirm delete" : "Delete"}
-              </button>
-              {confirmDelete && (
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="text-sm text-neutral-500 hover:text-neutral-900"
-                >
-                  Cancel
-                </button>
-              )}
+            <div className="flex items-center justify-end">
               <button
                 onClick={() => setEditing(true)}
                 className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition"
@@ -1228,136 +948,20 @@ function DepartureSlideOver({
   );
 }
 
-// ─── ConflictDrillDown (SEE-16) ───────────────────────────────────────────────
-
-function ConflictDrillDown({
-  conflicts,
-  dayDepartures,
-  onClose,
-  onDepartureClick,
-}: {
-  conflicts: string[];
-  dayDepartures: UiDeparture[];
-  onClose: () => void;
-  onDepartureClick: (dep: UiDeparture) => void;
-}) {
-  // For each conflict, find departures that use the conflicting resource
-  function getDepsForConflict(conflict: string): UiDeparture[] {
-    const lower = conflict.toLowerCase();
-    if (lower.includes("snowmobile")) {
-      return dayDepartures.filter((d) => (d.resourceUse.SM?.used ?? 0) > 0);
-    }
-    if (lower.includes("e-bike")) {
-      return dayDepartures.filter(
-        (d) => (d.resourceUse["E-bike"]?.used ?? 0) > 0,
-      );
-    }
-    if (lower.includes("guide")) {
-      return dayDepartures.filter((d) => (d.resourceUse.Guides?.used ?? 0) > 0);
-    }
-    return [];
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
-          <h2 className="text-base font-semibold text-red-900">
-            Resource Conflicts
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-900 transition text-lg leading-none"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto">
-          {conflicts.map((conflict, idx) => {
-            const deps = getDepsForConflict(conflict);
-            return (
-              <div key={idx}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-red-500">⚠</span>
-                  <span className="text-sm font-medium text-red-800">
-                    {conflict}
-                  </span>
-                </div>
-                <div className="space-y-2 pl-4">
-                  {deps.map((dep) => (
-                    <button
-                      key={dep.id}
-                      onClick={() => {
-                        onClose();
-                        onDepartureClick(dep);
-                      }}
-                      className="w-full text-left rounded-lg border border-red-100 bg-red-50 px-4 py-3 hover:bg-red-100 transition"
-                    >
-                      <div className="text-sm font-medium text-neutral-900">
-                        {dep.title}
-                      </div>
-                      <div className="text-xs text-neutral-600 mt-0.5">
-                        {dep.time} · {dep.guestsBooked}/{dep.guestsCap} guests
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {dep.resourceUse.SM && (
-                          <ResourceChip
-                            label="SM"
-                            used={dep.resourceUse.SM.used}
-                            cap={dep.resourceUse.SM.cap}
-                          />
-                        )}
-                        {dep.resourceUse["E-bike"] && (
-                          <ResourceChip
-                            label="E-bike"
-                            used={dep.resourceUse["E-bike"].used}
-                            cap={dep.resourceUse["E-bike"].cap}
-                          />
-                        )}
-                        {dep.resourceUse.Guides && (
-                          <ResourceChip
-                            label="Guides"
-                            used={dep.resourceUse.Guides.used}
-                            cap={dep.resourceUse.Guides.cap}
-                          />
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                  {deps.length === 0 && (
-                    <p className="text-sm text-neutral-500">
-                      No departures found.
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="border-t border-neutral-200 px-6 py-4">
-          <p className="text-xs text-neutral-500">
-            Click a departure to open its edit panel and resolve the conflict.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main AvailabilityClient ──────────────────────────────────────────────────
 
 export default function AvailabilityClient({
-  initialDepartures,
+  initialBookings,
+  productOptions,
 }: {
-  initialDepartures: DbDeparture[];
+  initialBookings: DbBooking[];
+  productOptions: { id: string; name: string }[];
 }) {
-  const [allDepartures, setAllDepartures] =
-    React.useState<DbDeparture[]>(initialDepartures);
+  const [allBookings, setAllBookings] =
+    React.useState<DbBooking[]>(initialBookings);
   const [view, setView] = React.useState<"month" | "week">("month");
   const [currentDate, setCurrentDate] = React.useState<Date>(
-    new Date(2025, 0, 6),
+    new Date(2026, 4, 1),
   );
 
   const year = currentDate.getFullYear();
@@ -1365,9 +969,15 @@ export default function AvailabilityClient({
 
   // Modals
   const [showAddModal, setShowAddModal] = React.useState(false);
-  const [editingDeparture, setEditingDeparture] =
-    React.useState<UiDeparture | null>(null);
-  const [showConflictDrill, setShowConflictDrill] = React.useState(false);
+  const [editingBooking, setEditingBooking] = React.useState<UiBooking | null>(
+    null,
+  );
+
+  // Resource summary
+  const [resourceCategories, setResourceCategories] = React.useState<
+    ResourceByCategory[]
+  >([]);
+  const [loadingResources, setLoadingResources] = React.useState(false);
 
   // Build calendar grid
   const monthGrid = generateMonthGrid(year, monthIndex0);
@@ -1375,17 +985,15 @@ export default function AvailabilityClient({
   const monthTitle = formatMonthTitle(year, monthIndex0);
 
   function getDayData(date: string, inMonth: boolean): DayData {
-    const deps = allDepartures
-      .filter((d) => d.departure_date === date)
-      .map(toUiDeparture)
+    const bookings = allBookings
+      .filter((b) => b.booking_date === date)
+      .map(toUiBooking)
       .sort((a, b) => a.time.localeCompare(b.time));
-    const conflicts = computeConflicts(deps);
     return {
       date,
       dayNumber: new Date(date + "T00:00:00").getDate(),
-      departures: deps,
+      bookings,
       inMonth,
-      conflicts,
     };
   }
 
@@ -1393,20 +1001,34 @@ export default function AvailabilityClient({
     getDayData(formatISO(cell.date), cell.inMonth),
   );
 
-  // Selected date
   const [selectedDate, setSelectedDate] = React.useState<string>(() => {
-    const first = calendarDays.find((d) => d.departures.length > 0);
+    const first = calendarDays.find((d) => d.bookings.length > 0);
     return first?.date ?? calendarDays[0]?.date ?? "";
   });
 
-  // Update selected date when navigating
+  // Fetch resource summary when selected date changes
+  React.useEffect(() => {
+    if (!selectedDate) return;
+    setLoadingResources(true);
+    fetch(`/api/provider/availability/resources?date=${selectedDate}`)
+      .then((r) => r.json())
+      .then((j) => {
+        setResourceCategories(
+          groupByCategory((j.resources as ResourceAvailability[]) ?? []),
+        );
+      })
+      .catch(() => setResourceCategories([]))
+      .finally(() => setLoadingResources(false));
+  }, [selectedDate]);
+
+  // Update selected date when navigating months/weeks
   React.useEffect(() => {
     if (view === "month") {
       const newDays = generateMonthGrid(
         currentDate.getFullYear(),
         currentDate.getMonth(),
       ).map((cell) => getDayData(formatISO(cell.date), cell.inMonth));
-      const first = newDays.find((d) => d.departures.length > 0);
+      const first = newDays.find((d) => d.bookings.length > 0);
       if (first) setSelectedDate(first.date);
     } else {
       const dates = getWeekDates(currentDate);
@@ -1421,43 +1043,34 @@ export default function AvailabilityClient({
         getDayData(selectedDate, true))
       : getDayData(selectedDate, true);
 
-  const selectedStatus = selectedDayData.departures.length
-    ? aggregateStatus(selectedDayData.departures)
-    : "ok";
-  const totalDepartures = selectedDayData.departures.length;
-  const totalGuests = selectedDayData.departures.reduce(
-    (s, d) => s + d.guestsBooked,
+  const totalBookings = selectedDayData.bookings.length;
+  const totalGuests = selectedDayData.bookings.reduce(
+    (s, b) => s + b.guestsBooked,
     0,
   );
-  const conflicts = selectedDayData.conflicts;
-
-  // Aggregate resource totals for day panel
-  const dayTotals = {
-    SM: selectedDayData.departures.reduce(
-      (s, d) => s + (d.resourceUse.SM?.used ?? 0),
-      0,
-    ),
-    "E-bike": selectedDayData.departures.reduce(
-      (s, d) => s + (d.resourceUse["E-bike"]?.used ?? 0),
-      0,
-    ),
-  };
+  const hasAnyConflict = resourceCategories.some((c) => c.hasConflict);
 
   // Handlers
-  function handleDepartureAdded(dep: DbDeparture) {
-    setAllDepartures((prev) => [...prev, dep]);
-    setSelectedDate(dep.departure_date);
+  function handleBookingAdded(b: DbBooking) {
+    setAllBookings((prev) => [...prev, b]);
+    setSelectedDate(b.booking_date);
     setShowAddModal(false);
   }
 
-  function handleDepartureSaved(dep: DbDeparture) {
-    setAllDepartures((prev) => prev.map((d) => (d.id === dep.id ? dep : d)));
-    setEditingDeparture(null);
-  }
-
-  function handleDepartureDeleted(id: string) {
-    setAllDepartures((prev) => prev.filter((d) => d.id !== id));
-    setEditingDeparture(null);
+  function handleBookingSaved(b: DbBooking) {
+    setAllBookings((prev) => prev.map((x) => (x.id === b.id ? b : x)));
+    setEditingBooking(null);
+    // Refresh resource summary
+    setLoadingResources(true);
+    fetch(`/api/provider/availability/resources?date=${selectedDate}`)
+      .then((r) => r.json())
+      .then((j) =>
+        setResourceCategories(
+          groupByCategory((j.resources as ResourceAvailability[]) ?? []),
+        ),
+      )
+      .catch(() => {})
+      .finally(() => setLoadingResources(false));
   }
 
   return (
@@ -1471,8 +1084,8 @@ export default function AvailabilityClient({
               </h1>
               <p className="mt-1 text-sm text-neutral-600">
                 {view === "month"
-                  ? "Month view with daily operational signals. Click a day to review departures and resource issues."
-                  : "Week view with daily departures. Click a day to see details."}
+                  ? "Month view. Click a day to review bookings and resource usage."
+                  : "Week view. Click a booking to see details."}
               </p>
             </div>
 
@@ -1536,7 +1149,7 @@ export default function AvailabilityClient({
                   </button>
                 </div>
                 <div className="text-xs text-neutral-500">
-                  {view === "month" ? "4 weeks view" : "Week view"}
+                  {view === "month" ? "5 weeks view" : "Week view"}
                 </div>
               </div>
 
@@ -1574,10 +1187,10 @@ export default function AvailabilityClient({
                 <div className="p-4">
                   <WeekView
                     weekDates={weekDates}
-                    allDepartures={allDepartures}
+                    allBookings={allBookings}
                     selectedDate={selectedDate}
                     onSelectDay={setSelectedDate}
-                    onDepartureClick={setEditingDeparture}
+                    onBookingClick={setEditingBooking}
                   />
                 </div>
               )}
@@ -1594,156 +1207,86 @@ export default function AvailabilityClient({
                 </div>
               </div>
 
-              <div className="px-5 py-4">
+              <div className="px-5 py-4 space-y-5">
+                {/* Summary row */}
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-neutral-700">
-                    <span className="font-medium">{totalDepartures}</span>{" "}
-                    departures <span className="text-neutral-400">•</span>{" "}
-                    <span className="font-medium">{totalGuests}</span> guests
+                    <span className="font-medium">{totalBookings}</span>{" "}
+                    {totalBookings === 1 ? "booking" : "bookings"}{" "}
+                    <span className="text-neutral-400">·</span>{" "}
+                    <span className="font-medium">{totalGuests}</span>{" "}
+                    {totalGuests === 1 ? "guest" : "guests"}
                   </div>
-                  <StatusPill status={selectedStatus} />
+                  {hasAnyConflict && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-200">
+                      ⚠ Resource conflict
+                    </span>
+                  )}
                 </div>
-
-                {/* Conflict warning (SEE-16) */}
-                {conflicts.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowConflictDrill(true)}
-                    className="mt-4 w-full text-left rounded-lg border-2 border-red-300 bg-red-50 p-4 hover:bg-red-100 transition"
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-red-600 font-bold">⚠️</span>
-                      <div className="text-sm font-semibold text-red-900">
-                        Resource Conflicts
-                      </div>
-                      <span className="ml-auto text-xs text-red-600 underline">
-                        View details →
-                      </span>
-                    </div>
-                    <ul className="mt-2 space-y-1.5">
-                      {conflicts.map((c, i) => (
-                        <li key={i} className="text-sm text-red-800">
-                          • {c}
-                        </li>
-                      ))}
-                    </ul>
-                  </button>
-                )}
 
                 {/* Resource summary */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {dayTotals.SM > 0 ? (
-                    <div className="rounded-lg border border-neutral-200 bg-white p-3">
-                      <div className="text-xs text-neutral-500">
-                        Snowmobiles
-                      </div>
-                      <div
-                        className={cx(
-                          "mt-1 text-sm font-medium",
-                          dayTotals.SM > CAPACITY.snowmobiles
-                            ? "text-red-700"
-                            : "text-neutral-900",
-                        )}
-                      >
-                        {dayTotals.SM}/{CAPACITY.snowmobiles}
-                      </div>
-                    </div>
-                  ) : null}
-                  {dayTotals["E-bike"] > 0 ? (
-                    <div className="rounded-lg border border-neutral-200 bg-white p-3">
-                      <div className="text-xs text-neutral-500">E-bikes</div>
-                      <div
-                        className={cx(
-                          "mt-1 text-sm font-medium",
-                          dayTotals["E-bike"] > CAPACITY.ebikes
-                            ? "text-red-700"
-                            : "text-neutral-900",
-                        )}
-                      >
-                        {dayTotals["E-bike"]}/{CAPACITY.ebikes}
-                      </div>
-                    </div>
-                  ) : null}
-                  {dayTotals.SM === 0 && dayTotals["E-bike"] === 0 && (
-                    <div className="col-span-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-center text-xs text-neutral-500">
-                      No resources used
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 flex items-center justify-between">
-                  <div className="text-sm font-medium text-neutral-900">
-                    Departures
+                <div>
+                  <div className="text-xs font-medium text-neutral-700 mb-2">
+                    Resources
                   </div>
-                  <button
-                    onClick={() => setShowAddModal(true)}
-                    className="text-sm text-neutral-900 underline underline-offset-4 hover:text-neutral-700"
-                  >
-                    Add
-                  </button>
+                  <ResourceSummaryBar
+                    categories={resourceCategories}
+                    loading={loadingResources}
+                  />
                 </div>
 
-                <div className="mt-3 space-y-3 max-h-[500px] overflow-y-auto">
-                  {selectedDayData.departures.length ? (
-                    selectedDayData.departures.map((d) => (
-                      <DepartureRow
-                        key={d.id}
-                        d={d}
-                        onClick={setEditingDeparture}
-                      />
-                    ))
-                  ) : (
-                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600">
-                      No departures for this day.
+                {/* Bookings list */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-medium text-neutral-900">
+                      Bookings
                     </div>
-                  )}
-                </div>
-
-                {conflicts.length > 0 && (
-                  <div className="mt-4">
                     <button
-                      onClick={() => setShowConflictDrill(true)}
-                      className="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+                      onClick={() => setShowAddModal(true)}
+                      className="text-sm text-neutral-900 underline underline-offset-4 hover:text-neutral-700"
                     >
-                      Review Issues
+                      Add
                     </button>
                   </div>
-                )}
+
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {selectedDayData.bookings.length ? (
+                      selectedDayData.bookings.map((b) => (
+                        <BookingRow
+                          key={b.id}
+                          b={b}
+                          onClick={setEditingBooking}
+                        />
+                      ))
+                    ) : (
+                      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600">
+                        No bookings for this day.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </aside>
           </div>
         </div>
       </div>
 
-      {/* Add Departure Modal */}
+      {/* Add Booking Modal */}
       {showAddModal && (
-        <AddDepartureModal
+        <AddBookingModal
           prefilledDate={selectedDate}
+          productOptions={productOptions}
           onClose={() => setShowAddModal(false)}
-          onSaved={handleDepartureAdded}
+          onSaved={handleBookingAdded}
         />
       )}
 
-      {/* Departure Slide-Over */}
-      {editingDeparture && (
-        <DepartureSlideOver
-          departure={editingDeparture}
-          onClose={() => setEditingDeparture(null)}
-          onSaved={handleDepartureSaved}
-          onDeleted={handleDepartureDeleted}
-        />
-      )}
-
-      {/* Conflict Drill-Down */}
-      {showConflictDrill && (
-        <ConflictDrillDown
-          conflicts={conflicts}
-          dayDepartures={selectedDayData.departures}
-          onClose={() => setShowConflictDrill(false)}
-          onDepartureClick={(dep) => {
-            setShowConflictDrill(false);
-            setEditingDeparture(dep);
-          }}
+      {/* Booking Slide-Over */}
+      {editingBooking && (
+        <BookingSlideOver
+          booking={editingBooking}
+          onClose={() => setEditingBooking(null)}
+          onSaved={handleBookingSaved}
         />
       )}
     </>
