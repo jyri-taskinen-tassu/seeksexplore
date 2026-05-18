@@ -58,7 +58,7 @@ Run on every file edited before committing.
 ## Backend
 
 ### Supabase
-- Project: `emam-dev`
+- Project name: `emam-dev` / Project ref: `vmmntdvmfmooklchpqvq`
 - Schema: `seeks_and_explore_demo`
 - Use Supabase MCP for queries and migrations.
 
@@ -66,6 +66,7 @@ Run on every file edited before committing.
 1. Create migration file: `migrations/<timestamp>_<description>.sql`
 2. Apply via Supabase MCP (`apply_migration`) or run SQL directly with `execute_sql`.
 3. Always scope queries to schema `seeks_and_explore_demo`.
+4. Initial schema baseline: `migrations/20260127000000_initial_seeks_and_explore_demo.sql`
 
 ## Architecture
 
