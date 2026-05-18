@@ -19,7 +19,17 @@ function cx(...classes: Array<string | false | undefined | null>) {
 // Icon components
 function IconTrendingUp({ className }: { className?: string }) {
   return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
       <polyline points="17 6 23 6 23 12" />
     </svg>
@@ -28,7 +38,17 @@ function IconTrendingUp({ className }: { className?: string }) {
 
 function IconTrendingDown({ className }: { className?: string }) {
   return (
-    <svg className={className} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
       <polyline points="17 18 23 18 23 12" />
     </svg>
@@ -37,7 +57,17 @@ function IconTrendingDown({ className }: { className?: string }) {
 
 function IconChart({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
@@ -64,7 +94,11 @@ function formatPercentage(value: number): string {
 }
 
 // KPI Card Component
-function KPICard({ metric }: { metric: ReturnType<typeof getKPIMetrics>[number] }) {
+function KPICard({
+  metric,
+}: {
+  metric: ReturnType<typeof getKPIMetrics>[number];
+}) {
   const isPositive = metric.change >= 0;
   const formattedValue =
     metric.format === "currency"
@@ -77,21 +111,26 @@ function KPICard({ metric }: { metric: ReturnType<typeof getKPIMetrics>[number] 
     <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <div className="text-sm font-medium text-neutral-600 mb-1">{metric.label}</div>
+          <div className="text-sm font-medium text-neutral-600 mb-1">
+            {metric.label}
+          </div>
           <div className="text-2xl font-bold tracking-tight text-neutral-900 mb-2">
             {formattedValue}
           </div>
-          <div className={cx(
-            "flex items-center gap-1 text-xs font-medium",
-            isPositive ? "text-emerald-600" : "text-red-600"
-          )}>
+          <div
+            className={cx(
+              "flex items-center gap-1 text-xs font-medium",
+              isPositive ? "text-emerald-600" : "text-red-600",
+            )}
+          >
             {isPositive ? (
               <IconTrendingUp className="h-3 w-3" />
             ) : (
               <IconTrendingDown className="h-3 w-3" />
             )}
             <span>
-              {isPositive ? "+" : ""}{metric.change.toFixed(1)}% {metric.changeLabel}
+              {isPositive ? "+" : ""}
+              {metric.change.toFixed(1)}% {metric.changeLabel}
             </span>
           </div>
         </div>
@@ -107,11 +146,11 @@ function KPICard({ metric }: { metric: ReturnType<typeof getKPIMetrics>[number] 
 type ChartMetric = "revenue" | "bookings" | "avgBookingValue";
 
 // Revenue Chart Component with comparison
-function RevenueChart({ 
-  currentData, 
+function RevenueChart({
+  currentData,
   compareData,
-  metric = "revenue"
-}: { 
+  metric = "revenue",
+}: {
   currentData: ReturnType<typeof getRevenueData>;
   compareData?: ReturnType<typeof getRevenueData>;
   metric?: ChartMetric;
@@ -150,25 +189,28 @@ function RevenueChart({
   const maxValue = Math.max(
     ...currentData.map((d) => getValue(d)),
     ...(compareData || []).map((d) => getValue(d)),
-    1
+    1,
   );
-  
+
   // Group data by week/month for better visualization if too many points
   const shouldGroup = currentData.length > 30;
-  const groupedData = shouldGroup 
-    ? currentData.filter((_, idx) => idx % Math.ceil(currentData.length / 30) === 0)
+  const groupedData = shouldGroup
+    ? currentData.filter(
+        (_, idx) => idx % Math.ceil(currentData.length / 30) === 0,
+      )
     : currentData;
-  
+
   // Ensure we have at least some data points to show
-  const displayData = groupedData.length > 0 ? groupedData : currentData.slice(0, 30);
-  
+  const displayData =
+    groupedData.length > 0 ? groupedData : currentData.slice(0, 30);
+
   // Generate Y-axis labels (5 ticks)
   const yAxisTicks = 5;
   const yAxisLabels: number[] = [];
   for (let i = 0; i <= yAxisTicks; i++) {
     yAxisLabels.push((maxValue / yAxisTicks) * i);
   }
-  
+
   return (
     <div className="space-y-4">
       {/* Legend */}
@@ -184,20 +226,23 @@ function RevenueChart({
           </div>
         )}
       </div>
-      
+
       {/* Chart with Y-axis */}
       <div className="flex gap-2">
         {/* Y-axis */}
-        <div className="flex flex-col justify-between text-xs text-neutral-500 pb-6" style={{ width: '60px' }}>
+        <div
+          className="flex flex-col justify-between text-xs text-neutral-500 pb-6"
+          style={{ width: "60px" }}
+        >
           {yAxisLabels.reverse().map((value, idx) => (
             <span key={idx} className="text-right pr-2">
-              {metric === "revenue" || metric === "avgBookingValue" 
-                ? formatCurrency(value, "EUR").replace(/\s/g, '')
+              {metric === "revenue" || metric === "avgBookingValue"
+                ? formatCurrency(value, "EUR").replace(/\s/g, "")
                 : Math.round(value).toString()}
             </span>
           ))}
         </div>
-        
+
         {/* Chart area */}
         <div className="flex-1 space-y-2">
           <div className="flex items-end justify-between gap-0.5 h-64 relative border-b border-l border-neutral-200 pl-2">
@@ -209,40 +254,59 @@ function RevenueChart({
                 style={{ bottom: `${(value / maxValue) * 100}%` }}
               />
             ))}
-            
+
             {/* Bars */}
             {displayData.map((point, idx) => {
               const value = getValue(point);
               const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
               // Find matching comparison point by date or index
-              const comparePoint = compareData?.find(cp => cp.date === point.date) || compareData?.[idx];
+              const comparePoint =
+                compareData?.find((cp) => cp.date === point.date) ||
+                compareData?.[idx];
               const compareValue = comparePoint ? getValue(comparePoint) : 0;
-              const compareHeight = compareValue && maxValue > 0 
-                ? (compareValue / maxValue) * 100 
-                : 0;
-              
+              const compareHeight =
+                compareValue && maxValue > 0
+                  ? (compareValue / maxValue) * 100
+                  : 0;
+
               return (
-                <div key={`${point.date}-${idx}`} className="flex-1 flex flex-col items-center gap-1 group relative min-w-[4px] h-full">
+                <div
+                  key={`${point.date}-${idx}`}
+                  className="flex-1 flex flex-col items-center gap-1 group relative min-w-[4px] h-full"
+                >
                   <div className="w-full flex flex-col justify-end h-full gap-0.5 relative z-0">
                     {/* Comparison bar (behind) */}
                     {compareHeight > 0 && (
                       <div
                         className="w-full rounded-t bg-neutral-300 opacity-70"
-                        style={{ height: `${compareHeight}%`, minHeight: compareHeight > 0 ? '1px' : '0' }}
-                        title={comparePoint ? `${comparePoint.date}: ${metric === "revenue" || metric === "avgBookingValue" ? formatCurrency(compareValue) : compareValue}` : ""}
+                        style={{
+                          height: `${compareHeight}%`,
+                          minHeight: compareHeight > 0 ? "1px" : "0",
+                        }}
+                        title={
+                          comparePoint
+                            ? `${comparePoint.date}: ${metric === "revenue" || metric === "avgBookingValue" ? formatCurrency(compareValue) : compareValue}`
+                            : ""
+                        }
                       />
                     )}
                     {/* Current bar */}
                     <div
                       className="w-full rounded-t bg-gradient-to-t from-neutral-900 to-neutral-700 hover:from-neutral-800 hover:to-neutral-600 transition-all duration-200 cursor-pointer relative z-10 shadow-sm"
-                      style={{ height: `${height}%`, minHeight: height > 0 ? '2px' : '0' }}
+                      style={{
+                        height: `${height}%`,
+                        minHeight: height > 0 ? "2px" : "0",
+                      }}
                       title={`${point.date}: ${metric === "revenue" || metric === "avgBookingValue" ? formatCurrency(value) : value}`}
                     />
                   </div>
                   {/* Tooltip on hover */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 pointer-events-none">
                     <div className="bg-neutral-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap shadow-lg">
-                      {point.date}: {metric === "revenue" || metric === "avgBookingValue" ? formatCurrency(value) : value}
+                      {point.date}:{" "}
+                      {metric === "revenue" || metric === "avgBookingValue"
+                        ? formatCurrency(value)
+                        : value}
                     </div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-neutral-900"></div>
                   </div>
@@ -257,9 +321,12 @@ function RevenueChart({
           </div>
         </div>
       </div>
-      
+
       {/* Y-axis label */}
-      <div className="text-xs text-neutral-500 -mt-2 pl-2" style={{ marginLeft: '60px' }}>
+      <div
+        className="text-xs text-neutral-500 -mt-2 pl-2"
+        style={{ marginLeft: "60px" }}
+      >
         {getLabel()}
       </div>
     </div>
@@ -267,36 +334,65 @@ function RevenueChart({
 }
 
 // Product Performance Table
-function ProductPerformanceTable({ data }: { data: ReturnType<typeof getProductPerformance> }) {
+function ProductPerformanceTable({
+  data,
+}: {
+  data: ReturnType<typeof getProductPerformance>;
+}) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-neutral-200">
-            <th className="text-left py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Product</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Bookings</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Revenue</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Occupancy</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Rating</th>
-            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Guests</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              Product
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              Bookings
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              Revenue
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              Occupancy
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              Rating
+            </th>
+            <th className="text-right py-3 px-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              Guests
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-neutral-100">
           {data.map((product) => (
-            <tr key={product.productId} className="hover:bg-neutral-50 transition-colors">
+            <tr
+              key={product.productId}
+              className="hover:bg-neutral-50 transition-colors"
+            >
               <td className="py-3 px-4">
-                <div className="font-medium text-sm text-neutral-900">{product.productName}</div>
+                <div className="font-medium text-sm text-neutral-900">
+                  {product.productName}
+                </div>
               </td>
-              <td className="py-3 px-4 text-right text-sm text-neutral-700">{formatNumber(product.bookings)}</td>
-              <td className="py-3 px-4 text-right text-sm font-medium text-neutral-900">{formatCurrency(product.revenue)}</td>
-              <td className="py-3 px-4 text-right text-sm text-neutral-700">{formatPercentage(product.occupancyRate)}</td>
+              <td className="py-3 px-4 text-right text-sm text-neutral-700">
+                {formatNumber(product.bookings)}
+              </td>
+              <td className="py-3 px-4 text-right text-sm font-medium text-neutral-900">
+                {formatCurrency(product.revenue)}
+              </td>
+              <td className="py-3 px-4 text-right text-sm text-neutral-700">
+                {formatPercentage(product.occupancyRate)}
+              </td>
               <td className="py-3 px-4 text-right text-sm text-neutral-700">
                 <div className="flex items-center justify-end gap-1">
                   <span>{product.avgRating.toFixed(1)}</span>
                   <span className="text-amber-400">★</span>
                 </div>
               </td>
-              <td className="py-3 px-4 text-right text-sm text-neutral-700">{formatNumber(product.totalGuests)}</td>
+              <td className="py-3 px-4 text-right text-sm text-neutral-700">
+                {formatNumber(product.totalGuests)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -306,20 +402,32 @@ function ProductPerformanceTable({ data }: { data: ReturnType<typeof getProductP
 }
 
 // Resource Utilization Component
-function ResourceUtilizationCard({ resource }: { resource: ReturnType<typeof getResourceUtilization>[number] }) {
+function ResourceUtilizationCard({
+  resource,
+}: {
+  resource: ReturnType<typeof getResourceUtilization>[number];
+}) {
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-4 hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="text-sm font-semibold text-neutral-900">
-            {resource.resourceType === "snowmobiles" ? "Snowmobiles" : resource.resourceType === "ebikes" ? "E-bikes" : "Guides"}
+            {resource.resourceType === "snowmobiles"
+              ? "Snowmobiles"
+              : resource.resourceType === "ebikes"
+                ? "E-bikes"
+                : "Guides"}
           </div>
           {resource.variant && (
-            <div className="text-xs text-neutral-500 mt-0.5">{resource.variant}</div>
+            <div className="text-xs text-neutral-500 mt-0.5">
+              {resource.variant}
+            </div>
           )}
         </div>
         <div className="text-right">
-          <div className="text-sm font-bold text-neutral-900">{formatPercentage(resource.utilizationRate)}</div>
+          <div className="text-sm font-bold text-neutral-900">
+            {formatPercentage(resource.utilizationRate)}
+          </div>
           <div className="text-xs text-neutral-500">
             {resource.utilizedUnits.toFixed(1)} / {resource.totalUnits}
           </div>
@@ -343,7 +451,9 @@ function ResourceUtilizationCard({ resource }: { resource: ReturnType<typeof get
 export default function ProviderAnalyticsPage() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("month");
   const [comparePeriod, setComparePeriod] = useState<boolean>(true);
-  const [chartMetric, setChartMetric] = useState<"revenue" | "bookings" | "avgBookingValue">("revenue");
+  const [chartMetric, setChartMetric] = useState<
+    "revenue" | "bookings" | "avgBookingValue"
+  >("revenue");
 
   const kpiMetrics = useMemo(() => getKPIMetrics(), []);
   const revenueData = useMemo(() => {
@@ -354,25 +464,33 @@ export default function ProviderAnalyticsPage() {
     }
     return data;
   }, [timePeriod]);
-  
+
   // Get comparison data (previous period)
   const compareRevenueData = useMemo(() => {
     if (!comparePeriod) return undefined;
-    const days = timePeriod === "week" ? 7 : timePeriod === "month" ? 30 : timePeriod === "quarter" ? 90 : 365;
+    const days =
+      timePeriod === "week"
+        ? 7
+        : timePeriod === "month"
+          ? 30
+          : timePeriod === "quarter"
+            ? 90
+            : 365;
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(endDate.getDate() - days);
     const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - days);
-    
+
     // Generate comparison data for previous period
     const compareData: ReturnType<typeof getRevenueData> = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split("T")[0];
-      const baseRevenue = 1800 + Math.random() * 2800; // Slightly lower for comparison
-      const bookings = Math.floor(4 + Math.random() * 14);
+      const seed = dateStr.split("-").reduce((a, b) => a + parseInt(b), 0);
+      const baseRevenue = 1800 + ((seed * 31) % 2800);
+      const bookings = 4 + ((seed * 7) % 14);
       compareData.push({
         date: dateStr,
         revenue: Math.round(baseRevenue),
@@ -382,19 +500,27 @@ export default function ProviderAnalyticsPage() {
     }
     return compareData;
   }, [timePeriod, comparePeriod]);
-  
+
   const productPerformance = useMemo(() => getProductPerformance(), []);
-  const bookingTrends = useMemo(() => getBookingTrends(timePeriod), [timePeriod]);
+  const bookingTrends = useMemo(
+    () => getBookingTrends(timePeriod),
+    [timePeriod],
+  );
   const resourceUtilization = useMemo(() => getResourceUtilization(), []);
   const messageAnalytics = useMemo(() => getMessageAnalytics(), []);
   const customerAnalytics = useMemo(() => getCustomerAnalytics(), []);
 
   const totalRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0);
-  const totalBookings = bookingTrends.reduce((sum, d) => sum + d.netBookings, 0);
-  const compareTotalRevenue = compareRevenueData?.reduce((sum, d) => sum + d.revenue, 0) || 0;
-  const revenueChange = compareTotalRevenue > 0 
-    ? ((totalRevenue - compareTotalRevenue) / compareTotalRevenue) * 100 
-    : 0;
+  const totalBookings = bookingTrends.reduce(
+    (sum, d) => sum + d.netBookings,
+    0,
+  );
+  const compareTotalRevenue =
+    compareRevenueData?.reduce((sum, d) => sum + d.revenue, 0) || 0;
+  const revenueChange =
+    compareTotalRevenue > 0
+      ? ((totalRevenue - compareTotalRevenue) / compareTotalRevenue) * 100
+      : 0;
 
   return (
     <div className="flex-1 flex flex-col bg-white">
@@ -402,7 +528,9 @@ export default function ProviderAnalyticsPage() {
       <header className="border-b border-neutral-200 bg-white px-6 py-4 sticky top-0 z-10">
         <div className="flex w-full items-center justify-between">
           <div>
-            <div className="text-lg font-semibold text-neutral-900">Analytics & Reports</div>
+            <div className="text-lg font-semibold text-neutral-900">
+              Analytics & Reports
+            </div>
             <div className="mt-1 text-sm text-neutral-500">
               Data-driven insights for your business
             </div>
@@ -444,29 +572,53 @@ export default function ProviderAnalyticsPage() {
           <div className="border-b border-neutral-200 px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-base font-semibold text-neutral-900">Revenue Trend</div>
+                <div className="text-base font-semibold text-neutral-900">
+                  Revenue Trend
+                </div>
                 <div className="mt-1 text-sm text-neutral-500">
                   {chartMetric === "revenue" && (
                     <>
-                      {formatCurrency(totalRevenue)} over {timePeriod === "week" ? "7" : timePeriod === "month" ? "30" : timePeriod === "quarter" ? "90" : "365"} days
+                      {formatCurrency(totalRevenue)} over{" "}
+                      {timePeriod === "week"
+                        ? "7"
+                        : timePeriod === "month"
+                          ? "30"
+                          : timePeriod === "quarter"
+                            ? "90"
+                            : "365"}{" "}
+                      days
                       {comparePeriod && compareTotalRevenue > 0 && (
-                        <span className={cx(
-                          "ml-2 font-medium",
-                          revenueChange >= 0 ? "text-emerald-600" : "text-red-600"
-                        )}>
-                          ({revenueChange >= 0 ? "+" : ""}{revenueChange.toFixed(1)}% vs previous)
+                        <span
+                          className={cx(
+                            "ml-2 font-medium",
+                            revenueChange >= 0
+                              ? "text-emerald-600"
+                              : "text-red-600",
+                          )}
+                        >
+                          ({revenueChange >= 0 ? "+" : ""}
+                          {revenueChange.toFixed(1)}% vs previous)
                         </span>
                       )}
                     </>
                   )}
                   {chartMetric === "bookings" && (
                     <>
-                      {formatNumber(revenueData.reduce((sum, d) => sum + d.bookings, 0))} bookings
+                      {formatNumber(
+                        revenueData.reduce((sum, d) => sum + d.bookings, 0),
+                      )}{" "}
+                      bookings
                     </>
                   )}
                   {chartMetric === "avgBookingValue" && (
                     <>
-                      Average: {formatCurrency(revenueData.reduce((sum, d) => sum + d.avgBookingValue, 0) / revenueData.length)}
+                      Average:{" "}
+                      {formatCurrency(
+                        revenueData.reduce(
+                          (sum, d) => sum + d.avgBookingValue,
+                          0,
+                        ) / revenueData.length,
+                      )}
                     </>
                   )}
                 </div>
@@ -474,7 +626,9 @@ export default function ProviderAnalyticsPage() {
               <div className="flex items-center gap-2">
                 <select
                   value={chartMetric}
-                  onChange={(e) => setChartMetric(e.target.value as typeof chartMetric)}
+                  onChange={(e) =>
+                    setChartMetric(e.target.value as typeof chartMetric)
+                  }
                   className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-neutral-900"
                 >
                   <option value="revenue">Revenue</option>
@@ -485,8 +639,8 @@ export default function ProviderAnalyticsPage() {
             </div>
           </div>
           <div className="p-6">
-            <RevenueChart 
-              currentData={revenueData} 
+            <RevenueChart
+              currentData={revenueData}
               compareData={comparePeriod ? compareRevenueData : undefined}
               metric={chartMetric}
             />
@@ -498,8 +652,12 @@ export default function ProviderAnalyticsPage() {
           {/* Product Performance */}
           <div className="xl:col-span-2 rounded-xl border border-neutral-200 bg-white shadow-sm">
             <div className="border-b border-neutral-200 px-6 py-4">
-              <div className="text-base font-semibold text-neutral-900">Product Performance</div>
-              <div className="mt-1 text-sm text-neutral-500">Top products by revenue</div>
+              <div className="text-base font-semibold text-neutral-900">
+                Product Performance
+              </div>
+              <div className="mt-1 text-sm text-neutral-500">
+                Top products by revenue
+              </div>
             </div>
             <div className="p-6">
               <ProductPerformanceTable data={productPerformance} />
@@ -509,8 +667,12 @@ export default function ProviderAnalyticsPage() {
           {/* Resource Utilization */}
           <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
             <div className="border-b border-neutral-200 px-6 py-4">
-              <div className="text-base font-semibold text-neutral-900">Resource Utilization</div>
-              <div className="mt-1 text-sm text-neutral-500">Equipment & guide usage</div>
+              <div className="text-base font-semibold text-neutral-900">
+                Resource Utilization
+              </div>
+              <div className="mt-1 text-sm text-neutral-500">
+                Equipment & guide usage
+              </div>
             </div>
             <div className="p-6 space-y-4">
               {resourceUtilization.map((resource, idx) => (
@@ -525,25 +687,41 @@ export default function ProviderAnalyticsPage() {
           {/* Booking Trends */}
           <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
             <div className="border-b border-neutral-200 px-6 py-4">
-              <div className="text-base font-semibold text-neutral-900">Booking Trends</div>
+              <div className="text-base font-semibold text-neutral-900">
+                Booking Trends
+              </div>
               <div className="mt-1 text-sm text-neutral-500">
                 {formatNumber(totalBookings)} net bookings
               </div>
             </div>
             <div className="p-6">
               <div className="space-y-3">
-                {bookingTrends.slice(-7).reverse().map((trend, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0">
-                    <div className="text-sm text-neutral-700">{trend.date}</div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-emerald-600 font-medium">+{trend.bookings}</span>
-                      {trend.cancellations > 0 && (
-                        <span className="text-red-600">-{trend.cancellations}</span>
-                      )}
-                      <span className="text-neutral-900 font-semibold">{trend.netBookings}</span>
+                {bookingTrends
+                  .slice(-7)
+                  .reverse()
+                  .map((trend, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0"
+                    >
+                      <div className="text-sm text-neutral-700">
+                        {trend.date}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="text-emerald-600 font-medium">
+                          +{trend.bookings}
+                        </span>
+                        {trend.cancellations > 0 && (
+                          <span className="text-red-600">
+                            -{trend.cancellations}
+                          </span>
+                        )}
+                        <span className="text-neutral-900 font-semibold">
+                          {trend.netBookings}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </div>
@@ -552,35 +730,61 @@ export default function ProviderAnalyticsPage() {
           {customerAnalytics && (
             <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
               <div className="border-b border-neutral-200 px-6 py-4">
-                <div className="text-base font-semibold text-neutral-900">Customer Insights</div>
+                <div className="text-base font-semibold text-neutral-900">
+                  Customer Insights
+                </div>
                 <div className="mt-1 text-sm text-neutral-500">
-                  {formatNumber(customerAnalytics.totalCustomers)} total customers
+                  {formatNumber(customerAnalytics.totalCustomers)} total
+                  customers
                 </div>
               </div>
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                    <div className="text-xs text-neutral-600 mb-1">New Customers</div>
-                    <div className="text-lg font-bold text-neutral-900">{formatNumber(customerAnalytics.newCustomers)}</div>
+                    <div className="text-xs text-neutral-600 mb-1">
+                      New Customers
+                    </div>
+                    <div className="text-lg font-bold text-neutral-900">
+                      {formatNumber(customerAnalytics.newCustomers)}
+                    </div>
                   </div>
                   <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                    <div className="text-xs text-neutral-600 mb-1">Returning</div>
-                    <div className="text-lg font-bold text-neutral-900">{formatNumber(customerAnalytics.returningCustomers)}</div>
+                    <div className="text-xs text-neutral-600 mb-1">
+                      Returning
+                    </div>
+                    <div className="text-lg font-bold text-neutral-900">
+                      {formatNumber(customerAnalytics.returningCustomers)}
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                  <div className="text-xs text-neutral-600 mb-1">Avg. Bookings per Customer</div>
-                  <div className="text-lg font-bold text-neutral-900">{customerAnalytics.avgBookingsPerCustomer.toFixed(1)}</div>
+                  <div className="text-xs text-neutral-600 mb-1">
+                    Avg. Bookings per Customer
+                  </div>
+                  <div className="text-lg font-bold text-neutral-900">
+                    {customerAnalytics.avgBookingsPerCustomer.toFixed(1)}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-neutral-700 mb-2">Top Countries</div>
+                  <div className="text-xs font-semibold text-neutral-700 mb-2">
+                    Top Countries
+                  </div>
                   <div className="space-y-2">
                     {customerAnalytics.topCountries.map((country, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-sm">
-                        <span className="text-neutral-700">{country.country}</span>
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-neutral-700">
+                          {country.country}
+                        </span>
                         <div className="flex items-center gap-3">
-                          <span className="text-neutral-600">{formatNumber(country.bookings)}</span>
-                          <span className="font-medium text-neutral-900">{formatCurrency(country.revenue)}</span>
+                          <span className="text-neutral-600">
+                            {formatNumber(country.bookings)}
+                          </span>
+                          <span className="font-medium text-neutral-900">
+                            {formatCurrency(country.revenue)}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -594,42 +798,66 @@ export default function ProviderAnalyticsPage() {
           {messageAnalytics && (
             <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
               <div className="border-b border-neutral-200 px-6 py-4">
-                <div className="text-base font-semibold text-neutral-900">Message Analytics</div>
-                <div className="mt-1 text-sm text-neutral-500">Communication overview</div>
+                <div className="text-base font-semibold text-neutral-900">
+                  Message Analytics
+                </div>
+                <div className="mt-1 text-sm text-neutral-500">
+                  Communication overview
+                </div>
               </div>
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                    <div className="text-xs text-neutral-600 mb-1">Total Messages</div>
-                    <div className="text-lg font-bold text-neutral-900">{formatNumber(messageAnalytics.totalMessages)}</div>
+                    <div className="text-xs text-neutral-600 mb-1">
+                      Total Messages
+                    </div>
+                    <div className="text-lg font-bold text-neutral-900">
+                      {formatNumber(messageAnalytics.totalMessages)}
+                    </div>
                   </div>
                   <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
                     <div className="text-xs text-neutral-600 mb-1">Unread</div>
-                    <div className="text-lg font-bold text-red-600">{formatNumber(messageAnalytics.unreadCount)}</div>
+                    <div className="text-lg font-bold text-red-600">
+                      {formatNumber(messageAnalytics.unreadCount)}
+                    </div>
                   </div>
                 </div>
                 <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                  <div className="text-xs text-neutral-600 mb-1">Avg. Response Time</div>
-                  <div className="text-lg font-bold text-neutral-900">{messageAnalytics.avgResponseTime} min</div>
+                  <div className="text-xs text-neutral-600 mb-1">
+                    Avg. Response Time
+                  </div>
+                  <div className="text-lg font-bold text-neutral-900">
+                    {messageAnalytics.avgResponseTime} min
+                  </div>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-neutral-700 mb-2">By Platform</div>
+                  <div className="text-xs font-semibold text-neutral-700 mb-2">
+                    By Platform
+                  </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-neutral-700">Email</span>
-                      <span className="font-medium text-neutral-900">{formatNumber(messageAnalytics.byPlatform.email)}</span>
+                      <span className="font-medium text-neutral-900">
+                        {formatNumber(messageAnalytics.byPlatform.email)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-neutral-700">WhatsApp</span>
-                      <span className="font-medium text-neutral-900">{formatNumber(messageAnalytics.byPlatform.whatsapp)}</span>
+                      <span className="font-medium text-neutral-900">
+                        {formatNumber(messageAnalytics.byPlatform.whatsapp)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-neutral-700">Meta</span>
-                      <span className="font-medium text-neutral-900">{formatNumber(messageAnalytics.byPlatform.meta)}</span>
+                      <span className="font-medium text-neutral-900">
+                        {formatNumber(messageAnalytics.byPlatform.meta)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-neutral-700">Reviews</span>
-                      <span className="font-medium text-neutral-900">{formatNumber(messageAnalytics.byPlatform.review)}</span>
+                      <span className="font-medium text-neutral-900">
+                        {formatNumber(messageAnalytics.byPlatform.review)}
+                      </span>
                     </div>
                   </div>
                 </div>

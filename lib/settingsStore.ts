@@ -1,7 +1,11 @@
 // lib/settingsStore.ts
 export type Currency = "EUR" | "USD" | "GBP" | "SEK" | "NOK";
 export type Language = "en" | "fi" | "sv" | "no";
-export type Timezone = "Europe/Helsinki" | "Europe/Stockholm" | "Europe/Oslo" | "UTC";
+export type Timezone =
+  | "Europe/Helsinki"
+  | "Europe/Stockholm"
+  | "Europe/Oslo"
+  | "UTC";
 
 export type CompanySettings = {
   companyName: string;
@@ -72,7 +76,7 @@ export type Settings = {
   pricing: PricingSettings;
 };
 
-let settings: Settings = {
+const settings: Settings = {
   company: {
     companyName: "Northern Adventures",
     legalName: "Northern Adventures Oy",
@@ -134,15 +138,21 @@ export function updateCompanySettings(updates: Partial<CompanySettings>): void {
   settings.company = { ...settings.company, ...updates };
 }
 
-export function updateNotificationSettings(updates: Partial<NotificationSettings>): void {
+export function updateNotificationSettings(
+  updates: Partial<NotificationSettings>,
+): void {
   settings.notifications = { ...settings.notifications, ...updates };
 }
 
-export function updateIntegrationSettings(updates: Partial<IntegrationSettings>): void {
+export function updateIntegrationSettings(
+  updates: Partial<IntegrationSettings>,
+): void {
   settings.integrations = { ...settings.integrations, ...updates };
 }
 
-export function updateLocalizationSettings(updates: Partial<LocalizationSettings>): void {
+export function updateLocalizationSettings(
+  updates: Partial<LocalizationSettings>,
+): void {
   settings.localization = { ...settings.localization, ...updates };
 }
 

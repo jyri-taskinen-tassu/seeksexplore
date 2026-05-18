@@ -641,7 +641,10 @@ export default function ProviderProductNewPage() {
                     <select
                       value={draft.categoryMain}
                       onChange={(e) =>
-                        update("categoryMain", e.target.value as any)
+                        update(
+                          "categoryMain",
+                          e.target.value as "Outdoor" | "Indoor" | "",
+                        )
                       }
                       className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     >
@@ -715,7 +718,10 @@ export default function ProviderProductNewPage() {
                     <select
                       value={draft.currency}
                       onChange={(e) =>
-                        update("currency", e.target.value as any)
+                        update(
+                          "currency",
+                          e.target.value as "EUR" | "SEK" | "NOK" | "DKK",
+                        )
                       }
                       className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     >
@@ -741,7 +747,10 @@ export default function ProviderProductNewPage() {
                     <select
                       value={draft.capacityMode}
                       onChange={(e) =>
-                        update("capacityMode", e.target.value as any)
+                        update(
+                          "capacityMode",
+                          e.target.value as "per_departure" | "per_resource",
+                        )
                       }
                       className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     >
@@ -762,8 +771,9 @@ export default function ProviderProductNewPage() {
                     />
                   </div>
                   <div className="mt-1 text-xs text-neutral-500">
-                    If capacity depends on vehicles/equipment, choose "Per
-                    resource". You'll allocate variants in Availability.
+                    If capacity depends on vehicles/equipment, choose &ldquo;Per
+                    resource&rdquo;. You&apos;ll allocate variants in
+                    Availability.
                   </div>
                 </Field>
 
@@ -784,7 +794,11 @@ export default function ProviderProductNewPage() {
                     onChange={(e) =>
                       update(
                         "cancellationPolicyTemplate",
-                        e.target.value as any,
+                        e.target.value as
+                          | "Flexible"
+                          | "Standard"
+                          | "Strict"
+                          | "",
                       )
                     }
                     className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
@@ -1382,8 +1396,8 @@ export default function ProviderProductNewPage() {
                     </div>
                     <ul className="mt-2 list-disc pl-5 text-sm text-neutral-700">
                       <li>
-                        If capacity is "per resource", allocate variants in
-                        Availability to avoid overbooking.
+                        If capacity is &ldquo;per resource&rdquo;, allocate
+                        variants in Availability to avoid overbooking.
                       </li>
                       <li>
                         Keep meeting point precise — reduces support messages.

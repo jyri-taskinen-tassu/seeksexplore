@@ -274,8 +274,8 @@ function ConfirmActionDialog({
   );
 }
 
-// ---- New Booking Modal (SEE-19) ----
-const PRODUCT_NAMES = [
+// ---- New Booking Modal (SEE-19, SEE-37) ----
+const FALLBACK_PRODUCT_NAMES = [
   "Snowmobile Safari (Sport)",
   "Snowmobile Safari (Touring)",
   "E-bike Tour",
@@ -292,11 +292,13 @@ function NewBookingModal({
   onClose: () => void;
   onCreated: (booking: Booking) => void;
 }) {
+  const [productNames, setProductNames] = useState<string[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [form, setForm] = useState({
     customer_name: "",
     customer_email: "",
     customer_phone: "",
-    product_name: PRODUCT_NAMES[0],
+    product_name: "",
     booking_date: "",
     booking_time: "09:00",
     guests: 1,
@@ -304,6 +306,27 @@ function NewBookingModal({
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/provider/products")
+      .then((r) => r.json())
+      .then((data) => {
+        const names: string[] = Array.isArray(data.products)
+          ? data.products.map((p: { name: string }) => p.name).filter(Boolean)
+          : [];
+        const list = names.length > 0 ? names : FALLBACK_PRODUCT_NAMES;
+        setProductNames(list);
+        setForm((prev) => ({ ...prev, product_name: list[0] }));
+      })
+      .catch(() => {
+        setProductNames(FALLBACK_PRODUCT_NAMES);
+        setForm((prev) => ({
+          ...prev,
+          product_name: FALLBACK_PRODUCT_NAMES[0],
+        }));
+      })
+      .finally(() => setLoadingProducts(false));
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -424,13 +447,18 @@ function NewBookingModal({
                 value={form.product_name}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)] bg-white"
+                disabled={loadingProducts}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)] bg-white disabled:opacity-60"
               >
-                {PRODUCT_NAMES.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
+                {loadingProducts ? (
+                  <option value="">Loading activities…</option>
+                ) : (
+                  productNames.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

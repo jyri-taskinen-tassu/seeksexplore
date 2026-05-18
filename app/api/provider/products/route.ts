@@ -3,6 +3,51 @@ import { NextResponse } from "next/server";
 
 const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
+export async function GET() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: link } = await supabase
+    .schema(SCHEMA)
+    .from("provider_users")
+    .select("provider_id")
+    .eq("profile_id", user.id)
+    .single();
+
+  if (!link) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { data: products, error } = await supabase
+    .schema(SCHEMA)
+    .from("products")
+    .select("id, product_information(name, language)")
+    .eq("provider_id", link.provider_id);
+
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const result = (products ?? [])
+    .map((p) => {
+      const info = Array.isArray(p.product_information)
+        ? p.product_information
+        : [];
+      const en = info.find(
+        (i: { language: string; name: string | null }) => i.language === "en",
+      );
+      const fallback = info[0] as
+        | { language: string; name: string | null }
+        | undefined;
+      const name = en?.name ?? fallback?.name ?? null;
+      return { id: p.id as string, name };
+    })
+    .filter((p) => p.name);
+
+  return NextResponse.json({ products: result });
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
