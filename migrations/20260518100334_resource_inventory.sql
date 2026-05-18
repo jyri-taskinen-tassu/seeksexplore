@@ -100,35 +100,3 @@ USING (EXISTS (
   SELECT 1 FROM seeks_and_explore_demo.provider_users pu
   WHERE pu.provider_id = resource_variants.provider_id AND pu.profile_id = auth.uid()
 ));
-
--- Seed mock data for existing demo providers
-DO $$
-DECLARE
-  p_id uuid;
-  cat_snow uuid;
-  cat_ebike uuid;
-  cat_guide uuid;
-BEGIN
-  FOR p_id IN SELECT id FROM seeks_and_explore_demo.providers LOOP
-    INSERT INTO seeks_and_explore_demo.resource_categories (provider_id, name, description)
-    VALUES
-      (p_id, 'Snowmobiles', 'Winter vehicles for snowmobile safaris'),
-      (p_id, 'E-bikes', 'Electric bicycles for tours'),
-      (p_id, 'Guides', 'Professional tour guides');
-
-    SELECT id INTO cat_snow FROM seeks_and_explore_demo.resource_categories
-      WHERE provider_id = p_id AND name = 'Snowmobiles' LIMIT 1;
-    SELECT id INTO cat_ebike FROM seeks_and_explore_demo.resource_categories
-      WHERE provider_id = p_id AND name = 'E-bikes' LIMIT 1;
-    SELECT id INTO cat_guide FROM seeks_and_explore_demo.resource_categories
-      WHERE provider_id = p_id AND name = 'Guides' LIMIT 1;
-
-    INSERT INTO seeks_and_explore_demo.resource_variants
-      (category_id, provider_id, name, capacity_per_unit, unit_label, total_units, buffer_units, status)
-    VALUES
-      (cat_snow, p_id, 'Sport (1-seat)', 1, 'vehicle', 5, 0, 'active'),
-      (cat_snow, p_id, 'Touring (2-seat)', 2, 'vehicle', 5, 1, 'active'),
-      (cat_ebike, p_id, 'Adult M/L', 1, 'bike', 10, 1, 'active'),
-      (cat_guide, p_id, 'Guide', 1, 'guide', 4, 0, 'active');
-  END LOOP;
-END $$;
