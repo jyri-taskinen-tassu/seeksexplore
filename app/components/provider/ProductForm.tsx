@@ -174,7 +174,7 @@ export function ProductForm() {
         <div className="mt-3 space-y-3">
           {draft.pricingTiers.length === 0 ? (
             <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-4 text-center text-sm text-neutral-500">
-              No customer types yet. Click "Add type" to create one.
+              No customer types yet. Click &ldquo;Add type&rdquo; to create one.
             </div>
           ) : (
             draft.pricingTiers.map((tier) => (

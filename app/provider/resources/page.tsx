@@ -222,7 +222,8 @@ export default function ProviderResourcesPage() {
                 {categoryVariants.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
                     <div className="text-sm text-neutral-500">
-                      No variants yet. Click "Add variant" to create one.
+                      No variants yet. Click &ldquo;Add variant&rdquo; to create
+                      one.
                     </div>
                   </div>
                 ) : (

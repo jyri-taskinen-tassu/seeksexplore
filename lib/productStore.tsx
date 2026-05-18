@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  ReactNode,
+} from "react";
 
 /**
  * Product Draft Store
@@ -60,7 +66,10 @@ export type ProductDraft = {
     touring: { total: number; outOfService: number };
   };
   ebikes?: {
-    sizes: Record<"S" | "M" | "L" | "XL" | "XXL", { total: number; outOfService: number }>;
+    sizes: Record<
+      "S" | "M" | "L" | "XL" | "XXL",
+      { total: number; outOfService: number }
+    >;
   };
   guidesPerDeparture?: number;
 
@@ -68,7 +77,13 @@ export type ProductDraft = {
   pricingTiers: PricingTier[];
 
   // Legacy pricing (for compatibility)
-  pricingOptions?: Array<{ id: string; name: string; price: number; consumesResource?: "snowmobile" | "guide"; variant?: "sport" | "touring" }>;
+  pricingOptions?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    consumesResource?: "snowmobile" | "guide";
+    variant?: "sport" | "touring";
+  }>;
   exampleBooking?: Record<string, number>;
 
   // Resource rules (new structure)
@@ -82,7 +97,11 @@ type ProductDraftState = {
 
 // Actions
 type ProductDraftAction =
-  | { type: "SET_FIELD"; key: keyof ProductDraft; value: any }
+  | {
+      type: "SET_FIELD";
+      key: keyof ProductDraft;
+      value: ProductDraft[keyof ProductDraft];
+    }
   | { type: "SET_DRAFT"; partial: Partial<ProductDraft> }
   | { type: "RESET_DRAFT" }
   | { type: "ADD_PRICING_TIER"; tier: PricingTier }
@@ -114,8 +133,10 @@ const INITIAL_DRAFT: ProductDraft = {
   requirements: "",
   cancellationPolicyTemplate: "",
   coverImageNote: "",
-  availabilityRule: "Fixed departures (MVP) — you can add times after publishing.",
-  resourcesNote: "MVP: attach resources later in Availability/Departures (guides, snowmobiles, e-bikes).",
+  availabilityRule:
+    "Fixed departures (MVP) — you can add times after publishing.",
+  resourcesNote:
+    "MVP: attach resources later in Availability/Departures (guides, snowmobiles, e-bikes).",
   requiresResources: false,
   pricingTiers: [],
   pricingOptions: [],
@@ -125,7 +146,7 @@ const INITIAL_DRAFT: ProductDraft = {
 // Reducer
 function productDraftReducer(
   state: ProductDraftState,
-  action: ProductDraftAction
+  action: ProductDraftAction,
 ): ProductDraftState {
   switch (action.type) {
     case "SET_FIELD":
@@ -166,7 +187,7 @@ function productDraftReducer(
         draft: {
           ...state.draft,
           pricingTiers: state.draft.pricingTiers.map((tier) =>
-            tier.id === action.id ? { ...tier, ...action.updates } : tier
+            tier.id === action.id ? { ...tier, ...action.updates } : tier,
           ),
         },
       };
@@ -176,7 +197,9 @@ function productDraftReducer(
         ...state,
         draft: {
           ...state.draft,
-          pricingTiers: state.draft.pricingTiers.filter((tier) => tier.id !== action.id),
+          pricingTiers: state.draft.pricingTiers.filter(
+            (tier) => tier.id !== action.id,
+          ),
         },
       };
 
@@ -195,7 +218,7 @@ function productDraftReducer(
         draft: {
           ...state.draft,
           resourceRules: state.draft.resourceRules.map((rule) =>
-            rule.id === action.id ? { ...rule, ...action.updates } : rule
+            rule.id === action.id ? { ...rule, ...action.updates } : rule,
           ),
         },
       };
@@ -205,7 +228,9 @@ function productDraftReducer(
         ...state,
         draft: {
           ...state.draft,
-          resourceRules: state.draft.resourceRules.filter((rule) => rule.id !== action.id),
+          resourceRules: state.draft.resourceRules.filter(
+            (rule) => rule.id !== action.id,
+          ),
         },
       };
 
@@ -217,7 +242,10 @@ function productDraftReducer(
 // Context
 type ProductDraftContextType = {
   draft: ProductDraft;
-  setField: <K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) => void;
+  setField: <K extends keyof ProductDraft>(
+    key: K,
+    value: ProductDraft[K],
+  ) => void;
   setDraft: (partial: Partial<ProductDraft>) => void;
   resetDraft: () => void;
   addPricingTier: (tier: PricingTier) => void;
@@ -228,7 +256,9 @@ type ProductDraftContextType = {
   removeResourceRule: (id: string) => void;
 };
 
-const ProductDraftContext = createContext<ProductDraftContextType | undefined>(undefined);
+const ProductDraftContext = createContext<ProductDraftContextType | undefined>(
+  undefined,
+);
 
 // Provider component
 export function ProductDraftProvider({ children }: { children: ReactNode }) {
@@ -236,7 +266,10 @@ export function ProductDraftProvider({ children }: { children: ReactNode }) {
     draft: INITIAL_DRAFT,
   });
 
-  const setField = useCallback(function<K extends keyof ProductDraft>(key: K, value: ProductDraft[K]): void {
+  const setField = useCallback(function <K extends keyof ProductDraft>(
+    key: K,
+    value: ProductDraft[K],
+  ): void {
     dispatch({ type: "SET_FIELD", key, value });
   }, []);
 
@@ -252,9 +285,12 @@ export function ProductDraftProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "ADD_PRICING_TIER", tier });
   }, []);
 
-  const updatePricingTier = useCallback((id: string, updates: Partial<PricingTier>) => {
-    dispatch({ type: "UPDATE_PRICING_TIER", id, updates });
-  }, []);
+  const updatePricingTier = useCallback(
+    (id: string, updates: Partial<PricingTier>) => {
+      dispatch({ type: "UPDATE_PRICING_TIER", id, updates });
+    },
+    [],
+  );
 
   const removePricingTier = useCallback((id: string) => {
     dispatch({ type: "REMOVE_PRICING_TIER", id });
@@ -264,9 +300,12 @@ export function ProductDraftProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "ADD_RESOURCE_RULE", rule });
   }, []);
 
-  const updateResourceRule = useCallback((id: string, updates: Partial<ResourceRule>) => {
-    dispatch({ type: "UPDATE_RESOURCE_RULE", id, updates });
-  }, []);
+  const updateResourceRule = useCallback(
+    (id: string, updates: Partial<ResourceRule>) => {
+      dispatch({ type: "UPDATE_RESOURCE_RULE", id, updates });
+    },
+    [],
+  );
 
   const removeResourceRule = useCallback((id: string) => {
     dispatch({ type: "REMOVE_RESOURCE_RULE", id });
@@ -296,7 +335,9 @@ export function ProductDraftProvider({ children }: { children: ReactNode }) {
 export function useProductDraft() {
   const context = useContext(ProductDraftContext);
   if (context === undefined) {
-    throw new Error("useProductDraft must be used within a ProductDraftProvider");
+    throw new Error(
+      "useProductDraft must be used within a ProductDraftProvider",
+    );
   }
   return context;
 }
