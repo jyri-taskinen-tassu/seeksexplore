@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProductDraft } from "@/lib/productStore";
 import type { ProductDraft as StoreProductDraft } from "@/lib/productStore";
+import TiptapEditor from "@/app/components/provider/TiptapEditor";
 
 type Step = "start" | "editor";
 
@@ -728,12 +729,9 @@ export default function ProviderProductNewPage() {
 
                 {/* Description */}
                 <Field label="Description">
-                  <textarea
-                    value={draft.description}
-                    onChange={(e) => update("description", e.target.value)}
-                    rows={4}
-                    placeholder="Describe the experience, what's included, meeting point, etc."
-                    className="w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                  <TiptapEditor
+                    content={draft.description}
+                    onChange={(html) => update("description", html)}
                   />
                 </Field>
 
