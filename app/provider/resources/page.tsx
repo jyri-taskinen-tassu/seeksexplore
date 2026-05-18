@@ -16,6 +16,7 @@ export default function ProviderResourcesPage() {
   const {
     categories,
     variants,
+    loading,
     addCategory,
     updateCategory,
     addVariant,
@@ -26,14 +27,24 @@ export default function ProviderResourcesPage() {
   } = useResourceInventory();
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    categories[0]?.id || null
+    null,
   );
-  const [editingVariant, setEditingVariant] = useState<ResourceVariant | null>(null);
+  const [editingVariant, setEditingVariant] = useState<ResourceVariant | null>(
+    null,
+  );
   const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [isAddingVariant, setIsAddingVariant] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
+  // Select first category once loaded
+  React.useEffect(() => {
+    if (!loading && categories.length > 0 && !selectedCategoryId) {
+      setSelectedCategoryId(categories[0].id);
+    }
+  }, [loading, categories, selectedCategoryId]);
+
+  const selectedCategory = categories.find(
+    (cat) => cat.id === selectedCategoryId,
+  );
   const categoryVariants = selectedCategoryId
     ? getVariantsByCategory(selectedCategoryId)
     : [];
@@ -41,7 +52,7 @@ export default function ProviderResourcesPage() {
   function handleAddCategory() {
     if (!newCategoryName.trim()) return;
     const newCategory: ResourceCategory = {
-      id: `cat-${Date.now()}`,
+      id: crypto.randomUUID(),
       name: newCategoryName.trim(),
     };
     addCategory(newCategory);
@@ -52,27 +63,22 @@ export default function ProviderResourcesPage() {
 
   function handleAddVariant() {
     if (!selectedCategoryId) return;
-    const newVariant: ResourceVariant = {
-      id: `var-${Date.now()}`,
+    setEditingVariant({
+      id: crypto.randomUUID(),
       categoryId: selectedCategoryId,
       name: "",
       unitLabel: "unit",
       totalUnits: 0,
       bufferUnits: 0,
       status: "active",
-    };
-    addVariant(newVariant);
-    setEditingVariant(newVariant);
-    setIsAddingVariant(false);
+    });
   }
 
   function handleSaveVariant(variant: ResourceVariant) {
-    if (variant.id.startsWith("var-") && !variants.find((v) => v.id === variant.id)) {
-      // New variant
-      addVariant(variant);
-    } else {
-      // Update existing
+    if (variants.find((v) => v.id === variant.id)) {
       updateVariant(variant.id, variant);
+    } else {
+      addVariant(variant);
     }
     setEditingVariant(null);
   }
@@ -83,13 +89,23 @@ export default function ProviderResourcesPage() {
     }
   }
 
+  if (loading) {
     return (
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="text-sm text-neutral-500">Loading resources…</div>
+      </div>
+    );
+  }
+
+  return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-neutral-200 px-6 py-4">
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between">
           <div>
-            <div className="text-lg font-medium text-neutral-900">Resources</div>
+            <div className="text-lg font-medium text-neutral-900">
+              Resources
+            </div>
             <div className="text-sm text-neutral-500">
               Manage your inventory: vehicles, equipment, guides
             </div>
@@ -103,7 +119,9 @@ export default function ProviderResourcesPage() {
           <aside className="lg:col-span-1">
             <div className="rounded-xl border border-neutral-200 bg-white p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="text-sm font-medium text-neutral-900">Categories</div>
+                <div className="text-sm font-medium text-neutral-900">
+                  Categories
+                </div>
                 <button
                   type="button"
                   onClick={() => setIsAddingCategory(true)}
@@ -162,12 +180,14 @@ export default function ProviderResourcesPage() {
                       "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
                       selectedCategoryId === category.id
                         ? "bg-neutral-900 text-white"
-                        : "bg-neutral-50 text-neutral-900 hover:bg-neutral-100"
+                        : "bg-neutral-50 text-neutral-900 hover:bg-neutral-100",
                     )}
                   >
                     <div className="font-medium">{category.name}</div>
                     {category.description && (
-                      <div className="mt-0.5 text-xs opacity-70">{category.description}</div>
+                      <div className="mt-0.5 text-xs opacity-70">
+                        {category.description}
+                      </div>
                     )}
                   </button>
                 ))}
@@ -223,15 +243,19 @@ export default function ProviderResourcesPage() {
                                   "rounded-full border px-2 py-0.5 text-xs",
                                   variant.status === "active"
                                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : "border-amber-200 bg-amber-50 text-amber-700"
+                                    : "border-amber-200 bg-amber-50 text-amber-700",
                                 )}
                               >
-                                {variant.status === "active" ? "OK" : "Maintenance"}
+                                {variant.status === "active"
+                                  ? "OK"
+                                  : "Maintenance"}
                               </span>
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
                               <div>
-                                <span className="text-neutral-500">Capacity:</span>{" "}
+                                <span className="text-neutral-500">
+                                  Capacity:
+                                </span>{" "}
                                 <span className="font-medium text-neutral-900">
                                   {variant.capacityPerUnit
                                     ? `${variant.capacityPerUnit} ppl / ${variant.unitLabel}`
@@ -239,19 +263,25 @@ export default function ProviderResourcesPage() {
                                 </span>
                               </div>
                               <div>
-                                <span className="text-neutral-500">Total units:</span>{" "}
+                                <span className="text-neutral-500">
+                                  Total units:
+                                </span>{" "}
                                 <span className="font-medium text-neutral-900">
                                   {variant.totalUnits}
                                 </span>
                               </div>
                               <div>
-                                <span className="text-neutral-500">Buffer:</span>{" "}
+                                <span className="text-neutral-500">
+                                  Buffer:
+                                </span>{" "}
                                 <span className="font-medium text-neutral-900">
                                   {variant.bufferUnits}
                                 </span>
                               </div>
                               <div>
-                                <span className="text-neutral-500">Available:</span>{" "}
+                                <span className="text-neutral-500">
+                                  Available:
+                                </span>{" "}
                                 <span className="font-medium text-emerald-700">
                                   {getAvailableUnits(variant)}
                                 </span>
@@ -273,10 +303,12 @@ export default function ProviderResourcesPage() {
                                 "rounded-lg border px-3 py-1.5 text-xs font-medium",
                                 variant.status === "active"
                                   ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                                  : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                  : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
                               )}
                             >
-                              {variant.status === "active" ? "Set maintenance" : "Set active"}
+                              {variant.status === "active"
+                                ? "Set maintenance"
+                                : "Set active"}
                             </button>
                             <button
                               type="button"
@@ -311,7 +343,6 @@ export default function ProviderResourcesPage() {
           onClose={() => setEditingVariant(null)}
         />
       )}
-
     </div>
   );
 }
@@ -362,7 +393,9 @@ function MaintenanceModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-neutral-900">Set maintenance units</div>
+            <div className="text-sm font-medium text-neutral-900">
+              Set maintenance units
+            </div>
             <div className="mt-1 text-xs text-neutral-600">{variant.name}</div>
           </div>
           <button
@@ -402,11 +435,15 @@ function MaintenanceModal({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <span className="text-neutral-500">Total units:</span>{" "}
-                <span className="font-medium text-neutral-900">{variant.totalUnits}</span>
+                <span className="font-medium text-neutral-900">
+                  {variant.totalUnits}
+                </span>
               </div>
               <div>
                 <span className="text-neutral-500">Buffer:</span>{" "}
-                <span className="font-medium text-neutral-900">{variant.bufferUnits}</span>
+                <span className="font-medium text-neutral-900">
+                  {variant.bufferUnits}
+                </span>
               </div>
               <div>
                 <span className="text-neutral-500">Maintenance:</span>{" "}
@@ -415,7 +452,10 @@ function MaintenanceModal({
               <div>
                 <span className="text-neutral-500">Available:</span>{" "}
                 <span className="font-medium text-emerald-700">
-                  {Math.max(0, variant.totalUnits - variant.bufferUnits - numValue)}
+                  {Math.max(
+                    0,
+                    variant.totalUnits - variant.bufferUnits - numValue,
+                  )}
                 </span>
               </div>
             </div>
@@ -438,7 +478,7 @@ function MaintenanceModal({
               "rounded-lg px-4 py-2 text-sm font-medium",
               isValid
                 ? "bg-neutral-900 text-white hover:bg-neutral-800"
-                : "cursor-not-allowed bg-neutral-200 text-neutral-500"
+                : "cursor-not-allowed bg-neutral-200 text-neutral-500",
             )}
           >
             Save
@@ -484,7 +524,9 @@ function VariantEditor({
       <div className="w-full max-w-md rounded-xl border border-neutral-200 bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm font-medium text-neutral-900">
-            {variant.id.startsWith("var-") && !variant.name ? "Add variant" : "Edit variant"}
+            {variant.id.startsWith("var-") && !variant.name
+              ? "Add variant"
+              : "Edit variant"}
           </div>
           <button
             type="button"
@@ -520,7 +562,9 @@ function VariantEditor({
               onChange={(e) =>
                 setEdited({
                   ...edited,
-                  capacityPerUnit: e.target.value ? Number(e.target.value) : undefined,
+                  capacityPerUnit: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
                 })
               }
               placeholder="e.g., 1 or 2"
@@ -539,7 +583,10 @@ function VariantEditor({
             <select
               value={edited.unitLabel}
               onChange={(e) =>
-                setEdited({ ...edited, unitLabel: e.target.value as ResourceVariant["unitLabel"] })
+                setEdited({
+                  ...edited,
+                  unitLabel: e.target.value as ResourceVariant["unitLabel"],
+                })
               }
               className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
             >
@@ -560,7 +607,10 @@ function VariantEditor({
                 type="number"
                 value={edited.totalUnits}
                 onChange={(e) =>
-                  setEdited({ ...edited, totalUnits: Number(e.target.value) || 0 })
+                  setEdited({
+                    ...edited,
+                    totalUnits: Number(e.target.value) || 0,
+                  })
                 }
                 min="0"
                 className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
@@ -574,14 +624,16 @@ function VariantEditor({
                 type="number"
                 value={edited.bufferUnits}
                 onChange={(e) =>
-                  setEdited({ ...edited, bufferUnits: Number(e.target.value) || 0 })
+                  setEdited({
+                    ...edited,
+                    bufferUnits: Number(e.target.value) || 0,
+                  })
                 }
                 min="0"
                 className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
               />
             </div>
           </div>
-
         </div>
 
         <div className="mt-6 flex items-center justify-end gap-3">
@@ -601,7 +653,6 @@ function VariantEditor({
           </button>
         </div>
       </div>
-      </div>
-    );
-  }
-  
+    </div>
+  );
+}

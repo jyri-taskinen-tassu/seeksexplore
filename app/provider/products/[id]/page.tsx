@@ -19,7 +19,8 @@ export default async function ProductDetailPage({
   const { data: product } = await supabase
     .schema(SCHEMA)
     .from("products")
-    .select(`
+    .select(
+      `
       *,
       product_information(*),
       product_images(*),
@@ -27,9 +28,10 @@ export default async function ProductDetailPage({
       product_target_groups(*),
       product_certificates(*),
       product_availability(*)
-    `)
+    `,
+    )
     .eq("id", id)
-    .eq("provider_id", (provider as { id: string }).id)
+    .eq("provider_id", (provider as unknown as { id: string }).id)
     .single();
 
   if (!product) notFound();
