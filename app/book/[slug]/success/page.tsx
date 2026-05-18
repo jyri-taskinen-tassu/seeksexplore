@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
-import Stripe from "stripe";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
+
+const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
 const BG = "#F4F1EA";
 const DARK = "#0A0A0A";
@@ -69,7 +71,7 @@ function DetailRow({
   );
 }
 
-type SearchParams = { session_id?: string; booking_id?: string; ref?: string };
+type SearchParams = { booking_id?: string; ref?: string };
 
 export default async function SuccessPage({
   params,
@@ -81,84 +83,22 @@ export default async function SuccessPage({
   const { slug } = await params;
   const sp = await searchParams;
 
-  // ── Free booking (no Stripe) ────────────────────────────────────────────────
-  if (sp.booking_id && sp.ref) {
-    return (
-      <SuccessScreen
-        slug={slug}
-        reference={sp.ref}
-        productName="Your experience"
-        slotDate={null}
-        slotTime={null}
-        guests={null}
-        customerName={null}
-        customerEmail={null}
-        totalAmount={null}
-        isPaid={false}
-      />
-    );
-  }
+  if (!sp.booking_id) redirect(`/book/${slug}`);
 
-  // ── Stripe checkout ─────────────────────────────────────────────────────────
-  if (!sp.session_id) redirect(`/book/${slug}`);
+  const admin = createAdminClient();
+  const { data: booking } = await admin
+    .schema(SCHEMA)
+    .from("bookings")
+    .select("*")
+    .eq("id", sp.booking_id)
+    .single();
 
-  if (!process.env.STRIPE_SECRET_KEY) redirect(`/book/${slug}`);
+  if (!booking) redirect(`/book/${slug}`);
 
-  let session: Stripe.Checkout.Session;
-  try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    session = await stripe.checkout.sessions.retrieve(sp.session_id);
-  } catch {
-    redirect(`/book/${slug}`);
-  }
-
-  if (session.status !== "complete") redirect(`/book/${slug}`);
-
-  const meta = session.metadata ?? {};
-  const reference = "SE-" + sp.session_id.slice(-6).toUpperCase();
-
-  return (
-    <SuccessScreen
-      slug={slug}
-      reference={reference}
-      productName={meta.product_name ?? "Your experience"}
-      slotDate={meta.slot_date ?? null}
-      slotTime={meta.slot_time ?? null}
-      guests={meta.guests ? parseInt(meta.guests, 10) : null}
-      customerName={meta.customer_name ?? null}
-      customerEmail={meta.customer_email ?? session.customer_email ?? null}
-      totalAmount={
-        session.amount_total != null ? session.amount_total / 100 : null
-      }
-      isPaid
-    />
-  );
-}
-
-function SuccessScreen({
-  slug,
-  reference,
-  productName,
-  slotDate,
-  slotTime,
-  guests,
-  customerName,
-  customerEmail,
-  totalAmount,
-  isPaid,
-}: {
-  slug: string;
-  reference: string;
-  productName: string;
-  slotDate: string | null;
-  slotTime: string | null;
-  guests: number | null;
-  customerName: string | null;
-  customerEmail: string | null;
-  totalAmount: number | null;
-  isPaid: boolean;
-}) {
-  const firstName = customerName?.split(" ")[0] ?? "adventurer";
+  const reference = sp.ref ?? "SE-" + sp.booking_id.slice(-6).toUpperCase();
+  const isPaid = booking.total_price > 0;
+  const customerFirstName =
+    booking.customer_name?.split(" ")[0] ?? "adventurer";
 
   return (
     <div
@@ -214,7 +154,7 @@ function SuccessScreen({
             margin: "0 0 20px",
           }}
         >
-          You&apos;re on the list, {firstName}.
+          You&apos;re on the list, {customerFirstName}.
         </h1>
 
         <p
@@ -228,27 +168,31 @@ function SuccessScreen({
           }}
         >
           {isPaid
-            ? `Your booking has been confirmed. We've sent a confirmation to ${customerEmail ?? "your email"}.`
+            ? `Your booking has been confirmed. We've sent a confirmation to ${booking.customer_email}.`
             : `Your request has been sent to the provider. They'll confirm by email within 24h.`}
         </p>
 
         {/* Details card */}
         <div style={{ border: BORDER, background: CARD_BG, marginBottom: 24 }}>
           <DetailRow label="Reference" value={reference} />
-          <DetailRow label="Activity" value={productName} />
-          {slotDate && <DetailRow label="Date" value={fmtDateLong(slotDate)} />}
-          {slotTime && <DetailRow label="Time" value={slotTime} />}
-          {guests != null && (
+          <DetailRow label="Activity" value={booking.product_name} />
+          {booking.booking_date && (
+            <DetailRow label="Date" value={fmtDateLong(booking.booking_date)} />
+          )}
+          {booking.booking_time && (
+            <DetailRow label="Time" value={booking.booking_time} />
+          )}
+          <DetailRow
+            label="Travelers"
+            value={`${booking.guests} ${booking.guests === 1 ? "person" : "people"}`}
+          />
+          <DetailRow label="Confirmation to" value={booking.customer_email} />
+          {isPaid && (
             <DetailRow
-              label="Travelers"
-              value={`${guests} ${guests === 1 ? "person" : "people"}`}
+              label="Total charged"
+              value={fmtEUR(Number(booking.total_price))}
+              last
             />
-          )}
-          {customerEmail && (
-            <DetailRow label="Confirmation to" value={customerEmail} />
-          )}
-          {totalAmount != null && (
-            <DetailRow label="Total charged" value={fmtEUR(totalAmount)} last />
           )}
         </div>
 

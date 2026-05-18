@@ -1,23 +1,19 @@
 /**
  * POST /api/book/[slug]/checkout
  *
+ * Two modes:
+ *   price = 0 / null  → creates pending booking directly, returns { booking_id, reference }
+ *   price > 0         → expects paymentIntentId, creates pending booking with PI ID,
+ *                        returns { booking_id, reference } — client then calls stripe.confirmPayment()
+ *
  * Required env vars:
  *   STRIPE_SECRET_KEY      — Stripe secret key (sk_test_... or sk_live_...)
  *   STRIPE_WEBHOOK_SECRET  — for webhook signature verification
- *
- * If price is null / 0: creates a pending booking directly (no Stripe).
- * If price > 0: creates a Stripe Checkout session and returns { url }.
  */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 
 const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
-
-function getBaseUrl(request: Request): string {
-  const url = new URL(request.url);
-  return `${url.protocol}//${url.host}`;
-}
 
 function generateRef(): string {
   return "SE-" + Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -53,6 +49,7 @@ export async function POST(
     customer_email,
     customer_phone,
     notes,
+    payment_intent_id,
   } = body as {
     product_id: string;
     product_name: string;
@@ -65,6 +62,7 @@ export async function POST(
     customer_email: string;
     customer_phone?: string;
     notes?: string;
+    payment_intent_id?: string;
   };
 
   if (
@@ -83,7 +81,6 @@ export async function POST(
     );
   }
 
-  // Verify product belongs to provider
   const { data: product } = await admin
     .schema(SCHEMA)
     .from("products")
@@ -101,80 +98,74 @@ export async function POST(
       ? price_per_person * guests
       : 0;
 
-  // No price → create pending booking directly (no payment)
-  if (totalPrice === 0) {
-    const reference = generateRef();
-    const { data: booking, error } = await admin
-      .schema(SCHEMA)
-      .from("bookings")
-      .insert({
-        provider_id: provider.id,
-        product_id,
-        product_name,
-        customer_name: customerName,
-        customer_email,
-        customer_phone: customer_phone ?? null,
-        booking_date: slot_date,
-        booking_time: slot_time,
-        guests,
-        status: "pending",
-        total_price: 0,
-        currency: "EUR",
-        notes: notes ?? null,
-      })
-      .select("id")
-      .single();
+  const reference = generateRef();
 
-    if (error)
-      return NextResponse.json({ error: error.message }, { status: 500 });
-
-    return NextResponse.json({ booking_id: booking.id, reference });
-  }
-
-  // Price > 0 → Stripe Checkout
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return NextResponse.json(
-      { error: "Stripe not configured" },
-      { status: 500 },
-    );
-  }
-
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const baseUrl = getBaseUrl(request);
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: customer_email,
-    line_items: [
-      {
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: product_name,
-            description: `${slot_date} at ${slot_time} · ${guests} ${guests === 1 ? "person" : "people"}`,
-          },
-          unit_amount: Math.round(price_per_person! * 100),
-        },
-        quantity: guests,
-      },
-    ],
-    metadata: {
-      slug,
+  const { data: booking, error } = await admin
+    .schema(SCHEMA)
+    .from("bookings")
+    .insert({
       provider_id: provider.id,
-      provider_name: provider.business_name ?? provider.official_name,
       product_id,
       product_name,
-      slot_date,
-      slot_time,
-      guests: String(guests),
       customer_name: customerName,
       customer_email,
-      customer_phone: customer_phone ?? "",
-      notes: notes ?? "",
-    },
-    success_url: `${baseUrl}/book/${slug}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/book/${slug}`,
-  });
+      customer_phone: customer_phone ?? null,
+      booking_date: slot_date,
+      booking_time: slot_time,
+      guests,
+      status: "pending",
+      total_price: totalPrice,
+      currency: "EUR",
+      notes: notes ?? null,
+      stripe_payment_intent_id: payment_intent_id ?? null,
+    })
+    .select("id")
+    .single();
 
-  return NextResponse.json({ url: session.url });
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Upsert customer record for provider CRM
+  const { data: existing } = await admin
+    .schema(SCHEMA)
+    .from("customers")
+    .select("id, total_bookings, total_spent")
+    .eq("provider_id", provider.id)
+    .eq("email", customer_email)
+    .single();
+
+  if (existing) {
+    await admin
+      .schema(SCHEMA)
+      .from("customers")
+      .update({
+        first_name: customer_first_name,
+        last_name: customer_last_name,
+        phone: customer_phone ?? null,
+        total_bookings: existing.total_bookings + 1,
+        total_spent: Number(existing.total_spent) + totalPrice,
+        last_booking_date: slot_date,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+  } else {
+    await admin
+      .schema(SCHEMA)
+      .from("customers")
+      .insert({
+        provider_id: provider.id,
+        first_name: customer_first_name,
+        last_name: customer_last_name,
+        email: customer_email,
+        phone: customer_phone ?? null,
+        tags: [],
+        total_bookings: 1,
+        total_spent: totalPrice,
+        currency: "EUR",
+        first_booking_date: slot_date,
+        last_booking_date: slot_date,
+      });
+  }
+
+  return NextResponse.json({ booking_id: booking.id, reference });
 }

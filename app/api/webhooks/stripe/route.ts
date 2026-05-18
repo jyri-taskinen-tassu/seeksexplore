@@ -1,8 +1,8 @@
 /**
  * POST /api/webhooks/stripe
  *
- * Handles Stripe webhook events. On checkout.session.completed, creates
- * a confirmed booking in the database.
+ * Handles Stripe webhook events. On payment_intent.succeeded, updates the
+ * matching pending booking to confirmed.
  *
  * Required env vars:
  *   STRIPE_SECRET_KEY
@@ -43,31 +43,18 @@ export async function POST(request: Request) {
     );
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const meta = session.metadata;
-    if (!meta) return NextResponse.json({ ok: true });
-
+  if (event.type === "payment_intent.succeeded") {
+    const pi = event.data.object as Stripe.PaymentIntent;
     const admin = createAdminClient();
 
     await admin
       .schema(SCHEMA)
       .from("bookings")
-      .insert({
-        provider_id: meta.provider_id,
-        product_id: meta.product_id,
-        product_name: meta.product_name,
-        customer_name: meta.customer_name,
-        customer_email: meta.customer_email,
-        customer_phone: meta.customer_phone || null,
-        booking_date: meta.slot_date,
-        booking_time: meta.slot_time,
-        guests: parseInt(meta.guests, 10),
+      .update({
         status: "confirmed",
-        total_price: (session.amount_total ?? 0) / 100,
-        currency: (session.currency ?? "eur").toUpperCase(),
-        notes: meta.notes || null,
-      });
+        total_price: pi.amount_received / 100,
+      })
+      .eq("stripe_payment_intent_id", pi.id);
   }
 
   return NextResponse.json({ ok: true });

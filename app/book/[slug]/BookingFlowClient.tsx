@@ -1,6 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1305,73 +1316,84 @@ function StepDetails({
   setForm: (f: Form) => void;
   onBack: () => void;
 }) {
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const update = (k: keyof Form, v: string | number) =>
-    setForm({ ...form, [k]: v });
-
-  const maxPeople = product.capacity_max ?? 20;
   const pricePerPerson = product.price_from;
+  const isPaid = pricePerPerson != null && pricePerPerson > 0;
+
   const subtotal = pricePerPerson != null ? pricePerPerson * form.people : null;
   const serviceFee =
     subtotal != null ? Math.round(subtotal * 0.04 * 100) / 100 : null;
   const total =
     subtotal != null && serviceFee != null ? subtotal + serviceFee : null;
 
-  const canSubmit =
-    form.firstName.trim() &&
-    form.lastName.trim() &&
-    form.email.trim() &&
-    form.people >= 1;
+  // clientSecret for Stripe Elements (paid products only)
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [piLoading, setPiLoading] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!canSubmit) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/book/${slug}/checkout`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product_id: product.id,
-          product_name: product.name,
-          slot_date: slot.date,
-          slot_time: slot.time,
-          guests: form.people,
-          price_per_person: pricePerPerson,
-          customer_first_name: form.firstName.trim(),
-          customer_last_name: form.lastName.trim(),
-          customer_email: form.email.trim(),
-          customer_phone: form.phone.trim() || undefined,
-          notes: form.notes.trim() || undefined,
-        }),
+  // Create/refresh PaymentIntent when people count or product changes
+  useEffect(() => {
+    if (!isPaid || !product.price_from) return;
+    let cancelled = false;
+    setPiLoading(true);
+    fetch(`/api/book/${slug}/payment-intent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_id: product.id,
+        guests: form.people,
+        price_per_person: product.price_from,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          setPaymentIntentId(data.paymentIntentId);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPiLoading(false);
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong");
-        return;
-      }
-      if (data.url) {
-        // Stripe checkout
-        window.location.href = data.url;
-      } else if (data.booking_id) {
-        // Free booking (no Stripe)
-        window.location.href = `/book/${slug}/success?booking_id=${data.booking_id}&ref=${data.reference}`;
-      }
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, product.id, product.price_from, form.people, isPaid]);
+
+  const stripeAppearance = {
+    theme: "stripe" as const,
+    variables: {
+      colorPrimary: "#0A0A0A",
+      colorBackground: "#FFFFFF",
+      colorText: "#0A0A0A",
+      colorDanger: "#C8442E",
+      fontFamily: "inherit",
+      borderRadius: "0px",
+      spacingUnit: "5px",
+    },
+    rules: {
+      ".Input": {
+        border: "1.5px solid #0A0A0A",
+        boxShadow: "none",
+        padding: "12px 14px",
+      },
+      ".Input:focus": { border: "1.5px solid #0A0A0A", boxShadow: "none" },
+      ".Label": {
+        fontWeight: "500",
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        textTransform: "uppercase",
+      },
+    },
   };
 
-  return (
+  const formContent = (
     <div
       style={{ display: "grid", gridTemplateColumns: "1fr", width: "100%" }}
       className="step3-grid"
     >
-      {/* Form */}
+      {/* Left: form */}
       <div
         style={{
           padding: "28px 24px 140px",
@@ -1408,13 +1430,13 @@ function StepDetails({
         {/* Group size */}
         <FormSection
           title="01 · Group size"
-          hint={`How many people are coming? Max ${maxPeople}.`}
+          hint={`How many people? Max ${product.capacity_max ?? 20}.`}
         >
           <Counter
             value={form.people}
-            onChange={(v) => update("people", v)}
+            onChange={(v) => setForm({ ...form, people: v })}
             min={1}
-            max={maxPeople}
+            max={product.capacity_max ?? 20}
           />
           {pricePerPerson != null && (
             <div
@@ -1425,7 +1447,8 @@ function StepDetails({
                 marginTop: 8,
               }}
             >
-              Max {maxPeople} per booking · €{pricePerPerson} per person
+              Max {product.capacity_max ?? 20} per booking · €{pricePerPerson}{" "}
+              per person
             </div>
           )}
         </FormSection>
@@ -1436,7 +1459,9 @@ function StepDetails({
             <FormField label="First name *">
               <input
                 value={form.firstName}
-                onChange={(e) => update("firstName", e.target.value)}
+                onChange={(e) =>
+                  setForm({ ...form, firstName: e.target.value })
+                }
                 style={inputStyle}
                 placeholder="Alex"
               />
@@ -1444,7 +1469,7 @@ function StepDetails({
             <FormField label="Last name *">
               <input
                 value={form.lastName}
-                onChange={(e) => update("lastName", e.target.value)}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                 style={inputStyle}
                 placeholder="Petrova"
               />
@@ -1455,7 +1480,7 @@ function StepDetails({
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => update("email", e.target.value)}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 style={inputStyle}
                 placeholder="alex@example.com"
               />
@@ -1463,7 +1488,7 @@ function StepDetails({
             <FormField label="Phone">
               <input
                 value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 style={inputStyle}
                 placeholder="+358 40 000 0000"
               />
@@ -1479,7 +1504,7 @@ function StepDetails({
         >
           <textarea
             value={form.notes}
-            onChange={(e) => update("notes", e.target.value)}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
             rows={3}
             placeholder="Optional"
             style={{
@@ -1490,68 +1515,106 @@ function StepDetails({
           />
         </FormSection>
 
-        {/* Payment info */}
+        {/* Payment section */}
         <FormSection
           title="04 · Payment"
           hint={
-            pricePerPerson != null
-              ? "You'll be redirected to Stripe's secure checkout to complete payment."
+            isPaid
+              ? "Enter your card details below."
               : "No payment required — the provider will confirm your request."
           }
         >
-          <div
-            style={{
-              padding: "14px 16px",
-              border: BORDER,
-              background: CARD_BG,
-              fontFamily: "var(--font-space-grotesk), sans-serif",
-              fontSize: 13,
-              color: "#3A3833",
-            }}
-          >
-            {pricePerPerson != null ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {isPaid ? (
+            piLoading || !clientSecret ? (
+              <div
+                style={{
+                  padding: "32px 16px",
+                  border: BORDER,
+                  background: CARD_BG,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                }}
+              >
                 <span
                   style={{
-                    display: "inline-block",
-                    width: 8,
-                    height: 8,
-                    background: "#1F8A5B",
-                    borderRadius: 999,
+                    fontFamily: "var(--font-jetbrains-mono), monospace",
+                    fontSize: 11,
+                    color: MUTED,
+                    letterSpacing: "0.08em",
                   }}
-                />
-                <span>
-                  Secured · Stripe · 256-bit TLS · Charged after provider
-                  confirms
+                >
+                  Loading payment form…
                 </span>
               </div>
             ) : (
-              <div>
-                This is a free booking request. The provider will confirm your
-                reservation.
+              <div
+                style={{
+                  border: BORDER,
+                  background: CARD_BG,
+                  padding: "20px 18px",
+                }}
+              >
+                <PaymentElement
+                  options={{
+                    layout: "tabs",
+                    fields: {
+                      billingDetails: { email: "never", name: "never" },
+                    },
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 14,
+                    paddingTop: 14,
+                    borderTop: "1px dashed #0A0A0A",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 8,
+                      height: 8,
+                      background: "#1F8A5B",
+                      borderRadius: 999,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "var(--font-space-grotesk), sans-serif",
+                      fontSize: 12,
+                      color: MUTED,
+                    }}
+                  >
+                    Secured · Stripe · 256-bit TLS
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
+            )
+          ) : (
+            <div
+              style={{
+                padding: "14px 16px",
+                border: BORDER,
+                background: CARD_BG,
+                fontFamily: "var(--font-space-grotesk), sans-serif",
+                fontSize: 13,
+                color: "#3A3833",
+              }}
+            >
+              This is a free booking request. The provider will confirm your
+              reservation.
+            </div>
+          )}
         </FormSection>
-
-        {error && (
-          <div
-            style={{
-              padding: "12px 16px",
-              background: "#FFF0ED",
-              border: "1.5px solid #C8442E",
-              color: "#C8442E",
-              fontFamily: "var(--font-space-grotesk), sans-serif",
-              fontSize: 13,
-              marginBottom: 16,
-            }}
-          >
-            {error}
-          </div>
-        )}
       </div>
 
-      {/* Summary sidebar */}
+      {/* Right: summary + pay button */}
       <aside style={{ background: BG, borderTop: BORDER }}>
         <div style={{ padding: "24px", position: "sticky", top: 0 }}>
           <div
@@ -1725,56 +1788,17 @@ function StepDetails({
             </div>
           )}
 
-          <div
-            style={{
-              fontFamily: "var(--font-space-grotesk), sans-serif",
-              fontSize: 12,
-              color: "#3A3833",
-              lineHeight: 1.5,
-              marginBottom: 18,
-              padding: "12px 14px",
-              background: BG,
-              border: "1.5px dashed #0A0A0A",
-            }}
-          >
-            {pricePerPerson != null ? (
-              <>
-                <strong>Authorization only.</strong> Nothing is charged until
-                the provider confirms — usually within 24h.
-              </>
-            ) : (
-              <>
-                <strong>Free booking.</strong> The provider will confirm your
-                request by email.
-              </>
-            )}
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit || submitting}
-            style={{
-              width: "100%",
-              background: canSubmit && !submitting ? DARK : "#CFCBC2",
-              color: canSubmit && !submitting ? BG : MUTED,
-              border: BORDER,
-              padding: "18px 22px",
-              fontFamily: "var(--font-space-grotesk), sans-serif",
-              fontWeight: 700,
-              fontSize: 15,
-              cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-            }}
-          >
-            {submitting
-              ? "Redirecting…"
-              : pricePerPerson != null
-                ? `Pay ${total != null ? fmtEUR(total) : ""} →`
-                : "Confirm booking →"}
-          </button>
+          <SidebarPayButton
+            slug={slug}
+            product={product}
+            slot={slot}
+            form={form}
+            isPaid={isPaid}
+            total={total}
+            paymentIntentId={paymentIntentId}
+            clientSecret={clientSecret}
+            piLoading={piLoading}
+          />
 
           <button
             onClick={onBack}
@@ -1804,6 +1828,176 @@ function StepDetails({
         }
       `}</style>
     </div>
+  );
+
+  if (isPaid && clientSecret && stripePromise) {
+    return (
+      <Elements
+        stripe={stripePromise}
+        options={{ clientSecret, appearance: stripeAppearance }}
+      >
+        {formContent}
+      </Elements>
+    );
+  }
+
+  return formContent;
+}
+
+function SidebarPayButton({
+  slug,
+  product,
+  slot,
+  form,
+  isPaid,
+  total,
+  paymentIntentId,
+  clientSecret,
+  piLoading,
+}: {
+  slug: string;
+  product: ProductData;
+  slot: SelectedSlot;
+  form: Form;
+  isPaid: boolean;
+  total: number | null;
+  paymentIntentId: string | null;
+  clientSecret: string | null;
+  piLoading: boolean;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const canSubmit =
+    form.firstName.trim() &&
+    form.lastName.trim() &&
+    form.email.trim() &&
+    form.people >= 1;
+
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      // 1. Create pending booking
+      const res = await fetch(`/api/book/${slug}/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_id: product.id,
+          product_name: product.name,
+          slot_date: slot.date,
+          slot_time: slot.time,
+          guests: form.people,
+          price_per_person: product.price_from,
+          customer_first_name: form.firstName.trim(),
+          customer_last_name: form.lastName.trim(),
+          customer_email: form.email.trim(),
+          customer_phone: form.phone.trim() || undefined,
+          notes: form.notes.trim() || undefined,
+          payment_intent_id: isPaid ? paymentIntentId : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong");
+        return;
+      }
+
+      const { booking_id, reference } = data as {
+        booking_id: string;
+        reference: string;
+      };
+
+      // 2a. Free booking — go straight to success
+      if (!isPaid) {
+        window.location.href = `/book/${slug}/success?booking_id=${booking_id}&ref=${reference}`;
+        return;
+      }
+
+      // 2b. Paid — confirm with Stripe Elements
+      if (!stripe || !elements || !clientSecret) {
+        setError("Payment not ready. Please wait a moment and try again.");
+        return;
+      }
+
+      const returnUrl = `${window.location.origin}/book/${slug}/success?booking_id=${booking_id}&ref=${reference}`;
+
+      const { error: stripeError } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: returnUrl,
+          payment_method_data: {
+            billing_details: {
+              name: `${form.firstName.trim()} ${form.lastName.trim()}`,
+              email: form.email.trim(),
+              phone: form.phone.trim() || undefined,
+            },
+          },
+        },
+      });
+
+      if (stripeError) {
+        setError(stripeError.message ?? "Payment failed. Please try again.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const ready = !isPaid || (!!clientSecret && !piLoading && !!stripe);
+  const btnLabel = submitting
+    ? isPaid
+      ? "Processing…"
+      : "Confirming…"
+    : isPaid && total != null
+      ? `Pay ${fmtEUR(total)} →`
+      : "Confirm booking →";
+
+  return (
+    <>
+      {error && (
+        <div
+          style={{
+            padding: "12px 16px",
+            background: "#FFF0ED",
+            border: "1.5px solid #C8442E",
+            color: "#C8442E",
+            fontFamily: "var(--font-space-grotesk), sans-serif",
+            fontSize: 13,
+            marginBottom: 12,
+          }}
+        >
+          {error}
+        </div>
+      )}
+      <button
+        onClick={handleSubmit}
+        disabled={!canSubmit || submitting || !ready}
+        style={{
+          width: "100%",
+          background: canSubmit && !submitting && ready ? DARK : "#CFCBC2",
+          color: canSubmit && !submitting && ready ? BG : MUTED,
+          border: BORDER,
+          padding: "18px 22px",
+          fontFamily: "var(--font-space-grotesk), sans-serif",
+          fontWeight: 700,
+          fontSize: 15,
+          cursor: canSubmit && !submitting && ready ? "pointer" : "not-allowed",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+        }}
+      >
+        {btnLabel}
+      </button>
+    </>
   );
 }
 
