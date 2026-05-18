@@ -31,7 +31,13 @@ git pull
 
 ### 3. Mark tickets Done
 
-Use `mcp__linear-server__save_issue` to set state = "Done" on every issue ID passed as argument.
+For every issue ID passed as argument:
+
+1. Use `mcp__linear-server__save_issue` to set state = "Done".
+2. Use `mcp__linear-server__list_issues` with `parentId = <issue-id>` to fetch sub-issues.
+3. Mark every sub-issue Done as well (regardless of current status).
+
+Recurse only one level — sub-issues of sub-issues are not touched.
 
 ### 4. Report back
 
