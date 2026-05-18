@@ -23,25 +23,6 @@ export default async function ProviderAvailabilityPage() {
     .order("booking_date", { ascending: true })
     .order("booking_time", { ascending: true });
 
-  const { data: products } = await supabase
-    .schema(SCHEMA)
-    .from("products")
-    .select("id, product_information!product_id(name, language)")
-    .eq("provider_id", (provider as { id: string }).id);
-
-  // Flatten product names (en preferred)
-  type RawProduct = {
-    id: string;
-    product_information: { name: string; language: string }[];
-  };
-  const productNames: Record<string, string> = {};
-  ((products ?? []) as RawProduct[]).forEach((p) => {
-    const en = p.product_information?.find((i) => i.language === "en");
-    const first = p.product_information?.[0];
-    productNames[p.id] = en?.name ?? first?.name ?? "Unknown product";
-  });
-
-  // Flatten product capacity from join
   type RawBooking = {
     products: { capacity_max: number | null } | null;
     [key: string]: unknown;
@@ -53,13 +34,5 @@ export default async function ProviderAvailabilityPage() {
     }),
   );
 
-  return (
-    <AvailabilityClient
-      initialBookings={normalized}
-      productOptions={Object.entries(productNames).map(([id, name]) => ({
-        id,
-        name,
-      }))}
-    />
-  );
+  return <AvailabilityClient initialBookings={normalized} />;
 }

@@ -1,0 +1,2 @@
+-- SEE-38: Drop departures table — bookings is the single source of truth
+DROP TABLE IF EXISTS seeks_and_explore_demo.departures CASCADE;

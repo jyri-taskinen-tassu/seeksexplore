@@ -1,6 +1,10 @@
 "use client";
 
 import React from "react";
+import {
+  NewBookingModal,
+  type NewBookingResult,
+} from "@/app/components/provider/NewBookingModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -498,222 +502,6 @@ function WeekView({
   );
 }
 
-// ─── AddBookingModal ──────────────────────────────────────────────────────────
-
-function AddBookingModal({
-  prefilledDate,
-  productOptions,
-  onClose,
-  onSaved,
-}: {
-  prefilledDate: string;
-  productOptions: { id: string; name: string }[];
-  onClose: () => void;
-  onSaved: (b: DbBooking) => void;
-}) {
-  const [productId, setProductId] = React.useState(productOptions[0]?.id ?? "");
-  const [date, setDate] = React.useState(prefilledDate);
-  const [time, setTime] = React.useState("09:00");
-  const [guests, setGuests] = React.useState(2);
-  const [customerName, setCustomerName] = React.useState("");
-  const [customerEmail, setCustomerEmail] = React.useState("");
-  const [notes, setNotes] = React.useState("");
-  const [saving, setSaving] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const selectedProduct = productOptions.find((p) => p.id === productId);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/provider/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          product_id: productId || null,
-          product_name: selectedProduct?.name ?? "",
-          customer_name: customerName,
-          customer_email: customerEmail,
-          booking_date: date,
-          booking_time: time,
-          guests,
-          notes: notes || null,
-        }),
-      });
-      if (!res.ok) {
-        const j = await res.json();
-        throw new Error(j.error ?? "Failed to save");
-      }
-      const j = await res.json();
-      onSaved(j.booking as DbBooking);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
-          <h2 className="text-base font-semibold text-neutral-900">
-            Add Booking
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-900 transition text-lg leading-none"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="px-6 py-5 space-y-4 max-h-[80vh] overflow-y-auto"
-        >
-          {/* Product */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Product
-            </label>
-            {productOptions.length > 0 ? (
-              <select
-                value={productId}
-                onChange={(e) => setProductId(e.target.value)}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              >
-                {productOptions.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div className="text-sm text-neutral-500 italic">
-                No products available
-              </div>
-            )}
-          </div>
-
-          {/* Date + Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Date
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Time
-              </label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              />
-            </div>
-          </div>
-
-          {/* Guests */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Guests
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={200}
-              value={guests}
-              onChange={(e) => setGuests(Number(e.target.value))}
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-            />
-          </div>
-
-          {/* Customer */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Customer name
-              </label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                required
-                placeholder="e.g. Anna Smith"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
-                Customer email
-              </label>
-              <input
-                type="email"
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                required
-                placeholder="e.g. anna@example.com"
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Notes
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Optional notes…"
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
-            />
-          </div>
-
-          {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm hover:bg-neutral-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Save booking"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ─── BookingSlideOver ─────────────────────────────────────────────────────────
 
 function BookingSlideOver({
@@ -955,7 +743,6 @@ export default function AvailabilityClient({
   productOptions,
 }: {
   initialBookings: DbBooking[];
-  productOptions: { id: string; name: string }[];
 }) {
   const [allBookings, setAllBookings] =
     React.useState<DbBooking[]>(initialBookings);
@@ -1051,8 +838,11 @@ export default function AvailabilityClient({
   const hasAnyConflict = resourceCategories.some((c) => c.hasConflict);
 
   // Handlers
-  function handleBookingAdded(b: DbBooking) {
-    setAllBookings((prev) => [...prev, b]);
+  function handleBookingAdded(b: NewBookingResult) {
+    setAllBookings((prev) => [
+      ...prev,
+      { ...b, product_capacity: null } as DbBooking,
+    ]);
     setSelectedDate(b.booking_date);
     setShowAddModal(false);
   }
@@ -1273,11 +1063,10 @@ export default function AvailabilityClient({
 
       {/* Add Booking Modal */}
       {showAddModal && (
-        <AddBookingModal
+        <NewBookingModal
           prefilledDate={selectedDate}
-          productOptions={productOptions}
           onClose={() => setShowAddModal(false)}
-          onSaved={handleBookingAdded}
+          onCreated={handleBookingAdded}
         />
       )}
 
