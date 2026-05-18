@@ -3,7 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  
+
   /* Seeks & Explore Brand Colors */
   --color-sky: #96b0bb;
   --color-cream: #efe9d4;
@@ -31,4 +31,55 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Rich text output styles — used by TiptapEditor and product detail view */
+.rich-text p {
+  margin-bottom: 0.75em;
+  line-height: 1.6;
+}
+.rich-text p:last-child {
+  margin-bottom: 0;
+}
+.rich-text h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1em 0 0.4em;
+}
+.rich-text h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.85em 0 0.35em;
+}
+.rich-text strong {
+  font-weight: 700;
+}
+.rich-text em {
+  font-style: italic;
+}
+.rich-text ul {
+  list-style: disc;
+  padding-left: 1.4em;
+  margin-bottom: 0.75em;
+}
+.rich-text ol {
+  list-style: decimal;
+  padding-left: 1.4em;
+  margin-bottom: 0.75em;
+}
+.rich-text li {
+  margin-bottom: 0.2em;
+}
+.rich-text blockquote {
+  border-left: 3px solid #d4d4d4;
+  padding-left: 0.85em;
+  color: #737373;
+  margin: 0.75em 0;
+}
+.rich-text code {
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-family: monospace;
+  font-size: 0.85em;
 }

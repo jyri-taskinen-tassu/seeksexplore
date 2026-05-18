@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useProductDraft } from "@/lib/productStore";
 import type { ProductDraft as StoreProductDraft } from "@/lib/productStore";
+import TiptapEditor from "@/app/components/provider/TiptapEditor";
 
 type Step = "start" | "editor";
 
@@ -47,10 +49,13 @@ type ProductDraft = {
     touring: { total: number; outOfService: number };
   };
   ebikes?: {
-    sizes: Record<"S" | "M" | "L" | "XL" | "XXL", { total: number; outOfService: number }>;
+    sizes: Record<
+      "S" | "M" | "L" | "XL" | "XXL",
+      { total: number; outOfService: number }
+    >;
   };
   guidesPerDeparture?: number;
-  
+
   // Pricing options
   pricingOptions?: Array<{ id: string; name: string; price: number }>;
   exampleBooking?: Record<string, number>;
@@ -77,24 +82,39 @@ function isRequiredMissing(d: ProductDraft) {
   if (!d.locationName.trim())
     missing.push({ key: "locationName", label: "Location" });
   if (!d.address.trim()) missing.push({ key: "address", label: "Address" });
-  if (!d.durationMinutes) missing.push({ key: "durationMinutes", label: "Duration" });
+  if (!d.durationMinutes)
+    missing.push({ key: "durationMinutes", label: "Duration" });
   if (!d.priceFrom) missing.push({ key: "priceFrom", label: "Price (from)" });
   if (!d.capacityMax) missing.push({ key: "capacityMax", label: "Capacity" });
   if (!d.cancellationPolicyTemplate)
-    missing.push({ key: "cancellationPolicyTemplate", label: "Cancellation policy" });
+    missing.push({
+      key: "cancellationPolicyTemplate",
+      label: "Cancellation policy",
+    });
   if (!d.coverImageNote.trim())
     missing.push({ key: "coverImageNote", label: "Cover image" });
-  
+
   // Resources validation
   if (d.requiresResources) {
-    if (!d.resourceType) missing.push({ key: "resourceType" as keyof ProductDraft, label: "Resource type" });
+    if (!d.resourceType)
+      missing.push({
+        key: "resourceType" as keyof ProductDraft,
+        label: "Resource type",
+      });
     if (d.resourceType === "snowmobiles") {
-      if (!d.snowmobiles || d.snowmobiles.sport.total < 0 || d.snowmobiles.touring.total < 0) {
-        missing.push({ key: "snowmobiles" as keyof ProductDraft, label: "Snowmobile inventory" });
+      if (
+        !d.snowmobiles ||
+        d.snowmobiles.sport.total < 0 ||
+        d.snowmobiles.touring.total < 0
+      ) {
+        missing.push({
+          key: "snowmobiles" as keyof ProductDraft,
+          label: "Snowmobile inventory",
+        });
       }
     }
   }
-  
+
   return missing;
 }
 
@@ -119,10 +139,11 @@ const EMPTY_DRAFT: ProductDraft = {
   description: "",
 
   coverImageNote: "",
-  availabilityRule: "Fixed departures (MVP) — you can add times after publishing.",
+  availabilityRule:
+    "Fixed departures (MVP) — you can add times after publishing.",
   resourcesNote:
     "MVP: attach resources later in Availability/Departures (guides, snowmobiles, e-bikes).",
-  
+
   requiresResources: false,
   guidesPerDeparture: 1,
 };
@@ -143,15 +164,18 @@ const AI_EXTRACTED_DRAFT_SNOWMOBILE: ProductDraft = {
   language: ["FI", "EN"],
   included: "Guide, helmet, warm overalls, fuel",
   notIncluded: "Meals, transport to Tahko",
-  requirements: "Driving license required for driver. Minimum age 18 for driving.",
+  requirements:
+    "Driving license required for driver. Minimum age 18 for driving.",
   cancellationPolicyTemplate: "Standard",
-  description: "Experience the thrill of snowmobiling through pristine winter landscapes. Choose between solo Sport (1-seat) or shared Touring (2-seat) options. Professional guide included.",
+  description:
+    "Experience the thrill of snowmobiling through pristine winter landscapes. Choose between solo Sport (1-seat) or shared Touring (2-seat) options. Professional guide included.",
 
   coverImageNote: "Add a cover image (required) — upload after draft creation.",
-  availabilityRule: "Fixed departures + on request (later). Start with fixed times.",
+  availabilityRule:
+    "Fixed departures + on request (later). Start with fixed times.",
   resourcesNote:
     "Uses snowmobiles by variant (Sport 1-seat / Touring 2-seat). Mark units out-of-service when needed.",
-  
+
   requiresResources: true,
   resourceType: "snowmobiles",
   snowmobiles: {
@@ -185,14 +209,17 @@ const AI_EXTRACTED_DRAFT_HIKING: ProductDraft = {
   language: ["FI", "EN"],
   included: "Professional guide, route map, safety briefing",
   notIncluded: "Transportation, meals, equipment rental",
-  requirements: "Good physical condition, suitable hiking shoes, weather-appropriate clothing",
+  requirements:
+    "Good physical condition, suitable hiking shoes, weather-appropriate clothing",
   cancellationPolicyTemplate: "Flexible",
-  description: "Explore the beautiful trails of Nuuksio National Park with an experienced guide. Suitable for all fitness levels. Discover local flora and fauna while enjoying the peaceful Nordic nature.",
+  description:
+    "Explore the beautiful trails of Nuuksio National Park with an experienced guide. Suitable for all fitness levels. Discover local flora and fauna while enjoying the peaceful Nordic nature.",
 
   coverImageNote: "Add a cover image (required) — upload after draft creation.",
-  availabilityRule: "Fixed departures (MVP) — you can add times after publishing.",
+  availabilityRule:
+    "Fixed departures (MVP) — you can add times after publishing.",
   resourcesNote: "No equipment required. Guide provided.",
-  
+
   requiresResources: false,
   guidesPerDeparture: 1,
   pricingOptions: [
@@ -207,25 +234,62 @@ const AI_EXTRACTED_DRAFT_HIKING: ProductDraft = {
 
 const AI_SCORES: FieldScore[] = [
   { key: "title", label: "Title", confidence: "high" },
-  { key: "categoryMain", label: "Category", confidence: "medium", note: "Detected from brochure keywords" },
+  {
+    key: "categoryMain",
+    label: "Category",
+    confidence: "medium",
+    note: "Detected from brochure keywords",
+  },
   { key: "locationName", label: "Location", confidence: "high" },
-  { key: "address", label: "Address", confidence: "medium", note: "Please verify exact street address" },
+  {
+    key: "address",
+    label: "Address",
+    confidence: "medium",
+    note: "Please verify exact street address",
+  },
   { key: "durationMinutes", label: "Duration", confidence: "high" },
-  { key: "priceFrom", label: "Price (from)", confidence: "medium", note: "Confirm VAT / seasonal pricing" },
-  { key: "capacityMax", label: "Capacity", confidence: "low", note: "Capacity depends on resource variants" },
+  {
+    key: "priceFrom",
+    label: "Price (from)",
+    confidence: "medium",
+    note: "Confirm VAT / seasonal pricing",
+  },
+  {
+    key: "capacityMax",
+    label: "Capacity",
+    confidence: "low",
+    note: "Capacity depends on resource variants",
+  },
   { key: "meetingPoint", label: "Meeting point", confidence: "medium" },
   { key: "requirements", label: "Requirements", confidence: "medium" },
-  { key: "cancellationPolicyTemplate", label: "Cancellation policy", confidence: "medium" },
-  { key: "coverImageNote", label: "Cover image", confidence: "low", note: "No media found in import" },
+  {
+    key: "cancellationPolicyTemplate",
+    label: "Cancellation policy",
+    confidence: "medium",
+  },
+  {
+    key: "coverImageNote",
+    label: "Cover image",
+    confidence: "low",
+    note: "No media found in import",
+  },
 ];
 
 export default function ProviderProductNewPage() {
-  const { draft: storeDraft, setDraft: setStoreDraft, setField, resetDraft } = useProductDraft();
-  
+  const router = useRouter();
+  const {
+    draft: storeDraft,
+    setDraft: setStoreDraft,
+    setField,
+    resetDraft,
+  } = useProductDraft();
+
   // Map store draft to local ProductDraft type (they're compatible but TypeScript needs help)
   const draft = storeDraft as unknown as ProductDraft;
-  
+
   const [step, setStep] = useState<Step>("start");
+  const [submitting, setSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [importMode, setImportMode] = useState<"ai" | "manual">("ai");
 
   const [droppedName, setDroppedName] = useState<string>("");
@@ -253,7 +317,10 @@ export default function ProviderProductNewPage() {
   function createAIDraft(draftType: "snowmobile" | "hiking" = "snowmobile") {
     setImportMode("ai");
     setIsAIDraft(true);
-    const aiDraft = draftType === "snowmobile" ? AI_EXTRACTED_DRAFT_SNOWMOBILE : AI_EXTRACTED_DRAFT_HIKING;
+    const aiDraft =
+      draftType === "snowmobile"
+        ? AI_EXTRACTED_DRAFT_SNOWMOBILE
+        : AI_EXTRACTED_DRAFT_HIKING;
     setStoreDraft(aiDraft as unknown as StoreProductDraft);
     setAiDraftCreated(true);
     setStep("editor");
@@ -268,8 +335,57 @@ export default function ProviderProductNewPage() {
     setAiDraftCreated(false);
   }
 
-  function update<K extends keyof ProductDraft>(key: K, value: ProductDraft[K]) {
+  function update<K extends keyof ProductDraft>(
+    key: K,
+    value: ProductDraft[K],
+  ) {
     setField(key as keyof StoreProductDraft, value);
+  }
+
+  async function handleSave() {
+    setSaveError(null);
+    setSubmitting(true);
+    try {
+      const totalMinutes = draft.durationMinutes ?? 0;
+      const res = await fetch("/api/provider/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: draft.title,
+          description: draft.description,
+          languages: draft.language,
+          type: draft.categorySub
+            ? draft.categorySub.toLowerCase().replace(/\s+/g, "_")
+            : draft.categoryMain
+              ? draft.categoryMain.toLowerCase()
+              : "experience",
+          accessible: false,
+          price_from: draft.priceFrom,
+          capacity_max: draft.capacityMax,
+          duration_hours:
+            totalMinutes >= 60 ? Math.floor(totalMinutes / 60) : null,
+          duration_minutes: totalMinutes % 60 || null,
+          city: draft.locationName || null,
+          street_name: draft.address || null,
+          available_months: [],
+          tags:
+            draft.pricingOptions
+              ?.map((o) => o.name.toLowerCase().replace(/\s+/g, "_"))
+              .filter(Boolean) ?? [],
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSaveError(json.error ?? "Save failed");
+        return;
+      }
+      resetDraft();
+      router.push(`/provider/products/${json.id}/edit`);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const publishDisabled = missingRequired.length > 0;
@@ -284,9 +400,12 @@ export default function ProviderProductNewPage() {
               <span className="text-sm font-semibold">P</span>
             </div>
             <div>
-              <div className="text-lg font-medium text-neutral-900">Add product</div>
+              <div className="text-lg font-medium text-neutral-900">
+                Add product
+              </div>
               <div className="text-sm text-neutral-500">
-                Create a draft fast, verify the essentials, publish without chaos.
+                Create a draft fast, verify the essentials, publish without
+                chaos.
               </div>
             </div>
           </div>
@@ -306,9 +425,12 @@ export default function ProviderProductNewPage() {
             <section className="rounded-xl border border-neutral-200 bg-white p-6 lg:col-span-2">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-medium text-neutral-900">A) AI import (P0)</div>
+                  <div className="text-sm font-medium text-neutral-900">
+                    A) AI import (P0)
+                  </div>
                   <div className="mt-1 text-sm text-neutral-600">
-                    Drop a brochure or link. We extract a draft — you review & publish.
+                    Drop a brochure or link. We extract a draft — you review &
+                    publish.
                   </div>
                 </div>
                 <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
@@ -321,7 +443,7 @@ export default function ProviderProductNewPage() {
                   <div
                     className={cx(
                       "flex min-h-[168px] flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center",
-                      "border-neutral-300 bg-neutral-50"
+                      "border-neutral-300 bg-neutral-50",
                     )}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -362,7 +484,9 @@ export default function ProviderProductNewPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-neutral-900">Or import from URL</label>
+                  <label className="text-sm font-medium text-neutral-900">
+                    Or import from URL
+                  </label>
                   <div className="mt-2">
                     <input
                       value={urlValue}
@@ -373,9 +497,13 @@ export default function ProviderProductNewPage() {
                   </div>
 
                   <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                    <div className="text-sm font-medium text-neutral-900">AI extracts</div>
+                    <div className="text-sm font-medium text-neutral-900">
+                      AI extracts
+                    </div>
                     <ul className="mt-2 list-disc pl-5 text-sm text-neutral-700">
-                      <li>Title, description, duration, location, meeting point</li>
+                      <li>
+                        Title, description, duration, location, meeting point
+                      </li>
                       <li>Price, capacity hints, included / not included</li>
                       <li>Requirements, cancellation policy suggestion</li>
                     </ul>
@@ -392,12 +520,12 @@ export default function ProviderProductNewPage() {
                       "mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-medium",
                       canProceedToEditor
                         ? "bg-neutral-900 text-white hover:bg-neutral-800"
-                        : "cursor-not-allowed bg-neutral-200 text-neutral-500"
+                        : "cursor-not-allowed bg-neutral-200 text-neutral-500",
                     )}
                   >
                     Create AI draft → Review & publish
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={() => createAIDraft("snowmobile")}
@@ -405,7 +533,7 @@ export default function ProviderProductNewPage() {
                   >
                     Use example import (Snowmobile)
                   </button>
-                  
+
                   <button
                     type="button"
                     onClick={() => createAIDraft("hiking")}
@@ -419,7 +547,9 @@ export default function ProviderProductNewPage() {
 
             {/* Right: Manual */}
             <aside className="rounded-xl border border-neutral-200 bg-white p-6">
-              <div className="text-sm font-medium text-neutral-900">B) Start from scratch (P0)</div>
+              <div className="text-sm font-medium text-neutral-900">
+                B) Start from scratch (P0)
+              </div>
               <div className="mt-1 text-sm text-neutral-600">
                 Use the same editor, without prefill.
               </div>
@@ -433,13 +563,17 @@ export default function ProviderProductNewPage() {
               </button>
 
               <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                <div className="text-sm font-medium text-neutral-900">Legal (important)</div>
+                <div className="text-sm font-medium text-neutral-900">
+                  Legal (important)
+                </div>
                 <div className="mt-2 text-sm text-neutral-700">
-                  This product must be <span className="font-medium">your own service</span>. No bundling
-                  other providers into one product.
+                  This product must be{" "}
+                  <span className="font-medium">your own service</span>. No
+                  bundling other providers into one product.
                 </div>
                 <div className="mt-2 text-xs text-neutral-500">
-                  Cross-sell later = recommendations/link-outs, not packaged checkout.
+                  Cross-sell later = recommendations/link-outs, not packaged
+                  checkout.
                 </div>
               </div>
             </aside>
@@ -450,11 +584,14 @@ export default function ProviderProductNewPage() {
             <section className="rounded-xl border border-neutral-200 bg-white p-6 lg:col-span-2">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <div className="text-sm font-medium text-neutral-900">Product editor</div>
+                  <div className="text-sm font-medium text-neutral-900">
+                    Product editor
+                  </div>
                   <div className="mt-1 text-sm text-neutral-600">
                     {isAIDraft ? (
                       <>
-                        <span className="font-medium">AI draft</span> — review essentials, then publish.
+                        <span className="font-medium">AI draft</span> — review
+                        essentials, then publish.
                       </>
                     ) : (
                       <>Manual draft — fill essentials, then publish.</>
@@ -478,7 +615,7 @@ export default function ProviderProductNewPage() {
                       "rounded-full border px-3 py-1 text-xs",
                       publishDisabled
                         ? "border-amber-200 bg-amber-50 text-amber-800"
-                        : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-emerald-200 bg-emerald-50 text-emerald-800",
                     )}
                   >
                     {publishDisabled ? "Needs review" : "Ready to publish"}
@@ -503,7 +640,9 @@ export default function ProviderProductNewPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <select
                       value={draft.categoryMain}
-                      onChange={(e) => update("categoryMain", e.target.value as any)}
+                      onChange={(e) =>
+                        update("categoryMain", e.target.value as any)
+                      }
                       className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     >
                       <option value="">Select</option>
@@ -546,7 +685,12 @@ export default function ProviderProductNewPage() {
                 <Field label="Duration (minutes)" required>
                   <input
                     value={draft.durationMinutes ?? ""}
-                    onChange={(e) => update("durationMinutes", e.target.value ? Number(e.target.value) : null)}
+                    onChange={(e) =>
+                      update(
+                        "durationMinutes",
+                        e.target.value ? Number(e.target.value) : null,
+                      )
+                    }
                     inputMode="numeric"
                     placeholder="e.g., 120"
                     className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
@@ -558,14 +702,21 @@ export default function ProviderProductNewPage() {
                   <div className="grid grid-cols-3 gap-2">
                     <input
                       value={draft.priceFrom ?? ""}
-                      onChange={(e) => update("priceFrom", e.target.value ? Number(e.target.value) : null)}
+                      onChange={(e) =>
+                        update(
+                          "priceFrom",
+                          e.target.value ? Number(e.target.value) : null,
+                        )
+                      }
                       inputMode="decimal"
                       placeholder="e.g., 149"
                       className="col-span-2 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     />
                     <select
                       value={draft.currency}
-                      onChange={(e) => update("currency", e.target.value as any)}
+                      onChange={(e) =>
+                        update("currency", e.target.value as any)
+                      }
                       className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     >
                       <option value="EUR">EUR</option>
@@ -578,12 +729,9 @@ export default function ProviderProductNewPage() {
 
                 {/* Description */}
                 <Field label="Description">
-                  <textarea
-                    value={draft.description}
-                    onChange={(e) => update("description", e.target.value)}
-                    rows={4}
-                    placeholder="Describe the experience, what's included, meeting point, etc."
-                    className="w-full resize-none rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                  <TiptapEditor
+                    content={draft.description}
+                    onChange={(html) => update("description", html)}
                   />
                 </Field>
 
@@ -592,7 +740,9 @@ export default function ProviderProductNewPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <select
                       value={draft.capacityMode}
-                      onChange={(e) => update("capacityMode", e.target.value as any)}
+                      onChange={(e) =>
+                        update("capacityMode", e.target.value as any)
+                      }
                       className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     >
                       <option value="per_departure">Per departure</option>
@@ -600,14 +750,20 @@ export default function ProviderProductNewPage() {
                     </select>
                     <input
                       value={draft.capacityMax ?? ""}
-                      onChange={(e) => update("capacityMax", e.target.value ? Number(e.target.value) : null)}
+                      onChange={(e) =>
+                        update(
+                          "capacityMax",
+                          e.target.value ? Number(e.target.value) : null,
+                        )
+                      }
                       inputMode="numeric"
                       placeholder="Max guests"
                       className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                     />
                   </div>
                   <div className="mt-1 text-xs text-neutral-500">
-                    If capacity depends on vehicles/equipment, choose "Per resource". You'll allocate variants in Availability.
+                    If capacity depends on vehicles/equipment, choose "Per
+                    resource". You'll allocate variants in Availability.
                   </div>
                 </Field>
 
@@ -625,7 +781,12 @@ export default function ProviderProductNewPage() {
                 <Field label="Cancellation policy" required>
                   <select
                     value={draft.cancellationPolicyTemplate}
-                    onChange={(e) => update("cancellationPolicyTemplate", e.target.value as any)}
+                    onChange={(e) =>
+                      update(
+                        "cancellationPolicyTemplate",
+                        e.target.value as any,
+                      )
+                    }
                     className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                   >
                     <option value="">Select</option>
@@ -664,7 +825,10 @@ export default function ProviderProductNewPage() {
                 <Field label="Availability">
                   <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
                     Availability is managed in{" "}
-                    <a href="/provider/availability" className="text-neutral-900 underline hover:text-neutral-700">
+                    <a
+                      href="/provider/availability"
+                      className="text-neutral-900 underline hover:text-neutral-700"
+                    >
                       Availability page
                     </a>
                   </div>
@@ -679,8 +843,15 @@ export default function ProviderProductNewPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const newOption = { id: `opt-${Date.now()}`, name: "", price: 0 };
-                        update("pricingOptions", [...(draft.pricingOptions || []), newOption]);
+                        const newOption = {
+                          id: `opt-${Date.now()}`,
+                          name: "",
+                          price: 0,
+                        };
+                        update("pricingOptions", [
+                          ...(draft.pricingOptions || []),
+                          newOption,
+                        ]);
                       }}
                       className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
                     >
@@ -693,9 +864,14 @@ export default function ProviderProductNewPage() {
                         <input
                           value={opt.name}
                           onChange={(e) => {
-                            update("pricingOptions", (draft.pricingOptions || []).map((o) =>
-                              o.id === opt.id ? { ...o, name: e.target.value } : o
-                            ));
+                            update(
+                              "pricingOptions",
+                              (draft.pricingOptions || []).map((o) =>
+                                o.id === opt.id
+                                  ? { ...o, name: e.target.value }
+                                  : o,
+                              ),
+                            );
                           }}
                           placeholder="Option name"
                           className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
@@ -704,9 +880,14 @@ export default function ProviderProductNewPage() {
                           type="number"
                           value={opt.price}
                           onChange={(e) => {
-                            update("pricingOptions", (draft.pricingOptions || []).map((o) =>
-                              o.id === opt.id ? { ...o, price: Number(e.target.value) || 0 } : o
-                            ));
+                            update(
+                              "pricingOptions",
+                              (draft.pricingOptions || []).map((o) =>
+                                o.id === opt.id
+                                  ? { ...o, price: Number(e.target.value) || 0 }
+                                  : o,
+                              ),
+                            );
                           }}
                           placeholder="Price"
                           className="w-24 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
@@ -714,7 +895,12 @@ export default function ProviderProductNewPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            update("pricingOptions", (draft.pricingOptions || []).filter((o) => o.id !== opt.id));
+                            update(
+                              "pricingOptions",
+                              (draft.pricingOptions || []).filter(
+                                (o) => o.id !== opt.id,
+                              ),
+                            );
                           }}
                           className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-xs text-red-700 hover:bg-red-50"
                         >
@@ -722,7 +908,8 @@ export default function ProviderProductNewPage() {
                         </button>
                       </div>
                     ))}
-                    {(!draft.pricingOptions || draft.pricingOptions.length === 0) && (
+                    {(!draft.pricingOptions ||
+                      draft.pricingOptions.length === 0) && (
                       <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-3 text-center text-sm text-neutral-500">
                         No pricing options. Base price will be used.
                       </div>
@@ -750,10 +937,12 @@ export default function ProviderProductNewPage() {
                         }}
                         className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-200"
                       />
-                      <span className="text-sm text-neutral-700">This product requires resources</span>
+                      <span className="text-sm text-neutral-700">
+                        This product requires resources
+                      </span>
                     </label>
                   </div>
-                  
+
                   {!draft.requiresResources ? (
                     <div className="mt-2 text-xs text-neutral-500">
                       Examples: hiking, courses, workshops
@@ -761,11 +950,14 @@ export default function ProviderProductNewPage() {
                   ) : (
                     <div className="mt-4 space-y-4">
                       <div>
-                        <label className="block text-xs font-medium text-neutral-700">Resource type</label>
+                        <label className="block text-xs font-medium text-neutral-700">
+                          Resource type
+                        </label>
                         <select
                           value={draft.resourceType || ""}
                           onChange={(e) => {
-                            const rt = e.target.value as ProductDraft["resourceType"];
+                            const rt = e.target
+                              .value as ProductDraft["resourceType"];
                             update("resourceType", rt);
                             if (rt === "snowmobiles") {
                               update("snowmobiles", {
@@ -784,82 +976,115 @@ export default function ProviderProductNewPage() {
                         </select>
                       </div>
 
-                      {draft.resourceType === "snowmobiles" && draft.snowmobiles && (
-                        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-                          <div className="text-sm font-medium text-neutral-900">Snowmobiles inventory</div>
-                          <div className="mt-3 grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-medium text-neutral-700">Sport (1-seat)</label>
-                              <div className="mt-1 grid grid-cols-2 gap-2">
-                                <input
-                                  type="number"
-                                  value={draft.snowmobiles.sport.total}
-                                  onChange={(e) => {
-                                    update("snowmobiles", {
-                                      ...draft.snowmobiles!,
-                                      sport: { ...draft.snowmobiles!.sport, total: Number(e.target.value) || 0 },
-                                    });
-                                  }}
-                                  placeholder="Total"
-                                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                                />
-                                <input
-                                  type="number"
-                                  value={draft.snowmobiles.sport.outOfService}
-                                  onChange={(e) => {
-                                    update("snowmobiles", {
-                                      ...draft.snowmobiles!,
-                                      sport: { ...draft.snowmobiles!.sport, outOfService: Number(e.target.value) || 0 },
-                                    });
-                                  }}
-                                  placeholder="Out of service"
-                                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                                />
+                      {draft.resourceType === "snowmobiles" &&
+                        draft.snowmobiles && (
+                          <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+                            <div className="text-sm font-medium text-neutral-900">
+                              Snowmobiles inventory
+                            </div>
+                            <div className="mt-3 grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-700">
+                                  Sport (1-seat)
+                                </label>
+                                <div className="mt-1 grid grid-cols-2 gap-2">
+                                  <input
+                                    type="number"
+                                    value={draft.snowmobiles.sport.total}
+                                    onChange={(e) => {
+                                      update("snowmobiles", {
+                                        ...draft.snowmobiles!,
+                                        sport: {
+                                          ...draft.snowmobiles!.sport,
+                                          total: Number(e.target.value) || 0,
+                                        },
+                                      });
+                                    }}
+                                    placeholder="Total"
+                                    className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                  />
+                                  <input
+                                    type="number"
+                                    value={draft.snowmobiles.sport.outOfService}
+                                    onChange={(e) => {
+                                      update("snowmobiles", {
+                                        ...draft.snowmobiles!,
+                                        sport: {
+                                          ...draft.snowmobiles!.sport,
+                                          outOfService:
+                                            Number(e.target.value) || 0,
+                                        },
+                                      });
+                                    }}
+                                    placeholder="Out of service"
+                                    className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-neutral-700">
+                                  Touring (2-seat)
+                                </label>
+                                <div className="mt-1 grid grid-cols-2 gap-2">
+                                  <input
+                                    type="number"
+                                    value={draft.snowmobiles.touring.total}
+                                    onChange={(e) => {
+                                      update("snowmobiles", {
+                                        ...draft.snowmobiles!,
+                                        touring: {
+                                          ...draft.snowmobiles!.touring,
+                                          total: Number(e.target.value) || 0,
+                                        },
+                                      });
+                                    }}
+                                    placeholder="Total"
+                                    className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                  />
+                                  <input
+                                    type="number"
+                                    value={
+                                      draft.snowmobiles.touring.outOfService
+                                    }
+                                    onChange={(e) => {
+                                      update("snowmobiles", {
+                                        ...draft.snowmobiles!,
+                                        touring: {
+                                          ...draft.snowmobiles!.touring,
+                                          outOfService:
+                                            Number(e.target.value) || 0,
+                                        },
+                                      });
+                                    }}
+                                    placeholder="Out of service"
+                                    className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                  />
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <label className="block text-xs font-medium text-neutral-700">Touring (2-seat)</label>
-                              <div className="mt-1 grid grid-cols-2 gap-2">
-                                <input
-                                  type="number"
-                                  value={draft.snowmobiles.touring.total}
-                                  onChange={(e) => {
-                                    update("snowmobiles", {
-                                      ...draft.snowmobiles!,
-                                      touring: { ...draft.snowmobiles!.touring, total: Number(e.target.value) || 0 },
-                                    });
-                                  }}
-                                  placeholder="Total"
-                                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                                />
-                                <input
-                                  type="number"
-                                  value={draft.snowmobiles.touring.outOfService}
-                                  onChange={(e) => {
-                                    update("snowmobiles", {
-                                      ...draft.snowmobiles!,
-                                      touring: { ...draft.snowmobiles!.touring, outOfService: Number(e.target.value) || 0 },
-                                    });
-                                  }}
-                                  placeholder="Out of service"
-                                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                                />
+                            <div className="mt-3 text-xs text-neutral-600">
+                              <div>
+                                Rule: Sport = 1 person per unit, Touring = 2
+                                persons per unit
                               </div>
                             </div>
                           </div>
-                          <div className="mt-3 text-xs text-neutral-600">
-                            <div>Rule: Sport = 1 person per unit, Touring = 2 persons per unit</div>
-                          </div>
-                        </div>
-                      )}
+                        )}
 
                       {draft.resourceType === "guides_only" && (
                         <div>
-                          <label className="block text-xs font-medium text-neutral-700">Guides per departure</label>
+                          <label className="block text-xs font-medium text-neutral-700">
+                            Guides per departure
+                          </label>
                           <input
                             type="number"
                             value={draft.guidesPerDeparture ?? 1}
-                            onChange={(e) => update("guidesPerDeparture", Number(e.target.value) || 1)}
+                            onChange={(e) =>
+                              update(
+                                "guidesPerDeparture",
+                                Number(e.target.value) || 1,
+                              )
+                            }
                             className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                           />
                         </div>
@@ -877,55 +1102,64 @@ export default function ProviderProductNewPage() {
                     className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
                   />
                   <div className="mt-1 text-xs text-neutral-500">
-                    MVP: we store a placeholder note. Later: real upload + gallery.
+                    MVP: we store a placeholder note. Later: real upload +
+                    gallery.
                   </div>
                 </Field>
 
                 {/* Add-ons legal */}
                 <div className="md:col-span-2 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <div className="text-sm font-medium text-neutral-900">Add-ons (later)</div>
+                  <div className="text-sm font-medium text-neutral-900">
+                    Add-ons (later)
+                  </div>
                   <div className="mt-1 text-sm text-neutral-700">
-                    Add-ons must be <span className="font-medium">your own services</span>. No bundling other providers into the same checkout.
+                    Add-ons must be{" "}
+                    <span className="font-medium">your own services</span>. No
+                    bundling other providers into the same checkout.
                   </div>
                   <div className="mt-1 text-xs text-neutral-500">
-                    Cross-sell later = recommendations/link-outs with clear provider separation.
+                    Cross-sell later = recommendations/link-outs with clear
+                    provider separation.
                   </div>
                 </div>
               </div>
 
               {/* Footer actions */}
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                {saveError && (
+                  <p className="text-sm text-red-600 flex-1">{saveError}</p>
+                )}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                    onClick={() => {
-                      console.log("Product draft:", draft);
-                      alert("Saved (MVP): product draft logged to console");
-                    }}
+                    disabled={submitting}
+                    className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+                    onClick={handleSave}
                   >
-                    Save draft
+                    {submitting ? "Saving…" : "Save draft"}
                   </button>
 
                   <button
                     type="button"
-                    disabled={publishDisabled}
+                    disabled={publishDisabled || submitting}
                     className={cx(
                       "rounded-lg px-4 py-2 text-sm font-medium",
-                      publishDisabled
+                      publishDisabled || submitting
                         ? "cursor-not-allowed bg-neutral-200 text-neutral-500"
-                        : "bg-neutral-900 text-white hover:bg-neutral-800"
+                        : "bg-neutral-900 text-white hover:bg-neutral-800",
                     )}
-                    onClick={() => alert("MVP: published (mock)")}
+                    onClick={handleSave}
                   >
-                    Publish
+                    {submitting ? "Saving…" : "Publish"}
                   </button>
                 </div>
               </div>
 
               {missingRequired.length > 0 && (
                 <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <div className="text-sm font-medium text-amber-900">Missing required fields</div>
+                  <div className="text-sm font-medium text-amber-900">
+                    Missing required fields
+                  </div>
                   <ul className="mt-2 list-disc pl-5 text-sm text-amber-900/90">
                     {missingRequired.map((m) => (
                       <li key={String(m.key)}>{m.label}</li>
@@ -937,7 +1171,9 @@ export default function ProviderProductNewPage() {
 
             {/* Right: Preview + Quality checks */}
             <aside className="rounded-xl border border-neutral-200 bg-white p-6">
-              <div className="text-sm font-medium text-neutral-900">Live preview</div>
+              <div className="text-sm font-medium text-neutral-900">
+                Live preview
+              </div>
               <div className="mt-1 text-sm text-neutral-600">
                 How customers see it (compact + detailed).
               </div>
@@ -950,11 +1186,15 @@ export default function ProviderProductNewPage() {
                     {draft.title || "Untitled product"}
                   </div>
                   <div className="mt-1 text-sm text-neutral-600">
-                    {(draft.locationName || "Location") + " • " + formatDuration(draft.durationMinutes)}
+                    {(draft.locationName || "Location") +
+                      " • " +
+                      formatDuration(draft.durationMinutes)}
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-sm text-neutral-900">
-                      {draft.priceFrom ? `${draft.priceFrom} ${draft.currency}` : "Price not set"}
+                      {draft.priceFrom
+                        ? `${draft.priceFrom} ${draft.currency}`
+                        : "Price not set"}
                     </span>
                     <span className="text-xs text-neutral-500">
                       Cap: {draft.capacityMax ?? "—"}
@@ -985,56 +1225,79 @@ export default function ProviderProductNewPage() {
               </div>
 
               {/* Resources preview */}
-              {draft.requiresResources && draft.resourceType === "snowmobiles" && draft.snowmobiles && (
-                <div className="mt-6">
-                  <div className="text-sm font-medium text-neutral-900">Auto allocation preview</div>
-                  <div className="mt-4 space-y-3">
-                    <div>
-                      <div className="text-xs text-neutral-500">Example booking</div>
-                      <div className="mt-2 space-y-1 text-sm text-neutral-700">
-                        {draft.exampleBooking && Object.entries(draft.exampleBooking).map(([id, qty]) => {
-                          const opt = draft.pricingOptions?.find((o) => o.id === id);
-                          if (!opt) return null;
-                          return (
-                            <div key={id}>
-                              {qty}× {opt.name} ({opt.price} EUR)
-                            </div>
-                          );
-                        })}
-                      </div>
+              {draft.requiresResources &&
+                draft.resourceType === "snowmobiles" &&
+                draft.snowmobiles && (
+                  <div className="mt-6">
+                    <div className="text-sm font-medium text-neutral-900">
+                      Auto allocation preview
                     </div>
-                    {draft.exampleBooking && (
+                    <div className="mt-4 space-y-3">
                       <div>
-                        <div className="text-xs text-neutral-500">Allocation totals</div>
-                        <div className="mt-2 space-y-2">
-                          <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                            <span className="text-sm text-neutral-700">Sport snowmobiles</span>
-                            <span className="text-sm font-medium text-neutral-900">
-                              {draft.exampleBooking.solo || 0}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                            <span className="text-sm text-neutral-700">Touring snowmobiles</span>
-                            <span className="text-sm font-medium text-neutral-900">
-                              {Math.ceil((draft.exampleBooking.shared || 0) / 2)}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
-                            <span className="text-sm text-neutral-700">Guides</span>
-                            <span className="text-sm font-medium text-neutral-900">
-                              {draft.guidesPerDeparture || 1}
-                            </span>
-                          </div>
+                        <div className="text-xs text-neutral-500">
+                          Example booking
+                        </div>
+                        <div className="mt-2 space-y-1 text-sm text-neutral-700">
+                          {draft.exampleBooking &&
+                            Object.entries(draft.exampleBooking).map(
+                              ([id, qty]) => {
+                                const opt = draft.pricingOptions?.find(
+                                  (o) => o.id === id,
+                                );
+                                if (!opt) return null;
+                                return (
+                                  <div key={id}>
+                                    {qty}× {opt.name} ({opt.price} EUR)
+                                  </div>
+                                );
+                              },
+                            )}
                         </div>
                       </div>
-                    )}
+                      {draft.exampleBooking && (
+                        <div>
+                          <div className="text-xs text-neutral-500">
+                            Allocation totals
+                          </div>
+                          <div className="mt-2 space-y-2">
+                            <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                              <span className="text-sm text-neutral-700">
+                                Sport snowmobiles
+                              </span>
+                              <span className="text-sm font-medium text-neutral-900">
+                                {draft.exampleBooking.solo || 0}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                              <span className="text-sm text-neutral-700">
+                                Touring snowmobiles
+                              </span>
+                              <span className="text-sm font-medium text-neutral-900">
+                                {Math.ceil(
+                                  (draft.exampleBooking.shared || 0) / 2,
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                              <span className="text-sm text-neutral-700">
+                                Guides
+                              </span>
+                              <span className="text-sm font-medium text-neutral-900">
+                                {draft.guidesPerDeparture || 1}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Quality checks */}
               <div className="mt-6">
-                <div className="text-sm font-medium text-neutral-900">Quality checks</div>
+                <div className="text-sm font-medium text-neutral-900">
+                  Quality checks
+                </div>
                 <div className="mt-1 text-sm text-neutral-600">
                   Prevent bad data before it hits operations.
                 </div>
@@ -1046,13 +1309,15 @@ export default function ProviderProductNewPage() {
                       "rounded-xl border p-4",
                       missingRequired.length > 0
                         ? "border-amber-200 bg-amber-50"
-                        : "border-emerald-200 bg-emerald-50"
+                        : "border-emerald-200 bg-emerald-50",
                     )}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="text-sm font-medium">
-                          {missingRequired.length > 0 ? "Missing required" : "Required fields OK"}
+                          {missingRequired.length > 0
+                            ? "Missing required"
+                            : "Required fields OK"}
                         </div>
                         <div className="mt-1 text-sm">
                           {missingRequired.length > 0
@@ -1065,10 +1330,12 @@ export default function ProviderProductNewPage() {
                           "rounded-full border px-3 py-1 text-xs",
                           missingRequired.length > 0
                             ? "border-amber-200 bg-white text-amber-700"
-                            : "border-emerald-200 bg-white text-emerald-700"
+                            : "border-emerald-200 bg-white text-emerald-700",
                         )}
                       >
-                        {missingRequired.length > 0 ? `${missingRequired.length} missing` : "OK"}
+                        {missingRequired.length > 0
+                          ? `${missingRequired.length} missing`
+                          : "OK"}
                       </span>
                     </div>
                   </div>
@@ -1076,16 +1343,31 @@ export default function ProviderProductNewPage() {
                   {/* AI confidence list */}
                   {isAIDraft && (
                     <div className="rounded-xl border border-neutral-200 bg-white p-4">
-                      <div className="text-sm font-medium text-neutral-900">AI confidence</div>
+                      <div className="text-sm font-medium text-neutral-900">
+                        AI confidence
+                      </div>
                       <div className="mt-2 space-y-2">
                         {AI_SCORES.map((s) => (
-                          <div key={String(s.key)} className="flex items-start justify-between gap-3">
+                          <div
+                            key={String(s.key)}
+                            className="flex items-start justify-between gap-3"
+                          >
                             <div>
-                              <div className="text-sm text-neutral-900">{s.label}</div>
-                              {s.note && <div className="text-xs text-neutral-500">{s.note}</div>}
+                              <div className="text-sm text-neutral-900">
+                                {s.label}
+                              </div>
+                              {s.note && (
+                                <div className="text-xs text-neutral-500">
+                                  {s.note}
+                                </div>
+                              )}
                             </div>
                             <span className={confidenceBadge(s.confidence)}>
-                              {s.confidence === "high" ? "High" : s.confidence === "medium" ? "Medium" : "Low"}
+                              {s.confidence === "high"
+                                ? "High"
+                                : s.confidence === "medium"
+                                  ? "Medium"
+                                  : "Low"}
                             </span>
                           </div>
                         ))}
@@ -1095,10 +1377,13 @@ export default function ProviderProductNewPage() {
 
                   {/* Conflicts (simple MVP logic) */}
                   <div className="rounded-xl border border-neutral-200 bg-white p-4">
-                    <div className="text-sm font-medium text-neutral-900">Conflict checks (MVP)</div>
+                    <div className="text-sm font-medium text-neutral-900">
+                      Conflict checks (MVP)
+                    </div>
                     <ul className="mt-2 list-disc pl-5 text-sm text-neutral-700">
                       <li>
-                        If capacity is "per resource", allocate variants in Availability to avoid overbooking.
+                        If capacity is "per resource", allocate variants in
+                        Availability to avoid overbooking.
                       </li>
                       <li>
                         Keep meeting point precise — reduces support messages.

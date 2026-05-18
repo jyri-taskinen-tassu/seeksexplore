@@ -49,6 +49,8 @@ gh pr create --base exploring --title "..." --body "..."
 
 PRs always target `exploring` branch, never `main`.
 
+**NEVER mark a Linear issue as Done.** Always create a PR instead. User verifies PRs manually, then gives a list of verified PRs — only then update Linear issue status to Done.
+
 ### 4. Prettier on every changed file
 ```bash
 npx prettier --write <changed-file>
