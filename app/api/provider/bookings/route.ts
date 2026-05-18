@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     .schema(SCHEMA)
     .from("bookings")
     .select("*")
-    .eq("provider_id", (provider as { id: string }).id)
+    .eq("provider_id", (provider as unknown as { id: string }).id)
     .order("booking_date", { ascending: true })
     .order("booking_time", { ascending: true });
 
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     .schema(SCHEMA)
     .from("bookings")
     .insert({
-      provider_id: (provider as { id: string }).id,
+      provider_id: (provider as unknown as { id: string }).id,
       customer_name,
       customer_email,
       customer_phone: customer_phone ?? null,

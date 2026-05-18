@@ -19,7 +19,7 @@ export default async function ProviderAvailabilityPage() {
     .schema(SCHEMA)
     .from("bookings")
     .select("*, products!product_id(capacity_max)")
-    .eq("provider_id", (provider as { id: string }).id)
+    .eq("provider_id", (provider as unknown as { id: string }).id)
     .order("booking_date", { ascending: true })
     .order("booking_time", { ascending: true });
 
@@ -29,7 +29,7 @@ export default async function ProviderAvailabilityPage() {
   };
   const normalized: DbBooking[] = ((bookings ?? []) as RawBooking[]).map(
     (b) => ({
-      ...(b as Omit<DbBooking, "product_capacity">),
+      ...(b as unknown as Omit<DbBooking, "product_capacity">),
       product_capacity: b.products?.capacity_max ?? null,
     }),
   );

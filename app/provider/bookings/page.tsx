@@ -15,7 +15,7 @@ export default async function ProviderBookingsPage() {
       .schema(SCHEMA)
       .from("bookings")
       .select("*")
-      .eq("provider_id", (provider as { id: string }).id)
+      .eq("provider_id", (provider as unknown as { id: string }).id)
       .order("booking_date", { ascending: true })
       .order("booking_time", { ascending: true });
 

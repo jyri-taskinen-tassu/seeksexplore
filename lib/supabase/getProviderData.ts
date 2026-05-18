@@ -4,7 +4,9 @@ const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
 export async function getProviderForUser() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data } = await supabase
@@ -14,5 +16,5 @@ export async function getProviderForUser() {
     .eq("profile_id", user.id)
     .single();
 
-  return data?.providers ?? null;
+  return (data?.providers as unknown as { id: string } | null) ?? null;
 }
