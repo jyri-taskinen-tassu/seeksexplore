@@ -18,9 +18,11 @@ export default async function ProductEditPage({
   const { data: product } = await supabase
     .schema(SCHEMA)
     .from("products")
-    .select(`*, product_information(*), product_images(*), product_tags(*), product_target_groups(*), product_availability(*)`)
+    .select(
+      `*, product_information(*), product_images(*), product_tags(*), product_target_groups(*), product_availability(*)`,
+    )
     .eq("id", id)
-    .eq("provider_id", (provider as { id: string }).id)
+    .eq("provider_id", (provider as unknown as { id: string }).id)
     .single();
 
   if (!product) notFound();

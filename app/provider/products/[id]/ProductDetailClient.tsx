@@ -84,20 +84,45 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+type ProductRow = {
+  id: string;
+  type: string | null;
+  accessible: boolean | null;
+  external_source: string | null;
+  url_primary: string | null;
+  price_from: number | null;
+  price_to: number | null;
+  pricing_unit: string | null;
+  duration_days: number | null;
+  duration_hours: number | null;
+  duration_minutes: number | null;
+  capacity_min: number | null;
+  capacity_max: number | null;
+  available_months: string[] | null;
+  bf_product_id: string | null;
+  product_information: InfoRow[];
+  product_images: ImgRow[];
+  product_tags: TagRow[];
+  product_target_groups: TargetRow[];
+  product_certificates: CertRow[];
+  product_availability: AvailRow[];
+};
+
 export default function ProductDetailClient({
-  product,
+  product: rawProduct,
 }: {
   product: Record<string, unknown>;
 }) {
-  const infos = (product.product_information as InfoRow[]) ?? [];
-  const images = ((product.product_images as ImgRow[]) ?? []).sort(
+  const product = rawProduct as unknown as ProductRow;
+  const infos = product.product_information ?? [];
+  const images = (product.product_images ?? []).sort(
     (a, b) => (a.order_index ?? 99) - (b.order_index ?? 99),
   );
-  const tags = (product.product_tags as TagRow[]) ?? [];
-  const targets = (product.product_target_groups as TargetRow[]) ?? [];
-  const certs = (product.product_certificates as CertRow[]) ?? [];
-  const availability = (product.product_availability as AvailRow[]) ?? [];
-  const months = (product.available_months as string[] | null) ?? [];
+  const tags = product.product_tags ?? [];
+  const targets = product.product_target_groups ?? [];
+  const certs = product.product_certificates ?? [];
+  const availability = product.product_availability ?? [];
+  const months = product.available_months ?? [];
 
   const coverImg = images.find((i) => i.is_cover) ?? images[0];
   const galleryImgs = images

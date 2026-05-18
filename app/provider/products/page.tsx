@@ -13,7 +13,7 @@ export default async function ProviderProductsPage() {
         .schema(SCHEMA)
         .from("products")
         .select("*, product_information(*), product_images(*), product_tags(*)")
-        .eq("provider_id", (provider as { id: string }).id)
+        .eq("provider_id", (provider as unknown as { id: string }).id)
         .order("created_at")
         .then((r) => r.data ?? [])
     : [];
@@ -23,7 +23,9 @@ export default async function ProviderProductsPage() {
       <header className="border-b border-neutral-200 bg-white px-6 py-4 sticky top-0 z-10">
         <div className="flex w-full items-center justify-between">
           <div>
-            <div className="text-lg font-semibold text-neutral-900">Products</div>
+            <div className="text-lg font-semibold text-neutral-900">
+              Products
+            </div>
             <div className="mt-1 text-sm text-neutral-500">
               Manage your product catalog
             </div>
@@ -48,7 +50,9 @@ export default async function ProviderProductsPage() {
       <main className="flex-1 overflow-y-auto px-6 py-6">
         <section className="rounded-xl border border-neutral-200 bg-white shadow-sm">
           <div className="border-b border-neutral-200 px-6 py-4">
-            <div className="text-base font-semibold text-neutral-900">Products</div>
+            <div className="text-base font-semibold text-neutral-900">
+              Products
+            </div>
             <div className="mt-1 text-sm text-neutral-500">
               {products.length} product{products.length !== 1 ? "s" : ""}
             </div>
@@ -56,7 +60,9 @@ export default async function ProviderProductsPage() {
           <div className="divide-y divide-neutral-100">
             {products.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="text-sm text-neutral-500 mb-4">No products yet</div>
+                <div className="text-sm text-neutral-500 mb-4">
+                  No products yet
+                </div>
                 <Link
                   href="/provider/products/new"
                   className="inline-block rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
@@ -66,16 +72,31 @@ export default async function ProviderProductsPage() {
               </div>
             ) : (
               products.map((product) => {
-                type InfoRow = { language: string; name: string | null; description: string | null };
-                type ImgRow = { thumbnail_url: string | null; large_url: string; is_cover: boolean };
+                type InfoRow = {
+                  language: string;
+                  name: string | null;
+                  description: string | null;
+                };
+                type ImgRow = {
+                  thumbnail_url: string | null;
+                  large_url: string;
+                  is_cover: boolean;
+                };
                 type TagRow = { tag: string };
                 const infos = product.product_information as InfoRow[];
-                const enInfo = infos?.find((i) => i.language === "en") ?? infos?.[0];
-                const coverImg = (product.product_images as ImgRow[])?.find((i) => i.is_cover) ?? (product.product_images as ImgRow[])?.[0];
+                const enInfo =
+                  infos?.find((i) => i.language === "en") ?? infos?.[0];
+                const coverImg =
+                  (product.product_images as ImgRow[])?.find(
+                    (i) => i.is_cover,
+                  ) ?? (product.product_images as ImgRow[])?.[0];
                 const tags = (product.product_tags as TagRow[]) ?? [];
 
                 return (
-                  <div key={product.id} className="p-6 hover:bg-neutral-50 transition-colors">
+                  <div
+                    key={product.id}
+                    className="p-6 hover:bg-neutral-50 transition-colors"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
                         {coverImg && (
@@ -109,26 +130,41 @@ export default async function ProviderProductsPage() {
                             {product.price_from != null && (
                               <span>
                                 From €{product.price_from}
-                                {product.price_to ? `–€${product.price_to}` : ""}
-                                {product.pricing_unit ? ` / ${product.pricing_unit}` : ""}
+                                {product.price_to
+                                  ? `–€${product.price_to}`
+                                  : ""}
+                                {product.pricing_unit
+                                  ? ` / ${product.pricing_unit}`
+                                  : ""}
                               </span>
                             )}
-                            {(product.duration_hours != null || product.duration_days != null) && (
+                            {(product.duration_hours != null ||
+                              product.duration_days != null) && (
                               <span>
                                 {[
-                                  product.duration_days && `${product.duration_days}d`,
-                                  product.duration_hours && `${product.duration_hours}h`,
-                                  product.duration_minutes && `${product.duration_minutes}m`,
-                                ].filter(Boolean).join(" ")}
+                                  product.duration_days &&
+                                    `${product.duration_days}d`,
+                                  product.duration_hours &&
+                                    `${product.duration_hours}h`,
+                                  product.duration_minutes &&
+                                    `${product.duration_minutes}m`,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ")}
                               </span>
                             )}
                             {product.available_months?.length > 0 && (
                               <span>
-                                {(product.available_months as string[]).map((m: string) => m.slice(0, 3)).join(", ")}
+                                {(product.available_months as string[])
+                                  .map((m: string) => m.slice(0, 3))
+                                  .join(", ")}
                               </span>
                             )}
                             {tags.slice(0, 3).map((t) => (
-                              <span key={t.tag} className="rounded-full border border-neutral-200 px-2 py-0.5">
+                              <span
+                                key={t.tag}
+                                className="rounded-full border border-neutral-200 px-2 py-0.5"
+                              >
                                 {t.tag.replace(/_/g, " ")}
                               </span>
                             ))}
