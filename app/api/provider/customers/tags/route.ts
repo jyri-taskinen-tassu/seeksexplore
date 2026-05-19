@@ -4,7 +4,11 @@ import { NextResponse } from "next/server";
 
 const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
-export async function GET() {
+/**
+ * GET /api/provider/customers/tags?q=<search>
+ * Returns grouped tag suggestions from Supabase RPC.
+ */
+export async function GET(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,19 +20,28 @@ export async function GET() {
   if (!provider)
     return NextResponse.json({ error: "Provider not found" }, { status: 404 });
 
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get("q") ?? "";
+
   const { data, error } = await supabase
     .schema(SCHEMA)
-    .from("sales_opportunities")
-    .select("*")
-    .eq("provider_id", provider.id)
-    .order("position", { ascending: true })
-    .order("created_at", { ascending: true });
+    .rpc("search_customer_tags", {
+      p_provider_id: provider.id,
+      p_query: query,
+    });
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // data is an array of { category: string, tags: TagItem[] }
+  return NextResponse.json(data ?? []);
 }
 
+/**
+ * POST /api/provider/customers/tags
+ * Body: { tag: string, category?: string }
+ * Upserts a tag into the provider's customer_tags catalog.
+ */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
@@ -42,35 +55,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Provider not found" }, { status: 404 });
 
   const body = await request.json();
+  const tag = (body.tag ?? "").trim();
+  const category = (body.category ?? "Custom").trim();
 
-  const { count } = await supabase
-    .schema(SCHEMA)
-    .from("sales_opportunities")
-    .select("*", { count: "exact", head: true })
-    .eq("provider_id", provider.id)
-    .eq("stage", "inquiry");
-  const nextPosition = count ?? 0;
+  if (!tag)
+    return NextResponse.json({ error: "tag is required" }, { status: 400 });
 
   const { data, error } = await supabase
     .schema(SCHEMA)
-    .from("sales_opportunities")
-    .insert({
-      provider_id: provider.id,
-      customer_name: body.customerName,
-      customer_email: body.customerEmail,
-      product_name: body.productName,
-      stage: "inquiry",
-      estimated_value: body.estimatedValue ?? 0,
-      currency: "EUR",
-      guests: body.guests ?? 1,
-      preferred_date: body.preferredDate ?? null,
-      notes: body.notes ?? null,
-      position: nextPosition,
-    })
-    .select()
-    .single();
+    .rpc("upsert_customer_tag", {
+      p_provider_id: provider.id,
+      p_tag: tag,
+      p_category: category,
+    });
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+
+  return NextResponse.json(data);
 }

@@ -24,6 +24,7 @@ export async function PATCH(
   const updates: Record<string, unknown> = {};
   if (body.stage !== undefined) updates.stage = body.stage;
   if (body.notes !== undefined) updates.notes = body.notes;
+  if (body.position !== undefined) updates.position = body.position;
 
   const { data, error } = await supabase
     .schema(SCHEMA)
