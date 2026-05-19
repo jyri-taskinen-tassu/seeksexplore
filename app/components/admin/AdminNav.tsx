@@ -183,15 +183,6 @@ export function AdminNav() {
               );
             })}
           </div>
-
-          <div className="mt-6 px-3">
-            <Link
-              href="/provider"
-              className="flex items-center gap-2 text-xs text-white/50 hover:text-white/80 transition-colors"
-            >
-              ← Back to Provider view
-            </Link>
-          </div>
         </nav>
 
         {/* Logout */}

@@ -9,123 +9,258 @@ export default async function ProvidersPage() {
     .schema(SCHEMA)
     .from("providers")
     .select(
-      "id, official_name, business_name, city, email, imported_at, provider_slug",
+      "id, official_name, business_name, city, email, imported_at, provider_slug, logo_url, logo_thumbnail_url",
     )
     .order("imported_at", { ascending: false });
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1
-          className="text-xl font-semibold"
-          style={{ color: "var(--color-forest)" }}
-        >
-          Providers
-        </h1>
+    <div className="p-8">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1
+            className="text-2xl font-bold tracking-tight"
+            style={{ color: "var(--color-forest)" }}
+          >
+            Providers
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "var(--color-sage)" }}>
+            {providers?.length ?? 0} registered operator
+            {providers?.length !== 1 ? "s" : ""}
+          </p>
+        </div>
         <Link
           href="/admin/providers/import"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
           style={{ background: "var(--color-forest)" }}
         >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
           Import from Business Finland
         </Link>
       </div>
 
       {!providers?.length ? (
-        <p className="text-sm" style={{ color: "var(--color-sage)" }}>
-          No providers yet. Import one from Business Finland.
-        </p>
+        <div
+          className="text-center py-24 rounded-2xl border-2 border-dashed"
+          style={{ borderColor: "var(--color-cream)" }}
+        >
+          <svg
+            className="mx-auto mb-4"
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--color-sage)", opacity: 0.6 }}
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <p className="font-semibold" style={{ color: "var(--color-forest)" }}>
+            No providers yet
+          </p>
+          <p
+            className="text-sm mt-1"
+            style={{ color: "var(--color-sage)", opacity: 0.8 }}
+          >
+            Import your first operator from Business Finland
+          </p>
+          <Link
+            href="/admin/providers/import"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "var(--color-accent)" }}
+          >
+            Import now
+          </Link>
+        </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr
-                className="border-b text-left"
-                style={{ color: "var(--color-sage)" }}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {providers.map((p) => {
+            const initials = (p.official_name || "P")
+              .split(" ")
+              .slice(0, 2)
+              .map((w: string) => w[0])
+              .join("")
+              .toUpperCase();
+
+            return (
+              <div
+                key={p.id}
+                className="group relative bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200"
               >
-                <th className="px-4 py-3 font-medium">Company</th>
-                <th className="px-4 py-3 font-medium">City</th>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Imported</th>
-                <th className="px-4 py-3 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {providers.map((p) => (
-                <tr key={p.id} className="border-b last:border-0">
-                  <td
-                    className="px-4 py-3 font-medium"
-                    style={{ color: "var(--color-forest)" }}
-                  >
-                    {p.official_name}
+                <Link
+                  href={`/admin/providers/${p.id}`}
+                  className="absolute inset-0 rounded-2xl"
+                  aria-label={p.official_name}
+                />
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    {(p as { logo_thumbnail_url?: string | null })
+                      .logo_thumbnail_url || p.logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={
+                          ((p as { logo_thumbnail_url?: string | null })
+                            .logo_thumbnail_url ?? p.logo_url) as string
+                        }
+                        alt={p.official_name}
+                        className="w-12 h-12 object-contain rounded-xl border bg-white"
+                        style={{ borderColor: "var(--color-cream)" }}
+                      />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm"
+                        style={{ background: "var(--color-forest)" }}
+                      >
+                        {initials}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="font-semibold text-sm leading-tight group-hover:opacity-70 transition-opacity"
+                      style={{ color: "var(--color-forest)" }}
+                    >
+                      {p.official_name}
+                    </p>
                     {p.business_name && p.business_name !== p.official_name && (
-                      <span
-                        className="block text-xs font-normal"
+                      <p
+                        className="text-xs mt-0.5 truncate"
                         style={{ color: "var(--color-sage)" }}
                       >
                         {p.business_name}
-                      </span>
+                      </p>
                     )}
-                  </td>
-                  <td
-                    className="px-4 py-3"
-                    style={{ color: "var(--color-sage)" }}
-                  >
-                    {p.city ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3"
-                    style={{ color: "var(--color-sage)" }}
-                  >
-                    {p.email ?? "—"}
-                  </td>
-                  <td
-                    className="px-4 py-3"
-                    style={{ color: "var(--color-sage)" }}
-                  >
-                    {new Date(p.imported_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Link
-                        href={`/admin/providers/${p.id}`}
-                        className="text-xs font-medium hover:underline"
-                        style={{ color: "var(--color-accent)" }}
-                      >
-                        View
-                      </Link>
-                      {p.provider_slug ? (
-                        <a
-                          href={`/book/${p.provider_slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-medium hover:underline"
-                          style={{ color: "var(--color-sage)" }}
-                        >
+                    <div
+                      className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs"
+                      style={{ color: "var(--color-sage)" }}
+                    >
+                      {p.city && (
+                        <span className="flex items-center gap-1">
                           <svg
-                            width="11"
-                            height="11"
+                            width="10"
+                            height="10"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            aria-hidden="true"
                           >
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                            <polyline points="15 3 21 3 21 9" />
-                            <line x1="10" y1="14" x2="21" y2="3" />
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
                           </svg>
-                          Book
-                        </a>
-                      ) : null}
+                          {p.city}
+                        </span>
+                      )}
+                      {p.email && (
+                        <span className="flex items-center gap-1 truncate max-w-[160px]">
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                            <polyline points="22,6 12,13 2,6" />
+                          </svg>
+                          <span className="truncate">{p.email}</span>
+                        </span>
+                      )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+
+                <div
+                  className="mt-4 pt-4 border-t flex items-center justify-between"
+                  style={{ borderColor: "var(--color-cream)" }}
+                >
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--color-sage)", opacity: 0.8 }}
+                  >
+                    {new Date(p.imported_at).toLocaleDateString("en-FI", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {p.provider_slug && (
+                      <a
+                        href={`/book/${p.provider_slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative z-10 text-xs px-2.5 py-1 rounded-lg font-medium transition-opacity hover:opacity-70 flex items-center gap-1"
+                        style={{
+                          background: "var(--color-cream)",
+                          color: "var(--color-forest)",
+                        }}
+                      >
+                        Book
+                        <svg
+                          width="9"
+                          height="9"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                      </a>
+                    )}
+                    <span
+                      className="text-xs px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1"
+                      style={{
+                        background: "var(--color-forest)",
+                        color: "white",
+                      }}
+                    >
+                      View
+                      <svg
+                        width="9"
+                        height="9"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

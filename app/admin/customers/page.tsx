@@ -9,7 +9,7 @@ export default async function AdminCustomersPage() {
     .schema(SCHEMA)
     .from("customers")
     .select(
-      "id, full_name, email, country, total_bookings, total_spent, currency, last_booking_date",
+      "id, first_name, last_name, email, country, total_bookings, total_spent, currency, last_booking_date",
     )
     .order("last_booking_date", { ascending: false, nullsFirst: false })
     .limit(200);
@@ -53,7 +53,9 @@ export default async function AdminCustomersPage() {
                 className="border-b last:border-0 hover:bg-neutral-50"
               >
                 <td className="px-4 py-3">
-                  <p className="font-medium text-neutral-900">{c.full_name}</p>
+                  <p className="font-medium text-neutral-900">
+                    {[c.first_name, c.last_name].filter(Boolean).join(" ")}
+                  </p>
                   <p className="text-xs text-neutral-500">{c.email}</p>
                 </td>
                 <td className="px-4 py-3 text-neutral-500">
