@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import CustomerTagInput from "@/app/components/provider/CustomerTagInput";
 
 export type CustomerTag = "vip" | "repeat" | "group" | "corporate" | "family";
 export type SalesStage =
@@ -18,12 +25,26 @@ export type Customer = {
   email: string;
   phone?: string | null;
   country?: string | null;
-  tags: CustomerTag[];
+  tags: string[];
   total_bookings: number;
   total_spent: number;
   currency: string;
   first_booking_date?: string | null;
   last_booking_date?: string | null;
+  notes?: string | null;
+};
+
+export type Booking = {
+  id: string;
+  customer_email: string;
+  customer_name: string;
+  product_name: string;
+  booking_date: string;
+  booking_time: string;
+  guests: number;
+  status: "pending" | "confirmed" | "cancelled";
+  total_price: number;
+  currency: string;
   notes?: string | null;
 };
 
@@ -67,57 +88,11 @@ function formatDate(dateStr: string | null | undefined): string {
   });
 }
 
-const TAG_STYLES: Record<CustomerTag, string> = {
-  vip: "bg-purple-50 text-purple-700 ring-purple-200",
-  repeat: "bg-blue-50 text-blue-700 ring-blue-200",
-  group: "bg-green-50 text-green-700 ring-green-200",
-  corporate: "bg-amber-50 text-amber-700 ring-amber-200",
-  family: "bg-pink-50 text-pink-700 ring-pink-200",
-};
-
-const TAG_LABELS: Record<CustomerTag, string> = {
-  vip: "VIP",
-  repeat: "Repeat",
-  group: "Group",
-  corporate: "Corporate",
-  family: "Family",
-};
-
-const ALL_TAGS: CustomerTag[] = [
-  "vip",
-  "repeat",
-  "group",
-  "corporate",
-  "family",
-];
-
-function TagBadge({
-  tag,
-  onRemove,
-}: {
-  tag: CustomerTag;
-  onRemove?: () => void;
-}) {
+/** Simple inline tag badge for the customer card list (read-only) */
+function TagBadge({ tag }: { tag: string }) {
   return (
-    <span
-      className={cx(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1",
-        TAG_STYLES[tag],
-      )}
-    >
-      {TAG_LABELS[tag]}
-      {onRemove && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          className="ml-0.5 rounded-full hover:opacity-70 transition-opacity"
-          aria-label={`Remove ${TAG_LABELS[tag]} tag`}
-        >
-          ×
-        </button>
-      )}
+    <span className="inline-flex items-center rounded-full bg-[var(--color-forest)]/10 px-2 py-0.5 text-xs font-medium text-[var(--color-forest)] ring-1 ring-[var(--color-forest)]/20">
+      {tag}
     </span>
   );
 }
@@ -168,76 +143,6 @@ function CustomerCard({
         </div>
       </div>
     </button>
-  );
-}
-
-function TagManager({
-  customer,
-  onTagsChange,
-}: {
-  customer: Customer;
-  onTagsChange: (customerId: string, tags: CustomerTag[]) => Promise<void>;
-}) {
-  const [saving, setSaving] = useState(false);
-  const [showAdd, setShowAdd] = useState(false);
-  const available = ALL_TAGS.filter((t) => !customer.tags.includes(t));
-
-  const handleRemove = async (tag: CustomerTag) => {
-    setSaving(true);
-    await onTagsChange(
-      customer.id,
-      customer.tags.filter((t) => t !== tag),
-    );
-    setSaving(false);
-  };
-
-  const handleAdd = async (tag: CustomerTag) => {
-    setSaving(true);
-    setShowAdd(false);
-    await onTagsChange(customer.id, [...customer.tags, tag]);
-    setSaving(false);
-  };
-
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {customer.tags.map((tag) => (
-          <TagBadge
-            key={tag}
-            tag={tag}
-            onRemove={saving ? undefined : () => handleRemove(tag)}
-          />
-        ))}
-        {available.length > 0 && (
-          <div className="relative">
-            <button
-              onClick={() => setShowAdd((v) => !v)}
-              disabled={saving}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-neutral-300 px-2 py-0.5 text-xs text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 transition-colors disabled:opacity-50"
-            >
-              + Add tag
-            </button>
-            {showAdd && (
-              <div className="absolute left-0 top-full mt-1 z-10 rounded-lg border border-neutral-200 bg-white shadow-lg py-1 min-w-[120px]">
-                {available.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleAdd(tag)}
-                    className="w-full text-left px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-2"
-                  >
-                    <span
-                      className={cx("h-2 w-2 rounded-full", TAG_STYLES[tag])}
-                    />
-                    {TAG_LABELS[tag]}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {saving && <span className="text-xs text-neutral-400">Saving…</span>}
-      </div>
-    </div>
   );
 }
 
@@ -305,13 +210,83 @@ function NotesEditor({
   );
 }
 
+const STATUS_STYLES: Record<
+  Booking["status"],
+  { badge: string; label: string }
+> = {
+  confirmed: {
+    badge: "bg-green-50 text-green-700 ring-green-200",
+    label: "Confirmed",
+  },
+  pending: {
+    badge: "bg-amber-50 text-amber-700 ring-amber-200",
+    label: "Pending",
+  },
+  cancelled: {
+    badge: "bg-red-50 text-red-600 ring-red-200",
+    label: "Cancelled",
+  },
+};
+
+function BookingRow({ booking }: { booking: Booking }) {
+  const style = STATUS_STYLES[booking.status];
+  const dateObj = new Date(booking.booking_date);
+  return (
+    <div className="flex items-start gap-4 rounded-lg border border-neutral-200 bg-white p-4">
+      <div className="flex-shrink-0 text-center min-w-[52px]">
+        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+          {dateObj.toLocaleDateString("en-US", { month: "short" })}
+        </div>
+        <div className="text-lg font-bold text-neutral-900 leading-none">
+          {dateObj.getUTCDate()}
+        </div>
+        <div className="text-xs text-neutral-400 mt-0.5">
+          {booking.booking_time}
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-neutral-900 truncate">
+            {booking.product_name}
+          </span>
+          <span
+            className={cx(
+              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1",
+              style.badge,
+            )}
+          >
+            {style.label}
+          </span>
+        </div>
+        <div className="mt-0.5 text-xs text-neutral-500">
+          {booking.guests} {booking.guests === 1 ? "guest" : "guests"}
+        </div>
+        {booking.notes && (
+          <div className="mt-1 text-xs text-neutral-500 italic truncate">
+            {booking.notes}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-shrink-0 text-right">
+        <div className="text-sm font-semibold text-neutral-900">
+          {formatCurrency(Number(booking.total_price), booking.currency)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CustomerDetailPanel({
   customer,
+  bookings,
   onTagsChange,
   onNotesChange,
 }: {
   customer: Customer;
-  onTagsChange: (customerId: string, tags: CustomerTag[]) => Promise<void>;
+  bookings: Booking[];
+  onTagsChange: (customerId: string, tags: string[]) => Promise<void>;
   onNotesChange: (customerId: string, notes: string) => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<"overview" | "bookings">(
@@ -321,38 +296,51 @@ function CustomerDetailPanel({
   return (
     <>
       <div className="border-b border-neutral-200 px-6 py-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-neutral-900">
-              {customer.first_name} {customer.last_name}
-            </h2>
-            <div className="mt-2">
-              <TagManager customer={customer} onTagsChange={onTagsChange} />
-            </div>
-          </div>
+        <div>
+          <h2 className="text-xl font-semibold text-neutral-900 mb-3">
+            {customer.first_name} {customer.last_name}
+          </h2>
+          <CustomerTagInput
+            customerId={customer.id}
+            initialTags={customer.tags}
+            onTagsChange={onTagsChange}
+          />
         </div>
       </div>
 
       <div className="border-b border-neutral-200 px-6">
         <div className="flex gap-1">
-          {(["overview", "bookings"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cx(
-                "px-4 py-2 text-sm font-medium transition-colors border-b-2",
-                activeTab === tab
-                  ? "border-neutral-900 text-neutral-900"
-                  : "border-transparent text-neutral-600 hover:text-neutral-900",
-              )}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={cx(
+              "px-4 py-2 text-sm font-medium transition-colors border-b-2",
+              activeTab === "overview"
+                ? "border-neutral-900 text-neutral-900"
+                : "border-transparent text-neutral-600 hover:text-neutral-900",
+            )}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab("bookings")}
+            className={cx(
+              "px-4 py-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-1.5",
+              activeTab === "bookings"
+                ? "border-neutral-900 text-neutral-900"
+                : "border-transparent text-neutral-600 hover:text-neutral-900",
+            )}
+          >
+            Bookings
+            {bookings.length > 0 && (
+              <span className="rounded-full bg-neutral-100 px-1.5 py-0.5 text-xs font-medium text-neutral-700">
+                {bookings.length}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 overflow-y-auto max-h-[calc(100vh-280px)]">
         {activeTab === "overview" && (
           <div className="space-y-6">
             <div>
@@ -423,9 +411,18 @@ function CustomerDetailPanel({
         )}
 
         {activeTab === "bookings" && (
-          <div className="text-sm text-neutral-500 text-center py-8">
-            Booking history will appear here once the customer booking flow is
-            live.
+          <div>
+            {bookings.length === 0 ? (
+              <div className="text-sm text-neutral-500 text-center py-12">
+                No bookings found for this customer.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {bookings.map((booking) => (
+                  <BookingRow key={booking.id} booking={booking} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -435,23 +432,20 @@ function CustomerDetailPanel({
 
 function KanbanCard({
   opportunity,
-  onDragStart,
-  isDragging,
   onClick,
+  isDragging,
 }: {
   opportunity: SalesOpportunity;
-  onDragStart: (e: React.DragEvent, id: string) => void;
-  isDragging: boolean;
   onClick: () => void;
+  isDragging: boolean;
 }) {
   return (
     <div
-      draggable
-      onDragStart={(e) => onDragStart(e, opportunity.id)}
       onClick={onClick}
       className={cx(
-        "rounded-lg border border-neutral-200 bg-white p-2.5 cursor-pointer hover:shadow-md transition-all",
-        isDragging && "opacity-50",
+        "rounded-lg border border-neutral-200 bg-white p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all select-none",
+        isDragging &&
+          "opacity-60 shadow-lg ring-2 ring-[var(--color-forest)]/30",
       )}
     >
       <div className="mb-1.5">
@@ -869,6 +863,50 @@ function AddLeadModal({
   );
 }
 
+const STAGES: {
+  id: SalesStage;
+  label: string;
+  color: string;
+  borderColor: string;
+  headerColor: string;
+}[] = [
+  {
+    id: "inquiry",
+    label: "Inquiry",
+    color: "bg-[var(--color-sky)]/5",
+    borderColor: "border-[var(--color-sky)]/20",
+    headerColor: "text-[var(--color-sky)]",
+  },
+  {
+    id: "quoted",
+    label: "Quoted",
+    color: "bg-[var(--color-accent)]/5",
+    borderColor: "border-[var(--color-accent)]/20",
+    headerColor: "text-[var(--color-accent)]",
+  },
+  {
+    id: "followup",
+    label: "Follow-up",
+    color: "bg-[var(--color-sage)]/5",
+    borderColor: "border-[var(--color-sage)]/20",
+    headerColor: "text-[var(--color-sage)]",
+  },
+  {
+    id: "booked",
+    label: "Booked",
+    color: "bg-[var(--color-forest)]/10",
+    borderColor: "border-[var(--color-forest)]/30",
+    headerColor: "text-[var(--color-forest)]",
+  },
+  {
+    id: "completed",
+    label: "Completed",
+    color: "bg-neutral-50",
+    borderColor: "border-neutral-200",
+    headerColor: "text-neutral-500",
+  },
+];
+
 function KanbanView({
   initialOpportunities,
 }: {
@@ -876,76 +914,111 @@ function KanbanView({
 }) {
   const [opportunities, setOpportunities] =
     useState<SalesOpportunity[]>(initialOpportunities);
-  const [draggedId, setDraggedId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedOpp, setSelectedOpp] = useState<SalesOpportunity | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const stages: {
-    id: SalesStage;
-    label: string;
-    color: string;
-    borderColor: string;
-  }[] = [
-    {
-      id: "inquiry",
-      label: "Inquiry",
-      color: "bg-[var(--color-sky)]/5",
-      borderColor: "border-[var(--color-sky)]/20",
-    },
-    {
-      id: "quoted",
-      label: "Quoted",
-      color: "bg-[var(--color-accent)]/5",
-      borderColor: "border-[var(--color-accent)]/20",
-    },
-    {
-      id: "followup",
-      label: "Follow-up",
-      color: "bg-[var(--color-sage)]/5",
-      borderColor: "border-[var(--color-sage)]/20",
-    },
-    {
-      id: "booked",
-      label: "Booked",
-      color: "bg-[var(--color-forest)]/10",
-      borderColor: "border-[var(--color-forest)]/30",
-    },
-    {
-      id: "completed",
-      label: "Completed",
-      color: "bg-neutral-50",
-      borderColor: "border-neutral-200",
-    },
-  ];
+  const handleDragEnd = useCallback(
+    async (result: DropResult) => {
+      const { draggableId, destination } = result;
+      if (!destination) return;
 
-  const handleDrop = async (e: React.DragEvent, targetStage: SalesStage) => {
-    e.preventDefault();
-    if (!draggedId) return;
-    // Optimistic update
-    setOpportunities((prev) =>
-      prev.map((o) => (o.id === draggedId ? { ...o, stage: targetStage } : o)),
-    );
-    setDraggedId(null);
-    // Persist
-    await fetch(`/api/provider/sales-opportunities/${draggedId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage: targetStage }),
-    });
-  };
+      const targetStage = destination.droppableId as SalesStage;
+      const opp = opportunities.find((o) => o.id === draggableId);
+      if (!opp || opp.stage === targetStage) return;
 
-  const handleStageChange = async (id: string, stage: SalesStage) => {
-    setOpportunities((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, stage } : o)),
-    );
-    if (selectedOpp?.id === id)
-      setSelectedOpp((o) => (o ? { ...o, stage } : o));
-    await fetch(`/api/provider/sales-opportunities/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage }),
-    });
-  };
+      // Snapshot for rollback
+      const previousOpportunities = opportunities;
+
+      // Optimistic update
+      setOpportunities((prev) =>
+        prev.map((o) =>
+          o.id === draggableId
+            ? { ...o, stage: targetStage, updated_at: new Date().toISOString() }
+            : o,
+        ),
+      );
+      if (selectedOpp?.id === draggableId) {
+        setSelectedOpp((o) => (o ? { ...o, stage: targetStage } : o));
+      }
+      setError(null);
+
+      // Persist to Supabase
+      try {
+        const res = await fetch(
+          `/api/provider/sales-opportunities/${draggableId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stage: targetStage }),
+          },
+        );
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.status}`);
+        }
+        const updated: SalesOpportunity = await res.json();
+        // Sync server response
+        setOpportunities((prev) =>
+          prev.map((o) => (o.id === draggableId ? updated : o)),
+        );
+      } catch (err) {
+        // Rollback on failure
+        setOpportunities(previousOpportunities);
+        if (selectedOpp?.id === draggableId) {
+          setSelectedOpp(opp);
+        }
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to save. Please try again.",
+        );
+      }
+    },
+    [opportunities, selectedOpp],
+  );
+
+  const handleStageChange = useCallback(
+    async (id: string, stage: SalesStage) => {
+      const opp = opportunities.find((o) => o.id === id);
+      if (!opp) return;
+
+      const previousOpportunities = opportunities;
+
+      // Optimistic update
+      setOpportunities((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, stage } : o)),
+      );
+      if (selectedOpp?.id === id) {
+        setSelectedOpp((o) => (o ? { ...o, stage } : o));
+      }
+      setError(null);
+
+      try {
+        const res = await fetch(`/api/provider/sales-opportunities/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage }),
+        });
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const updated: SalesOpportunity = await res.json();
+        setOpportunities((prev) =>
+          prev.map((o) => (o.id === id ? updated : o)),
+        );
+      } catch (err) {
+        // Rollback
+        setOpportunities(previousOpportunities);
+        if (selectedOpp?.id === id) {
+          setSelectedOpp(opp);
+        }
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to save. Please try again.",
+        );
+      }
+    },
+    [opportunities, selectedOpp],
+  );
 
   const handleAddLead = async (data: {
     customerName: string;
@@ -982,6 +1055,19 @@ function KanbanView({
         </button>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600 ml-4"
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {showAddModal && (
         <AddLeadModal
           onClose={() => setShowAddModal(false)}
@@ -997,68 +1083,93 @@ function KanbanView({
         />
       )}
 
-      <div className="overflow-x-auto">
-        <div className="flex gap-3 min-w-max pb-4">
-          {stages.map((stage) => {
-            const stageOpps = opportunities.filter((o) => o.stage === stage.id);
-            const stageValue = stageOpps.reduce(
-              (s, o) => s + o.estimated_value,
-              0,
-            );
-            return (
-              <div
-                key={stage.id}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                }}
-                onDrop={(e) => handleDrop(e, stage.id)}
-                className={cx(
-                  "flex-shrink-0 w-72 rounded-lg border p-3",
-                  stage.color,
-                  stage.borderColor,
-                  draggedId && "ring-2 ring-neutral-400",
-                )}
-              >
-                <div className="mb-3 pb-3 border-b border-neutral-200">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-semibold text-neutral-900">
-                      {stage.label}
-                    </h3>
-                    <span className="text-xs font-medium text-neutral-600 bg-neutral-100 rounded-full px-2 py-0.5">
-                      {stageOpps.length}
-                    </span>
-                  </div>
-                  <div className="text-xs text-neutral-500">
-                    {formatCurrency(stageValue)}
-                  </div>
-                </div>
-
-                <div className="space-y-2 max-h-[650px] overflow-y-auto">
-                  {stageOpps.length === 0 ? (
-                    <div className="text-xs text-neutral-400 text-center py-8 border-2 border-dashed border-neutral-200 rounded">
-                      Drop here
-                    </div>
-                  ) : (
-                    stageOpps.map((opp) => (
-                      <KanbanCard
-                        key={opp.id}
-                        opportunity={opp}
-                        onDragStart={(e, id) => {
-                          setDraggedId(id);
-                          e.dataTransfer.effectAllowed = "move";
-                        }}
-                        isDragging={draggedId === opp.id}
-                        onClick={() => setSelectedOpp(opp)}
-                      />
-                    ))
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="overflow-x-auto">
+          <div className="flex gap-3 min-w-max pb-4">
+            {STAGES.map((stage) => {
+              const stageOpps = opportunities.filter(
+                (o) => o.stage === stage.id,
+              );
+              const stageValue = stageOpps.reduce(
+                (s, o) => s + o.estimated_value,
+                0,
+              );
+              return (
+                <div
+                  key={stage.id}
+                  className={cx(
+                    "flex-shrink-0 w-72 rounded-lg border p-3",
+                    stage.color,
+                    stage.borderColor,
                   )}
+                >
+                  <div className="mb-3 pb-3 border-b border-neutral-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3
+                        className={cx(
+                          "text-sm font-semibold",
+                          stage.headerColor,
+                        )}
+                      >
+                        {stage.label}
+                      </h3>
+                      <span className="text-xs font-medium text-neutral-600 bg-neutral-100 rounded-full px-2 py-0.5">
+                        {stageOpps.length}
+                      </span>
+                    </div>
+                    <div className="text-xs text-neutral-500">
+                      {formatCurrency(stageValue)}
+                    </div>
+                  </div>
+
+                  <Droppable droppableId={stage.id}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={cx(
+                          "space-y-2 min-h-[120px] max-h-[650px] overflow-y-auto rounded-md transition-colors",
+                          snapshot.isDraggingOver &&
+                            "bg-[var(--color-forest)]/5 ring-2 ring-[var(--color-forest)]/20",
+                        )}
+                      >
+                        {stageOpps.length === 0 && !snapshot.isDraggingOver ? (
+                          <div className="text-xs text-neutral-400 text-center py-8 border-2 border-dashed border-neutral-200 rounded">
+                            Drop here
+                          </div>
+                        ) : (
+                          stageOpps.map((opp, index) => (
+                            <Draggable
+                              key={opp.id}
+                              draggableId={opp.id}
+                              index={index}
+                            >
+                              {(dragProvided, dragSnapshot) => (
+                                <div
+                                  ref={dragProvided.innerRef}
+                                  {...dragProvided.draggableProps}
+                                  {...dragProvided.dragHandleProps}
+                                >
+                                  <KanbanCard
+                                    opportunity={opp}
+                                    isDragging={dragSnapshot.isDragging}
+                                    onClick={() => setSelectedOpp(opp)}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </DragDropContext>
     </div>
   );
 }
@@ -1066,14 +1177,16 @@ function KanbanView({
 export default function CustomersClient({
   initialCustomers,
   initialOpportunities,
+  initialBookingsByEmail = {},
 }: {
   initialCustomers: Customer[];
   initialOpportunities: SalesOpportunity[];
+  initialBookingsByEmail?: Record<string, Booking[]>;
 }) {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTag, setSelectedTag] = useState<CustomerTag | "all">("all");
+  const [selectedTag, setSelectedTag] = useState<string | "all">("all");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
@@ -1091,7 +1204,7 @@ export default function CustomersClient({
       );
     });
 
-  const handleTagsChange = async (customerId: string, tags: CustomerTag[]) => {
+  const handleTagsChange = async (customerId: string, tags: string[]) => {
     const res = await fetch(`/api/provider/customers/${customerId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -1173,33 +1286,41 @@ export default function CustomersClient({
                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
               />
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedTag("all")}
-                  className={cx(
-                    "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
-                    selectedTag === "all"
-                      ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-                  )}
-                >
-                  All
-                </button>
-                {ALL_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => setSelectedTag(tag)}
-                    className={cx(
-                      "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
-                      selectedTag === tag
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
-                    )}
-                  >
-                    <TagBadge tag={tag} />
-                  </button>
-                ))}
-              </div>
+              {/* Dynamic tag filter — derived from current customer tags */}
+              {(() => {
+                const allTags = Array.from(
+                  new Set(customers.flatMap((c) => c.tags)),
+                ).sort();
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedTag("all")}
+                      className={cx(
+                        "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                        selectedTag === "all"
+                          ? "border-neutral-900 bg-neutral-900 text-white"
+                          : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                      )}
+                    >
+                      All
+                    </button>
+                    {allTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setSelectedTag(tag)}
+                        className={cx(
+                          "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                          selectedTag === tag
+                            ? "border-neutral-900 bg-neutral-900 text-white"
+                            : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                        )}
+                      >
+                        <TagBadge tag={tag} />
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
 
               <div className="space-y-2 max-h-[600px] overflow-y-auto">
                 {filtered.length === 0 ? (
@@ -1223,6 +1344,11 @@ export default function CustomersClient({
               {selectedCustomer ? (
                 <CustomerDetailPanel
                   customer={selectedCustomer}
+                  bookings={
+                    initialBookingsByEmail[
+                      selectedCustomer.email.toLowerCase()
+                    ] ?? []
+                  }
                   onTagsChange={handleTagsChange}
                   onNotesChange={handleNotesChange}
                 />
