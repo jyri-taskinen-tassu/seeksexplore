@@ -97,7 +97,25 @@ PR body must include:
 - Issue references: `Closes SEE-XX`
 - Footer: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
-### 10. Report back
+### 10. Link PR and branch to Linear issue(s)
+
+For every issue worked on, do both:
+
+**a) Add comment** with branch + PR info using `mcp__linear-server__save_comment`:
+```
+🌿 Branch: `<branch-name>`
+🔗 PR: <pr-url>
+```
+
+**b) Create attachment** using `mcp__linear-server__create_attachment`:
+- `issueId`: the Linear issue ID
+- `url`: PR URL (e.g. `https://github.com/owner/repo/pull/42`)
+- `title`: `Pull Request #<number>`
+- `metadata`: `{ "branch": "<branch-name>", "pr": <pr-number> }`
+
+This lets `/ship-feature` resolve branch + PR from just an issue ID.
+
+### 11. Report back
 
 After PR is created, output:
 - PR URL

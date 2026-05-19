@@ -5,14 +5,31 @@ Merge a PR, mark Linear tickets Done, pull exploring branch.
 ## Usage
 
 ```
+/ship-feature <ISSUE-ID> [ISSUE-ID ...]
 /ship-feature <PR-NUMBER> <ISSUE-ID> [ISSUE-ID ...]
 ```
 
-Example: `/ship-feature 2 SEE-36 SEE-37`
+Examples:
+- `/ship-feature SEE-36` — PR number resolved from Linear
+- `/ship-feature SEE-36 SEE-37` — multi-issue, PR resolved from first issue
+- `/ship-feature 2 SEE-36 SEE-37` — explicit PR number (legacy / override)
 
 ---
 
 ## Steps (execute in order)
+
+### 0. Resolve PR number (skip if PR number was explicitly provided)
+
+If only issue IDs were given (first arg starts with `SEE-` or similar), resolve the PR number from Linear:
+
+1. Use `mcp__linear-server__list_comments` with the first issue's ID.
+2. Find the comment containing `🌿 Branch:` and `🔗 PR:`.
+3. Extract the PR URL from that comment.
+4. Parse the PR number from the URL: last path segment of `https://github.com/.../pull/<number>`.
+
+If no such comment exists, fall back: use `mcp__linear-server__get_attachment` — list attachments on the issue and find one with `title` starting with `Pull Request`. Read `metadata.pr` for the number.
+
+If still not found, stop and ask the user to provide the PR number explicitly.
 
 ### 1. Merge PR
 
