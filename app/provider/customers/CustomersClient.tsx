@@ -61,6 +61,7 @@ export type SalesOpportunity = {
   guests: number;
   preferred_date?: string | null;
   notes?: string | null;
+  position: number;
   created_at: string;
   updated_at: string;
 };
@@ -920,49 +921,118 @@ function KanbanView({
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
-      const { draggableId, destination } = result;
+      const { draggableId, source, destination } = result;
       if (!destination) return;
+      if (
+        source.droppableId === destination.droppableId &&
+        source.index === destination.index
+      )
+        return;
 
       const targetStage = destination.droppableId as SalesStage;
       const opp = opportunities.find((o) => o.id === draggableId);
-      if (!opp || opp.stage === targetStage) return;
+      if (!opp) return;
 
-      // Snapshot for rollback
       const previousOpportunities = opportunities;
 
-      // Optimistic update
-      setOpportunities((prev) =>
-        prev.map((o) =>
-          o.id === draggableId
-            ? { ...o, stage: targetStage, updated_at: new Date().toISOString() }
-            : o,
-        ),
+      // Same column — reorder within stage
+      if (opp.stage === targetStage) {
+        let reorderedStage: SalesOpportunity[] = [];
+        setOpportunities((prev) => {
+          const stageItems = prev.filter((o) => o.stage === targetStage);
+          const otherItems = prev.filter((o) => o.stage !== targetStage);
+          reorderedStage = [...stageItems];
+          const [moved] = reorderedStage.splice(source.index, 1);
+          reorderedStage.splice(destination.index, 0, moved);
+          reorderedStage = reorderedStage.map((o, i) => ({
+            ...o,
+            position: i,
+          }));
+          return [...otherItems, ...reorderedStage];
+        });
+        setError(null);
+        try {
+          const res = await fetch("/api/provider/sales-opportunities/reorder", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: reorderedStage.map((o) => ({
+                id: o.id,
+                position: o.position,
+              })),
+            }),
+          });
+          if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        } catch (err) {
+          setOpportunities(previousOpportunities);
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to save. Please try again.",
+          );
+        }
+        return;
+      }
+
+      // Cross-column — update stage + insert at destination index
+      const destStageItems = opportunities.filter(
+        (o) => o.stage === targetStage,
       );
+      const insertPosition = destination.index;
+
+      // Optimistic update: move item to new stage at destination index, shift others
+      setOpportunities((prev) => {
+        const withoutMoved = prev.filter((o) => o.id !== draggableId);
+        const destItems = withoutMoved
+          .filter((o) => o.stage === targetStage)
+          .map((o, i) => ({ ...o, position: i >= insertPosition ? i + 1 : i }));
+        const movedItem = {
+          ...opp,
+          stage: targetStage,
+          position: insertPosition,
+          updated_at: new Date().toISOString(),
+        };
+        const otherItems = withoutMoved.filter((o) => o.stage !== targetStage);
+        return [...otherItems, movedItem, ...destItems];
+      });
       if (selectedOpp?.id === draggableId) {
         setSelectedOpp((o) => (o ? { ...o, stage: targetStage } : o));
       }
       setError(null);
 
-      // Persist to Supabase
+      // Persist to Supabase — update moved item + shift affected dest items
       try {
-        const res = await fetch(
-          `/api/provider/sales-opportunities/${draggableId}`,
-          {
+        const shiftedItems = destStageItems
+          .slice(insertPosition)
+          .map((o, i) => ({ id: o.id, position: insertPosition + 1 + i }));
+
+        const [stageRes, reorderRes] = await Promise.all([
+          fetch(`/api/provider/sales-opportunities/${draggableId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ stage: targetStage }),
-          },
-        );
-        if (!res.ok) {
-          throw new Error(`Server error: ${res.status}`);
-        }
-        const updated: SalesOpportunity = await res.json();
-        // Sync server response
+            body: JSON.stringify({
+              stage: targetStage,
+              position: insertPosition,
+            }),
+          }),
+          shiftedItems.length > 0
+            ? fetch("/api/provider/sales-opportunities/reorder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items: shiftedItems }),
+              })
+            : Promise.resolve({ ok: true } as Response),
+        ]);
+
+        if (!stageRes.ok) throw new Error(`Server error: ${stageRes.status}`);
+        if (!reorderRes.ok)
+          throw new Error(`Server error: ${reorderRes.status}`);
+
+        const updated: SalesOpportunity = await stageRes.json();
         setOpportunities((prev) =>
           prev.map((o) => (o.id === draggableId ? updated : o)),
         );
       } catch (err) {
-        // Rollback on failure
         setOpportunities(previousOpportunities);
         if (selectedOpp?.id === draggableId) {
           setSelectedOpp(opp);

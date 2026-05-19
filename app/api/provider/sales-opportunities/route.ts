@@ -21,7 +21,8 @@ export async function GET() {
     .from("sales_opportunities")
     .select("*")
     .eq("provider_id", provider.id)
-    .order("created_at", { ascending: false });
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true });
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -41,6 +42,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Provider not found" }, { status: 404 });
 
   const body = await request.json();
+
+  const { count } = await supabase
+    .schema(SCHEMA)
+    .from("sales_opportunities")
+    .select("*", { count: "exact", head: true })
+    .eq("provider_id", provider.id)
+    .eq("stage", "inquiry");
+  const nextPosition = count ?? 0;
+
   const { data, error } = await supabase
     .schema(SCHEMA)
     .from("sales_opportunities")
@@ -55,6 +65,7 @@ export async function POST(request: Request) {
       guests: body.guests ?? 1,
       preferred_date: body.preferredDate ?? null,
       notes: body.notes ?? null,
+      position: nextPosition,
     })
     .select()
     .single();
