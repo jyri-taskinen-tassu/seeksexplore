@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 function cx(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
@@ -10,7 +12,17 @@ function cx(...classes: Array<string | false | undefined | null>) {
 // Icon components
 function IconDashboard({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
@@ -21,7 +33,17 @@ function IconDashboard({ className }: { className?: string }) {
 
 function IconProducts({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
       <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
       <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -31,7 +53,17 @@ function IconProducts({ className }: { className?: string }) {
 
 function IconAvailability({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -43,7 +75,17 @@ function IconAvailability({ className }: { className?: string }) {
 
 function IconBookings({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <line x1="16" y1="13" x2="8" y2="13" />
@@ -55,7 +97,17 @@ function IconBookings({ className }: { className?: string }) {
 
 function IconResources({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
     </svg>
   );
@@ -63,7 +115,17 @@ function IconResources({ className }: { className?: string }) {
 
 function IconAnalytics({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
@@ -73,7 +135,17 @@ function IconAnalytics({ className }: { className?: string }) {
 
 function IconSettings({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="12" r="3" />
       <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3" />
     </svg>
@@ -82,7 +154,17 @@ function IconSettings({ className }: { className?: string }) {
 
 function IconCustomers({ className }: { className?: string }) {
   return (
-    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -91,13 +173,45 @@ function IconCustomers({ className }: { className?: string }) {
   );
 }
 
+function IconLogout({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
 export function ProviderNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    await supabase.auth.signOut();
+    router.push("/");
+  }
 
   const navItems = [
     { href: "/provider", label: "Dashboard", icon: IconDashboard },
     { href: "/provider/products", label: "Products", icon: IconProducts },
-    { href: "/provider/availability", label: "Availability", icon: IconAvailability },
+    {
+      href: "/provider/availability",
+      label: "Availability",
+      icon: IconAvailability,
+    },
     { href: "/provider/bookings", label: "Bookings", icon: IconBookings },
     { href: "/provider/customers", label: "Customers", icon: IconCustomers },
     { href: "/provider/resources", label: "Resources", icon: IconResources },
@@ -115,8 +229,12 @@ export function ProviderNav() {
               <span className="text-lg font-bold">T</span>
             </div>
             <div>
-              <div className="text-sm font-bold text-neutral-900 tracking-tight">Trailion</div>
-              <div className="text-xs text-neutral-500 font-medium">Provider</div>
+              <div className="text-sm font-bold text-neutral-900 tracking-tight">
+                Trailion
+              </div>
+              <div className="text-xs text-neutral-500 font-medium">
+                Provider
+              </div>
             </div>
           </Link>
         </div>
@@ -126,7 +244,8 @@ export function ProviderNav() {
           <div className="space-y-1">
             {navItems.map((item) => {
               const isActive =
-                pathname === item.href || (item.href !== "/provider" && pathname.startsWith(item.href));
+                pathname === item.href ||
+                (item.href !== "/provider" && pathname.startsWith(item.href));
               return (
                 <Link
                   key={item.href}
@@ -135,16 +254,22 @@ export function ProviderNav() {
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative group",
                     isActive
                       ? "bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-900 shadow-sm"
-                      : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 hover:shadow-sm"
+                      : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 hover:shadow-sm",
                   )}
                 >
-                  <span className={cx(
-                    "transition-transform duration-200 flex items-center justify-center",
-                    isActive ? "scale-110" : "group-hover:scale-110"
-                  )}>
-                    <item.icon className={cx(
-                      isActive ? "text-neutral-900" : "text-neutral-500 group-hover:text-neutral-700"
-                    )} />
+                  <span
+                    className={cx(
+                      "transition-transform duration-200 flex items-center justify-center",
+                      isActive ? "scale-110" : "group-hover:scale-110",
+                    )}
+                  >
+                    <item.icon
+                      className={cx(
+                        isActive
+                          ? "text-neutral-900"
+                          : "text-neutral-500 group-hover:text-neutral-700",
+                      )}
+                    />
                   </span>
                   <span className="font-medium">{item.label}</span>
                   {isActive && (
@@ -156,12 +281,31 @@ export function ProviderNav() {
           </div>
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-neutral-200 px-6 py-4">
-          <div className="text-xs text-neutral-500">
-            <div className="font-medium text-neutral-700">Provider MVP</div>
-            <div className="mt-1">Infrastructure-first</div>
-          </div>
+        {/* Logout */}
+        <div className="shrink-0 border-t border-neutral-200 px-3 py-3">
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group"
+            style={{
+              backgroundColor: "var(--color-cream)",
+              color: "var(--color-forest)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                "var(--color-accent)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                "var(--color-cream)";
+              (e.currentTarget as HTMLButtonElement).style.color =
+                "var(--color-forest)";
+            }}
+          >
+            <IconLogout className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            <span>{loggingOut ? "Signing out…" : "Sign out"}</span>
+          </button>
         </div>
       </div>
     </aside>
