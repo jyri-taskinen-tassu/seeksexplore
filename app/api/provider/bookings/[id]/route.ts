@@ -26,7 +26,7 @@ export async function PATCH(
     .from("bookings")
     .select("id")
     .eq("id", id)
-    .eq("provider_id", (provider as { id: string }).id)
+    .eq("provider_id", (provider as unknown as { id: string }).id)
     .single();
 
   if (!existing)

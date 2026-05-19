@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     .schema(SCHEMA)
     .rpc("get_resource_availability", {
       p_date: date,
-      p_provider_id: (provider as { id: string }).id,
+      p_provider_id: (provider as unknown as { id: string }).id,
     });
 
   if (error)

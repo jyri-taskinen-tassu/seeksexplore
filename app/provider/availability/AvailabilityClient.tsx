@@ -740,7 +740,6 @@ function BookingSlideOver({
 
 export default function AvailabilityClient({
   initialBookings,
-  productOptions,
 }: {
   initialBookings: DbBooking[];
 }) {
