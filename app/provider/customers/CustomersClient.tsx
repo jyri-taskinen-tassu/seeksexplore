@@ -436,11 +436,13 @@ function CustomerDetailPanel({
 function KanbanCard({
   opportunity,
   onDragStart,
+  onDragEnd,
   isDragging,
   onClick,
 }: {
   opportunity: SalesOpportunity;
   onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragEnd: () => void;
   isDragging: boolean;
   onClick: () => void;
 }) {
@@ -448,10 +450,11 @@ function KanbanCard({
     <div
       draggable
       onDragStart={(e) => onDragStart(e, opportunity.id)}
+      onDragEnd={onDragEnd}
       onClick={onClick}
       className={cx(
-        "rounded-lg border border-neutral-200 bg-white p-2.5 cursor-pointer hover:shadow-md transition-all",
-        isDragging && "opacity-50",
+        "rounded-lg border border-neutral-200 bg-white p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all select-none",
+        isDragging && "opacity-40 scale-95",
       )}
     >
       <div className="mb-1.5">
@@ -877,8 +880,15 @@ function KanbanView({
   const [opportunities, setOpportunities] =
     useState<SalesOpportunity[]>(initialOpportunities);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<SalesStage | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedOpp, setSelectedOpp] = useState<SalesOpportunity | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(null), 4000);
+  };
 
   const stages: {
     id: SalesStage;
@@ -920,31 +930,61 @@ function KanbanView({
 
   const handleDrop = async (e: React.DragEvent, targetStage: SalesStage) => {
     e.preventDefault();
+    setDragOverStage(null);
     if (!draggedId) return;
+
+    const id = draggedId;
+    const prevOpps = opportunities;
+    const dragged = opportunities.find((o) => o.id === id);
+    if (!dragged || dragged.stage === targetStage) {
+      setDraggedId(null);
+      return;
+    }
+
     // Optimistic update
     setOpportunities((prev) =>
-      prev.map((o) => (o.id === draggedId ? { ...o, stage: targetStage } : o)),
+      prev.map((o) => (o.id === id ? { ...o, stage: targetStage } : o)),
     );
     setDraggedId(null);
-    // Persist
-    await fetch(`/api/provider/sales-opportunities/${draggedId}`, {
+
+    // Persist to Supabase
+    const res = await fetch(`/api/provider/sales-opportunities/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage: targetStage }),
     });
+
+    if (!res.ok) {
+      // Rollback on failure
+      setOpportunities(prevOpps);
+      showError("Failed to update stage. Change reverted.");
+    }
   };
 
   const handleStageChange = async (id: string, stage: SalesStage) => {
+    const prevOpps = opportunities;
+    const prevOpp = opportunities.find((o) => o.id === id);
+
+    // Optimistic update
     setOpportunities((prev) =>
       prev.map((o) => (o.id === id ? { ...o, stage } : o)),
     );
     if (selectedOpp?.id === id)
       setSelectedOpp((o) => (o ? { ...o, stage } : o));
-    await fetch(`/api/provider/sales-opportunities/${id}`, {
+
+    const res = await fetch(`/api/provider/sales-opportunities/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stage }),
     });
+
+    if (!res.ok) {
+      // Rollback on failure
+      setOpportunities(prevOpps);
+      if (selectedOpp?.id === id && prevOpp)
+        setSelectedOpp((o) => (o ? { ...o, stage: prevOpp.stage } : o));
+      showError("Failed to update stage. Change reverted.");
+    }
   };
 
   const handleAddLead = async (data: {
@@ -964,12 +1004,21 @@ function KanbanView({
     if (res.ok) {
       const newOpp: SalesOpportunity = await res.json();
       setOpportunities((prev) => [newOpp, ...prev]);
+    } else {
+      showError("Failed to add lead. Please try again.");
     }
     setShowAddModal(false);
   };
 
   return (
     <div className="space-y-4">
+      {/* Error toast */}
+      {errorMsg && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
+          <span className="font-medium">Error:</span> {errorMsg}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div className="text-sm text-neutral-600">
           Drag cards between columns to update stage
@@ -1005,19 +1054,29 @@ function KanbanView({
               (s, o) => s + o.estimated_value,
               0,
             );
+            const isDropTarget =
+              draggedId !== null && dragOverStage === stage.id;
             return (
               <div
                 key={stage.id}
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = "move";
+                  if (dragOverStage !== stage.id) setDragOverStage(stage.id);
+                }}
+                onDragLeave={(e) => {
+                  // Only clear if leaving the column entirely (not entering a child)
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOverStage(null);
+                  }
                 }}
                 onDrop={(e) => handleDrop(e, stage.id)}
                 className={cx(
-                  "flex-shrink-0 w-72 rounded-lg border p-3",
+                  "flex-shrink-0 w-72 rounded-lg border p-3 transition-all",
                   stage.color,
                   stage.borderColor,
-                  draggedId && "ring-2 ring-neutral-400",
+                  isDropTarget &&
+                    "ring-2 ring-[var(--color-forest)] border-[var(--color-forest)]/50 scale-[1.01]",
                 )}
               >
                 <div className="mb-3 pb-3 border-b border-neutral-200">
@@ -1036,7 +1095,14 @@ function KanbanView({
 
                 <div className="space-y-2 max-h-[650px] overflow-y-auto">
                   {stageOpps.length === 0 ? (
-                    <div className="text-xs text-neutral-400 text-center py-8 border-2 border-dashed border-neutral-200 rounded">
+                    <div
+                      className={cx(
+                        "text-xs text-neutral-400 text-center py-8 border-2 border-dashed rounded transition-colors",
+                        isDropTarget
+                          ? "border-[var(--color-forest)]/40 text-[var(--color-forest)] bg-[var(--color-forest)]/5"
+                          : "border-neutral-200",
+                      )}
+                    >
                       Drop here
                     </div>
                   ) : (
@@ -1047,6 +1113,10 @@ function KanbanView({
                         onDragStart={(e, id) => {
                           setDraggedId(id);
                           e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragEnd={() => {
+                          setDraggedId(null);
+                          setDragOverStage(null);
                         }}
                         isDragging={draggedId === opp.id}
                         onClick={() => setSelectedOpp(opp)}
