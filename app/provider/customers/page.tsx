@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   getAllCustomers,
   getCustomerById,
@@ -18,6 +18,7 @@ import {
   type SalesOpportunity,
   type SalesStage,
 } from "@/lib/customersStore";
+import type { SupabaseBooking } from "@/app/api/provider/customers/bookings/route";
 
 function cx(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
@@ -34,7 +35,11 @@ function formatCurrency(value: number, currency: string = "EUR"): string {
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function TagBadge({ tag }: { tag: CustomerTag }) {
@@ -58,11 +63,45 @@ function TagBadge({ tag }: { tag: CustomerTag }) {
     <span
       className={cx(
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1",
-        styles[tag]
+        styles[tag],
       )}
     >
       {labels[tag]}
     </span>
+  );
+}
+
+function InlineBookingRow({ booking }: { booking: SupabaseBooking }) {
+  const statusColors = {
+    confirmed: "bg-emerald-50 text-emerald-700",
+    pending: "bg-amber-50 text-amber-700",
+    cancelled: "bg-red-50 text-red-700",
+  };
+
+  return (
+    <div className="flex items-center justify-between py-1.5 px-1 text-xs border-b border-neutral-100 last:border-0">
+      <div className="flex-1 min-w-0">
+        <span className="font-medium text-neutral-800 truncate block">
+          {booking.product_name}
+        </span>
+        <span className="text-neutral-500">
+          {formatDate(booking.booking_date)}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 ml-2 shrink-0">
+        <span className="font-semibold text-neutral-900">
+          {formatCurrency(booking.total_price, booking.currency)}
+        </span>
+        <span
+          className={cx(
+            "rounded-full px-1.5 py-0.5 font-medium",
+            statusColors[booking.status],
+          )}
+        >
+          {booking.status}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -75,49 +114,130 @@ function CustomerCard({
   onSelect: (customer: Customer) => void;
   selected: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const [inlineBookings, setInlineBookings] = useState<SupabaseBooking[]>([]);
+  const [inlineLoading, setInlineLoading] = useState(false);
+
+  const loadInlineBookings = useCallback(async () => {
+    if (inlineBookings.length > 0) return;
+    setInlineLoading(true);
+    try {
+      const res = await fetch(
+        `/api/provider/customers/bookings?email=${encodeURIComponent(customer.email)}`,
+      );
+      if (res.ok) {
+        const data: SupabaseBooking[] = await res.json();
+        setInlineBookings(data);
+      }
+    } catch {
+      // silently fail — inline preview is best-effort
+    } finally {
+      setInlineLoading(false);
+    }
+  }, [customer.email, inlineBookings.length]);
+
+  const handleExpandToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!expanded) loadInlineBookings();
+    setExpanded((v) => !v);
+  };
+
   return (
-    <button
-      onClick={() => onSelect(customer)}
+    <div
       className={cx(
-        "w-full text-left rounded-lg border p-4 transition-all",
+        "rounded-lg border transition-all",
         selected
           ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900"
-          : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm"
+          : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm",
       )}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-neutral-900">
-              {customer.firstName} {customer.lastName}
-            </h3>
-            {customer.tags.map((tag) => (
-              <TagBadge key={tag} tag={tag} />
-            ))}
+      <button
+        onClick={() => onSelect(customer)}
+        className="w-full text-left p-4"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-neutral-900">
+                {customer.firstName} {customer.lastName}
+              </h3>
+              {customer.tags.map((tag) => (
+                <TagBadge key={tag} tag={tag} />
+              ))}
+            </div>
+            <div className="text-sm text-neutral-600 space-y-0.5">
+              <div>{customer.email}</div>
+              {customer.phone && <div>{customer.phone}</div>}
+              {customer.country && <div>{customer.country}</div>}
+            </div>
           </div>
-          <div className="text-sm text-neutral-600 space-y-0.5">
-            <div>{customer.email}</div>
-            {customer.phone && <div>{customer.phone}</div>}
-            {customer.country && <div>{customer.country}</div>}
+          <div className="text-right text-sm">
+            <div className="font-semibold text-neutral-900">
+              {formatCurrency(customer.totalSpent, customer.currency)}
+            </div>
+            <div className="text-neutral-500">
+              {customer.totalBookings}{" "}
+              {customer.totalBookings === 1 ? "booking" : "bookings"}
+            </div>
           </div>
         </div>
-        <div className="text-right text-sm">
-          <div className="font-semibold text-neutral-900">
-            {formatCurrency(customer.totalSpent, customer.currency)}
-          </div>
-          <div className="text-neutral-500">
-            {customer.totalBookings} {customer.totalBookings === 1 ? "booking" : "bookings"}
-          </div>
-        </div>
+      </button>
+
+      {/* Expand toggle */}
+      <div className="border-t border-neutral-100 px-4 py-1.5">
+        <button
+          onClick={handleExpandToggle}
+          className="flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-700 transition-colors"
+        >
+          <span
+            className={cx(
+              "inline-block transition-transform",
+              expanded ? "rotate-90" : "",
+            )}
+          >
+            ▶
+          </span>
+          {expanded ? "Hide bookings" : "Show bookings"}
+        </button>
       </div>
-    </button>
+
+      {expanded && (
+        <div className="px-4 pb-3">
+          {inlineLoading ? (
+            <div className="text-xs text-neutral-400 py-2 text-center">
+              Loading…
+            </div>
+          ) : inlineBookings.length === 0 ? (
+            <div className="text-xs text-neutral-400 py-2 text-center">
+              No bookings found in live data
+            </div>
+          ) : (
+            <div className="rounded-md border border-neutral-100 bg-neutral-50 px-2 pt-1">
+              {inlineBookings.slice(0, 5).map((b) => (
+                <InlineBookingRow key={b.id} booking={b} />
+              ))}
+              {inlineBookings.length > 5 && (
+                <div
+                  className="text-xs text-neutral-400 text-center py-1.5 cursor-pointer hover:text-neutral-600"
+                  onClick={() => onSelect(customer)}
+                >
+                  +{inlineBookings.length - 5} more — view full history
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
 function BookingHistoryList({ bookings }: { bookings: BookingHistory[] }) {
   if (bookings.length === 0) {
     return (
-      <div className="text-sm text-neutral-500 text-center py-4">No booking history</div>
+      <div className="text-sm text-neutral-500 text-center py-4">
+        No booking history
+      </div>
     );
   }
 
@@ -130,7 +250,9 @@ function BookingHistoryList({ bookings }: { bookings: BookingHistory[] }) {
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="font-medium text-neutral-900">{booking.productName}</div>
+              <div className="font-medium text-neutral-900">
+                {booking.productName}
+              </div>
               <div className="text-sm text-neutral-600 mt-0.5">
                 {formatDate(booking.date)} at {booking.time} • {booking.guests}{" "}
                 {booking.guests === 1 ? "guest" : "guests"}
@@ -143,9 +265,10 @@ function BookingHistoryList({ bookings }: { bookings: BookingHistory[] }) {
               <span
                 className={cx(
                   "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1",
-                  booking.status === "completed" && "bg-emerald-50 text-emerald-700",
+                  booking.status === "completed" &&
+                    "bg-emerald-50 text-emerald-700",
                   booking.status === "confirmed" && "bg-blue-50 text-blue-700",
-                  booking.status === "cancelled" && "bg-red-50 text-red-700"
+                  booking.status === "cancelled" && "bg-red-50 text-red-700",
                 )}
               >
                 {booking.status}
@@ -158,10 +281,54 @@ function BookingHistoryList({ bookings }: { bookings: BookingHistory[] }) {
   );
 }
 
+function SupabaseBookingCard({ booking }: { booking: SupabaseBooking }) {
+  const statusStyles = {
+    confirmed: "bg-emerald-50 text-emerald-700",
+    pending: "bg-amber-50 text-amber-700",
+    cancelled: "bg-red-50 text-red-700",
+  };
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-3">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="font-medium text-neutral-900">
+            {booking.product_name}
+          </div>
+          <div className="text-sm text-neutral-600 mt-0.5">
+            {formatDate(booking.booking_date)} at {booking.booking_time} •{" "}
+            {booking.guests} {booking.guests === 1 ? "guest" : "guests"}
+          </div>
+          {booking.notes && (
+            <div className="mt-1 text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5 inline-block">
+              {booking.notes}
+            </div>
+          )}
+        </div>
+        <div className="text-right ml-4">
+          <div className="text-sm font-semibold text-neutral-900">
+            {formatCurrency(booking.total_price, booking.currency)}
+          </div>
+          <span
+            className={cx(
+              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1",
+              statusStyles[booking.status],
+            )}
+          >
+            {booking.status}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MessageHistoryList({ messages }: { messages: MessageHistory[] }) {
   if (messages.length === 0) {
     return (
-      <div className="text-sm text-neutral-500 text-center py-4">No message history</div>
+      <div className="text-sm text-neutral-500 text-center py-4">
+        No message history
+      </div>
     );
   }
 
@@ -174,7 +341,7 @@ function MessageHistoryList({ messages }: { messages: MessageHistory[] }) {
             "rounded-lg border p-3",
             message.direction === "inbound"
               ? "border-blue-200 bg-blue-50"
-              : "border-neutral-200 bg-white"
+              : "border-neutral-200 bg-white",
           )}
         >
           <div className="flex items-start justify-between mb-1">
@@ -182,15 +349,19 @@ function MessageHistoryList({ messages }: { messages: MessageHistory[] }) {
               <span
                 className={cx(
                   "text-xs font-medium px-2 py-0.5 rounded",
-                  message.platform === "email" && "bg-neutral-100 text-neutral-700",
-                  message.platform === "whatsapp" && "bg-green-100 text-green-700",
-                  message.platform === "phone" && "bg-blue-100 text-blue-700"
+                  message.platform === "email" &&
+                    "bg-neutral-100 text-neutral-700",
+                  message.platform === "whatsapp" &&
+                    "bg-green-100 text-green-700",
+                  message.platform === "phone" && "bg-blue-100 text-blue-700",
                 )}
               >
                 {message.platform}
               </span>
               <span className="text-xs text-neutral-500">
-                {message.direction === "inbound" ? "From customer" : "To customer"}
+                {message.direction === "inbound"
+                  ? "From customer"
+                  : "To customer"}
               </span>
             </div>
             <div className="text-xs text-neutral-500">
@@ -198,7 +369,9 @@ function MessageHistoryList({ messages }: { messages: MessageHistory[] }) {
             </div>
           </div>
           {message.subject && (
-            <div className="font-medium text-sm text-neutral-900 mb-1">{message.subject}</div>
+            <div className="font-medium text-sm text-neutral-900 mb-1">
+              {message.subject}
+            </div>
           )}
           <div className="text-sm text-neutral-600">{message.content}</div>
         </div>
@@ -211,8 +384,16 @@ export default function ProviderCustomersPage() {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState<CustomerTag | "all">("all");
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "bookings" | "messages">("overview");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "bookings" | "messages"
+  >("overview");
+  const [supabaseBookings, setSupabaseBookings] = useState<SupabaseBooking[]>(
+    [],
+  );
+  const [supabaseLoading, setSupabaseLoading] = useState(false);
 
   const allCustomers = getAllCustomers();
   const filteredByTag =
@@ -230,6 +411,22 @@ export default function ProviderCustomersPage() {
     ? getMessageHistoryByCustomer(selectedCustomer.id)
     : [];
 
+  // Fetch live Supabase bookings when a customer is selected and bookings tab is active
+  useEffect(() => {
+    if (!selectedCustomer) {
+      setSupabaseBookings([]);
+      return;
+    }
+    setSupabaseLoading(true);
+    fetch(
+      `/api/provider/customers/bookings?email=${encodeURIComponent(selectedCustomer.email)}`,
+    )
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: SupabaseBooking[]) => setSupabaseBookings(data))
+      .catch(() => setSupabaseBookings([]))
+      .finally(() => setSupabaseLoading(false));
+  }, [selectedCustomer?.email]);
+
   const tags: CustomerTag[] = ["vip", "repeat", "group", "corporate", "family"];
 
   return (
@@ -237,9 +434,12 @@ export default function ProviderCustomersPage() {
       <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">Customers</h1>
+            <h1 className="text-2xl font-semibold text-neutral-900">
+              Customers
+            </h1>
             <p className="mt-1 text-sm text-neutral-600">
-              Manage customer relationships, view history, and track interactions.
+              Manage customer relationships, view history, and track
+              interactions.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -249,7 +449,7 @@ export default function ProviderCustomersPage() {
                 "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                 view === "list"
                   ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
               )}
             >
               List
@@ -260,7 +460,7 @@ export default function ProviderCustomersPage() {
                 "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
                 view === "kanban"
                   ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
               )}
             >
               Sales Pipeline
@@ -272,209 +472,277 @@ export default function ProviderCustomersPage() {
           <KanbanView />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
-          {/* Customer List */}
-          <div className="space-y-4">
-            {/* Search */}
-            <div>
-              <input
-                type="text"
-                placeholder="Search customers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
-              />
-            </div>
+            {/* Customer List */}
+            <div className="space-y-4">
+              {/* Search */}
+              <div>
+                <input
+                  type="text"
+                  placeholder="Search customers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+              </div>
 
-            {/* Tags Filter */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedTag("all")}
-                className={cx(
-                  "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
-                  selectedTag === "all"
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
-                )}
-              >
-                All
-              </button>
-              {tags.map((tag) => (
+              {/* Tags Filter */}
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={tag}
-                  onClick={() => setSelectedTag(tag)}
+                  onClick={() => setSelectedTag("all")}
                   className={cx(
                     "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
-                    selectedTag === tag
+                    selectedTag === "all"
                       ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                      : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
                   )}
                 >
-                  <TagBadge tag={tag} />
+                  All
                 </button>
-              ))}
+                {tags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTag(tag)}
+                    className={cx(
+                      "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                      selectedTag === tag
+                        ? "border-neutral-900 bg-neutral-900 text-white"
+                        : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                    )}
+                  >
+                    <TagBadge tag={tag} />
+                  </button>
+                ))}
+              </div>
+
+              {/* Customer List */}
+              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                {filteredCustomers.length === 0 ? (
+                  <div className="text-sm text-neutral-500 text-center py-8">
+                    No customers found
+                  </div>
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <CustomerCard
+                      key={customer.id}
+                      customer={customer}
+                      onSelect={setSelectedCustomer}
+                      selected={selectedCustomer?.id === customer.id}
+                    />
+                  ))
+                )}
+              </div>
             </div>
 
-            {/* Customer List */}
-            <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {filteredCustomers.length === 0 ? (
-                <div className="text-sm text-neutral-500 text-center py-8">
-                  No customers found
-                </div>
+            {/* Customer Detail */}
+            <div className="rounded-xl border border-neutral-200 bg-white">
+              {selectedCustomer ? (
+                <>
+                  {/* Header */}
+                  <div className="border-b border-neutral-200 px-6 py-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-xl font-semibold text-neutral-900">
+                          {selectedCustomer.firstName}{" "}
+                          {selectedCustomer.lastName}
+                        </h2>
+                        <div className="mt-1 flex items-center gap-2">
+                          {selectedCustomer.tags.map((tag) => (
+                            <TagBadge key={tag} tag={tag} />
+                          ))}
+                        </div>
+                      </div>
+                      <button className="text-sm text-neutral-600 hover:text-neutral-900">
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="border-b border-neutral-200 px-6">
+                    <div className="flex gap-1">
+                      {(["overview", "bookings", "messages"] as const).map(
+                        (tab) => (
+                          <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={cx(
+                              "px-4 py-2 text-sm font-medium transition-colors border-b-2",
+                              activeTab === tab
+                                ? "border-neutral-900 text-neutral-900"
+                                : "border-transparent text-neutral-600 hover:text-neutral-900",
+                            )}
+                          >
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    {activeTab === "overview" && (
+                      <div className="space-y-6">
+                        {/* Contact Info */}
+                        <div>
+                          <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                            Contact Information
+                          </h3>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="text-neutral-500">Email:</span>{" "}
+                              <span className="text-neutral-900">
+                                {selectedCustomer.email}
+                              </span>
+                            </div>
+                            {selectedCustomer.phone && (
+                              <div>
+                                <span className="text-neutral-500">Phone:</span>{" "}
+                                <span className="text-neutral-900">
+                                  {selectedCustomer.phone}
+                                </span>
+                              </div>
+                            )}
+                            {selectedCustomer.country && (
+                              <div>
+                                <span className="text-neutral-500">
+                                  Country:
+                                </span>{" "}
+                                <span className="text-neutral-900">
+                                  {selectedCustomer.country}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="rounded-lg border border-neutral-200 p-4">
+                            <div className="text-sm text-neutral-500">
+                              Total Bookings
+                            </div>
+                            <div className="mt-1 text-2xl font-semibold text-neutral-900">
+                              {selectedCustomer.totalBookings}
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-neutral-200 p-4">
+                            <div className="text-sm text-neutral-500">
+                              Total Spent
+                            </div>
+                            <div className="mt-1 text-2xl font-semibold text-neutral-900">
+                              {formatCurrency(
+                                selectedCustomer.totalSpent,
+                                selectedCustomer.currency,
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dates */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm text-neutral-500">
+                              First Booking
+                            </div>
+                            <div className="mt-1 text-sm font-medium text-neutral-900">
+                              {formatDate(selectedCustomer.firstBookingDate)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-neutral-500">
+                              Last Booking
+                            </div>
+                            <div className="mt-1 text-sm font-medium text-neutral-900">
+                              {formatDate(selectedCustomer.lastBookingDate)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Notes */}
+                        {selectedCustomer.notes && (
+                          <div>
+                            <h3 className="text-sm font-semibold text-neutral-900 mb-2">
+                              Notes
+                            </h3>
+                            <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
+                              {selectedCustomer.notes}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === "bookings" && (
+                      <div className="space-y-4">
+                        {/* Live Supabase bookings */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-neutral-900">
+                              Live Bookings
+                              {!supabaseLoading && (
+                                <span className="ml-2 text-xs font-normal text-neutral-500">
+                                  ({supabaseBookings.length})
+                                </span>
+                              )}
+                            </h3>
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                              Supabase
+                            </span>
+                          </div>
+                          {supabaseLoading ? (
+                            <div className="flex items-center justify-center py-6 text-sm text-neutral-400">
+                              Loading…
+                            </div>
+                          ) : supabaseBookings.length === 0 ? (
+                            <div className="rounded-lg border border-dashed border-neutral-200 py-6 text-center text-sm text-neutral-400">
+                              No live bookings found for this customer
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {supabaseBookings.map((booking) => (
+                                <SupabaseBookingCard
+                                  key={booking.id}
+                                  booking={booking}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="border-t border-neutral-100 pt-4">
+                          <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                            Booking History
+                            <span className="ml-2 text-xs font-normal text-neutral-500">
+                              ({selectedBookingHistory.length})
+                            </span>
+                          </h3>
+                          <BookingHistoryList
+                            bookings={selectedBookingHistory}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "messages" && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-neutral-900 mb-4">
+                          Message History ({selectedMessageHistory.length})
+                        </h3>
+                        <MessageHistoryList messages={selectedMessageHistory} />
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
-                filteredCustomers.map((customer) => (
-                  <CustomerCard
-                    key={customer.id}
-                    customer={customer}
-                    onSelect={setSelectedCustomer}
-                    selected={selectedCustomer?.id === customer.id}
-                  />
-                ))
+                <div className="flex items-center justify-center h-96 text-neutral-500">
+                  Select a customer to view details
+                </div>
               )}
             </div>
           </div>
-
-          {/* Customer Detail */}
-          <div className="rounded-xl border border-neutral-200 bg-white">
-            {selectedCustomer ? (
-              <>
-                {/* Header */}
-                <div className="border-b border-neutral-200 px-6 py-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h2 className="text-xl font-semibold text-neutral-900">
-                        {selectedCustomer.firstName} {selectedCustomer.lastName}
-                      </h2>
-                      <div className="mt-1 flex items-center gap-2">
-                        {selectedCustomer.tags.map((tag) => (
-                          <TagBadge key={tag} tag={tag} />
-                        ))}
-                      </div>
-                    </div>
-                    <button className="text-sm text-neutral-600 hover:text-neutral-900">
-                      Edit
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tabs */}
-                <div className="border-b border-neutral-200 px-6">
-                  <div className="flex gap-1">
-                    {(["overview", "bookings", "messages"] as const).map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={cx(
-                          "px-4 py-2 text-sm font-medium transition-colors border-b-2",
-                          activeTab === tab
-                            ? "border-neutral-900 text-neutral-900"
-                            : "border-transparent text-neutral-600 hover:text-neutral-900"
-                        )}
-                      >
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6">
-                  {activeTab === "overview" && (
-                    <div className="space-y-6">
-                      {/* Contact Info */}
-                      <div>
-                        <h3 className="text-sm font-semibold text-neutral-900 mb-3">
-                          Contact Information
-                        </h3>
-                        <div className="space-y-2 text-sm">
-                          <div>
-                            <span className="text-neutral-500">Email:</span>{" "}
-                            <span className="text-neutral-900">{selectedCustomer.email}</span>
-                          </div>
-                          {selectedCustomer.phone && (
-                            <div>
-                              <span className="text-neutral-500">Phone:</span>{" "}
-                              <span className="text-neutral-900">{selectedCustomer.phone}</span>
-                            </div>
-                          )}
-                          {selectedCustomer.country && (
-                            <div>
-                              <span className="text-neutral-500">Country:</span>{" "}
-                              <span className="text-neutral-900">{selectedCustomer.country}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-lg border border-neutral-200 p-4">
-                          <div className="text-sm text-neutral-500">Total Bookings</div>
-                          <div className="mt-1 text-2xl font-semibold text-neutral-900">
-                            {selectedCustomer.totalBookings}
-                          </div>
-                        </div>
-                        <div className="rounded-lg border border-neutral-200 p-4">
-                          <div className="text-sm text-neutral-500">Total Spent</div>
-                          <div className="mt-1 text-2xl font-semibold text-neutral-900">
-                            {formatCurrency(selectedCustomer.totalSpent, selectedCustomer.currency)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Dates */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-sm text-neutral-500">First Booking</div>
-                          <div className="mt-1 text-sm font-medium text-neutral-900">
-                            {formatDate(selectedCustomer.firstBookingDate)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-neutral-500">Last Booking</div>
-                          <div className="mt-1 text-sm font-medium text-neutral-900">
-                            {formatDate(selectedCustomer.lastBookingDate)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Notes */}
-                      {selectedCustomer.notes && (
-                        <div>
-                          <h3 className="text-sm font-semibold text-neutral-900 mb-2">Notes</h3>
-                          <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
-                            {selectedCustomer.notes}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab === "bookings" && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-neutral-900 mb-4">
-                        Booking History ({selectedBookingHistory.length})
-                      </h3>
-                      <BookingHistoryList bookings={selectedBookingHistory} />
-                    </div>
-                  )}
-
-                  {activeTab === "messages" && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-neutral-900 mb-4">
-                        Message History ({selectedMessageHistory.length})
-                      </h3>
-                      <MessageHistoryList messages={selectedMessageHistory} />
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-96 text-neutral-500">
-                Select a customer to view details
-              </div>
-            )}
-          </div>
-        </div>
         )}
       </div>
     </div>
@@ -482,17 +750,50 @@ export default function ProviderCustomersPage() {
 }
 
 function KanbanView() {
-  const [opportunities, setOpportunities] = useState<SalesOpportunity[]>(getAllSalesOpportunities());
+  const [opportunities, setOpportunities] = useState<SalesOpportunity[]>(
+    getAllSalesOpportunities(),
+  );
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<SalesOpportunity | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] =
+    useState<SalesOpportunity | null>(null);
 
-  const stages: { id: SalesStage; label: string; color: string; borderColor: string }[] = [
-    { id: "inquiry", label: "Inquiry", color: "bg-[var(--color-sky)]/5", borderColor: "border-[var(--color-sky)]/20" },
-    { id: "quoted", label: "Quoted", color: "bg-[var(--color-accent)]/5", borderColor: "border-[var(--color-accent)]/20" },
-    { id: "followup", label: "Follow-up", color: "bg-[var(--color-sage)]/5", borderColor: "border-[var(--color-sage)]/20" },
-    { id: "booked", label: "Booked", color: "bg-[var(--color-forest)]/10", borderColor: "border-[var(--color-forest)]/30" },
-    { id: "completed", label: "Completed", color: "bg-neutral-50", borderColor: "border-neutral-200" },
+  const stages: {
+    id: SalesStage;
+    label: string;
+    color: string;
+    borderColor: string;
+  }[] = [
+    {
+      id: "inquiry",
+      label: "Inquiry",
+      color: "bg-[var(--color-sky)]/5",
+      borderColor: "border-[var(--color-sky)]/20",
+    },
+    {
+      id: "quoted",
+      label: "Quoted",
+      color: "bg-[var(--color-accent)]/5",
+      borderColor: "border-[var(--color-accent)]/20",
+    },
+    {
+      id: "followup",
+      label: "Follow-up",
+      color: "bg-[var(--color-sage)]/5",
+      borderColor: "border-[var(--color-sage)]/20",
+    },
+    {
+      id: "booked",
+      label: "Booked",
+      color: "bg-[var(--color-forest)]/10",
+      borderColor: "border-[var(--color-forest)]/30",
+    },
+    {
+      id: "completed",
+      label: "Completed",
+      color: "bg-neutral-50",
+      borderColor: "border-neutral-200",
+    },
   ];
 
   const handleDragStart = (e: React.DragEvent, oppId: string) => {
@@ -566,11 +867,17 @@ function KanbanView() {
           onClose={() => setSelectedOpportunity(null)}
           onUpdate={(updates) => {
             if (updates.stage) {
-              updateSalesOpportunityStage(selectedOpportunity.id, updates.stage);
+              updateSalesOpportunityStage(
+                selectedOpportunity.id,
+                updates.stage,
+              );
             }
             setOpportunities(getAllSalesOpportunities());
             if (updates.stage) {
-              setSelectedOpportunity({ ...selectedOpportunity, stage: updates.stage });
+              setSelectedOpportunity({
+                ...selectedOpportunity,
+                stage: updates.stage,
+              });
             }
           }}
         />
@@ -579,8 +886,13 @@ function KanbanView() {
       <div className="overflow-x-auto">
         <div className="flex gap-3 min-w-max pb-4">
           {stages.map((stage) => {
-            const stageOpps = opportunities.filter((opp) => opp.stage === stage.id);
-            const stageValue = stageOpps.reduce((sum, opp) => sum + opp.estimatedValue, 0);
+            const stageOpps = opportunities.filter(
+              (opp) => opp.stage === stage.id,
+            );
+            const stageValue = stageOpps.reduce(
+              (sum, opp) => sum + opp.estimatedValue,
+              0,
+            );
 
             return (
               <div
@@ -591,12 +903,14 @@ function KanbanView() {
                   "flex-shrink-0 w-72 rounded-lg border p-3",
                   stage.color,
                   stage.borderColor,
-                  draggedCard && "ring-2 ring-neutral-400"
+                  draggedCard && "ring-2 ring-neutral-400",
                 )}
               >
                 <div className="mb-3 pb-3 border-b border-neutral-200">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-semibold text-neutral-900">{stage.label}</h3>
+                    <h3 className="text-sm font-semibold text-neutral-900">
+                      {stage.label}
+                    </h3>
                     <span className="text-xs font-medium text-neutral-600 bg-neutral-100 rounded-full px-2 py-0.5">
                       {stageOpps.length}
                     </span>
@@ -650,14 +964,16 @@ function KanbanCard({
       onClick={onClick}
       className={cx(
         "rounded-lg border border-neutral-200 bg-white p-2.5 cursor-pointer hover:shadow-md transition-all",
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
       )}
     >
       <div className="mb-1.5">
         <div className="font-medium text-xs text-neutral-900 mb-0.5">
           {opportunity.customerName}
         </div>
-        <div className="text-[11px] text-neutral-600">{opportunity.productName}</div>
+        <div className="text-[11px] text-neutral-600">
+          {opportunity.productName}
+        </div>
       </div>
 
       <div className="flex items-center justify-between text-[11px] mb-1.5">
@@ -744,13 +1060,18 @@ function AddLeadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
       <div
         className="rounded-xl border border-neutral-200 bg-white p-6 w-full max-w-md shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">Add New Lead</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Add New Lead
+          </h2>
           <button
             onClick={onClose}
             className="text-neutral-400 hover:text-neutral-600"
@@ -768,7 +1089,9 @@ function AddLeadModal({
               type="text"
               required
               value={formData.customerName}
-              onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, customerName: e.target.value })
+              }
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
             />
           </div>
@@ -781,14 +1104,21 @@ function AddLeadModal({
               type="email"
               required
               value={formData.customerEmail}
-              onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, customerEmail: e.target.value })
+              }
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Product(s) {selectedProducts.length > 0 && <span className="text-neutral-500 font-normal">({selectedProducts.length} selected)</span>}
+              Product(s){" "}
+              {selectedProducts.length > 0 && (
+                <span className="text-neutral-500 font-normal">
+                  ({selectedProducts.length} selected)
+                </span>
+              )}
             </label>
             <div className="max-h-48 overflow-y-auto border border-neutral-300 rounded-lg p-2 space-y-1">
               {products.map((product) => (
@@ -821,7 +1151,12 @@ function AddLeadModal({
                 required
                 min="1"
                 value={formData.guests}
-                onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) || 1 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    guests: parseInt(e.target.value) || 1,
+                  })
+                }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
               />
             </div>
@@ -834,7 +1169,12 @@ function AddLeadModal({
                 required
                 min="0"
                 value={formData.estimatedValue}
-                onChange={(e) => setFormData({ ...formData, estimatedValue: parseFloat(e.target.value) || 0 })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    estimatedValue: parseFloat(e.target.value) || 0,
+                  })
+                }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
               />
             </div>
@@ -847,7 +1187,9 @@ function AddLeadModal({
             <input
               type="date"
               value={formData.preferredDate}
-              onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, preferredDate: e.target.value })
+              }
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
             />
           </div>
@@ -858,7 +1200,9 @@ function AddLeadModal({
             </label>
             <textarea
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
               rows={3}
               className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-none"
             />
@@ -905,16 +1249,15 @@ function OpportunityDetailSlideOver({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/20 z-40"
-        onClick={onClose}
-      />
-      
+      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
+
       {/* Slide Over */}
       <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 flex flex-col">
         {/* Header */}
         <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-neutral-900">Lead Details</h2>
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Lead Details
+          </h2>
           <button
             onClick={onClose}
             className="text-neutral-400 hover:text-neutral-600 transition-colors"
@@ -928,43 +1271,64 @@ function OpportunityDetailSlideOver({
           <div className="space-y-6">
             {/* Customer Info */}
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">Customer</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                Customer
+              </h3>
               <div className="space-y-2">
                 <div>
                   <div className="text-xs text-neutral-500">Name</div>
-                  <div className="text-sm font-medium text-neutral-900">{opportunity.customerName}</div>
+                  <div className="text-sm font-medium text-neutral-900">
+                    {opportunity.customerName}
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs text-neutral-500">Email</div>
-                  <div className="text-sm text-neutral-900">{opportunity.customerEmail}</div>
+                  <div className="text-sm text-neutral-900">
+                    {opportunity.customerEmail}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Opportunity Details */}
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">Opportunity</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                Opportunity
+              </h3>
               <div className="space-y-2">
                 <div>
                   <div className="text-xs text-neutral-500">Product</div>
-                  <div className="text-sm text-neutral-900">{opportunity.productName}</div>
+                  <div className="text-sm text-neutral-900">
+                    {opportunity.productName}
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-neutral-500">Guests</div>
-                    <div className="text-sm font-medium text-neutral-900">{opportunity.guests}</div>
+                    <div className="text-sm font-medium text-neutral-900">
+                      {opportunity.guests}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-xs text-neutral-500">Estimated Value</div>
+                    <div className="text-xs text-neutral-500">
+                      Estimated Value
+                    </div>
                     <div className="text-sm font-medium text-neutral-900">
-                      {formatCurrency(opportunity.estimatedValue, opportunity.currency)}
+                      {formatCurrency(
+                        opportunity.estimatedValue,
+                        opportunity.currency,
+                      )}
                     </div>
                   </div>
                 </div>
                 {opportunity.preferredDate && (
                   <div>
-                    <div className="text-xs text-neutral-500">Preferred Date</div>
-                    <div className="text-sm text-neutral-900">{formatDate(opportunity.preferredDate)}</div>
+                    <div className="text-xs text-neutral-500">
+                      Preferred Date
+                    </div>
+                    <div className="text-sm text-neutral-900">
+                      {formatDate(opportunity.preferredDate)}
+                    </div>
                   </div>
                 )}
               </div>
@@ -972,10 +1336,14 @@ function OpportunityDetailSlideOver({
 
             {/* Stage */}
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">Stage</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                Stage
+              </h3>
               <select
                 value={opportunity.stage}
-                onChange={(e) => onUpdate({ stage: e.target.value as SalesStage })}
+                onChange={(e) =>
+                  onUpdate({ stage: e.target.value as SalesStage })
+                }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm"
               >
                 {stages.map((stage) => (
@@ -989,7 +1357,9 @@ function OpportunityDetailSlideOver({
             {/* Notes */}
             {opportunity.notes && (
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900 mb-3">Notes</h3>
+                <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                  Notes
+                </h3>
                 <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
                   {opportunity.notes}
                 </div>
@@ -998,30 +1368,38 @@ function OpportunityDetailSlideOver({
 
             {/* Dates */}
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">Timeline</h3>
+              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                Timeline
+              </h3>
               <div className="space-y-2 text-sm">
                 <div>
                   <div className="text-xs text-neutral-500">Created</div>
                   <div className="text-neutral-900">
-                    {new Date(opportunity.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(opportunity.createdAt).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )}
                   </div>
                 </div>
                 <div>
                   <div className="text-xs text-neutral-500">Last Updated</div>
                   <div className="text-neutral-900">
-                    {new Date(opportunity.updatedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(opportunity.updatedAt).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
+                    )}
                   </div>
                 </div>
               </div>
