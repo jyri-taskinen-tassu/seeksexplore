@@ -1301,6 +1301,369 @@ const secondaryBtn: React.CSSProperties = {
 
 // ─── Step 2: Details + Payment ─────────────────────────────────────────────────
 
+// Shared layout — accepts payment section and pay button as props so Stripe
+// hooks only exist in the right context (inside or outside Elements).
+function StepLayout({
+  product,
+  slot,
+  form,
+  setForm,
+  onBack,
+  paymentSection,
+  payButton,
+}: {
+  product: ProductData;
+  slot: SelectedSlot;
+  form: Form;
+  setForm: (f: Form) => void;
+  onBack: () => void;
+  paymentSection: React.ReactNode;
+  payButton: React.ReactNode;
+}) {
+  const pricePerPerson = product.price_from;
+  const subtotal = pricePerPerson != null ? pricePerPerson * form.people : null;
+  const serviceFee =
+    subtotal != null ? Math.round(subtotal * 0.04 * 100) / 100 : null;
+  const total =
+    subtotal != null && serviceFee != null ? subtotal + serviceFee : null;
+
+  return (
+    <div
+      style={{ display: "grid", gridTemplateColumns: "1fr", width: "100%" }}
+      className="step3-grid"
+    >
+      {/* Left: form */}
+      <div
+        style={{
+          padding: "28px 24px 140px",
+          maxWidth: 720,
+          margin: "0 auto",
+          width: "100%",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--font-jetbrains-mono), monospace",
+            fontSize: 11,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase" as const,
+            color: MUTED,
+            marginBottom: 8,
+          }}
+        >
+          03 · Details &amp; payment
+        </div>
+        <h1
+          style={{
+            fontFamily: "var(--font-space-grotesk), sans-serif",
+            fontWeight: 700,
+            fontSize: "clamp(26px, 4.5vw, 40px)",
+            lineHeight: 1.02,
+            letterSpacing: "-0.02em",
+            margin: "0 0 28px",
+          }}
+        >
+          Just a few details and we&apos;ll hold your spot.
+        </h1>
+
+        <FormSection
+          title="01 · Group size"
+          hint={`How many people? Max ${product.capacity_max ?? 20}.`}
+        >
+          <Counter
+            value={form.people}
+            onChange={(v) => setForm({ ...form, people: v })}
+            min={1}
+            max={product.capacity_max ?? 20}
+          />
+          {pricePerPerson != null && (
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 11,
+                color: MUTED,
+                marginTop: 8,
+              }}
+            >
+              Max {product.capacity_max ?? 20} per booking · €{pricePerPerson}{" "}
+              per person
+            </div>
+          )}
+        </FormSection>
+
+        <FormSection title="02 · Contact" hint="So the provider can reach you">
+          <FormRow>
+            <FormField label="First name *">
+              <input
+                value={form.firstName}
+                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                style={inputStyle}
+                placeholder="Alex"
+              />
+            </FormField>
+            <FormField label="Last name *">
+              <input
+                value={form.lastName}
+                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                style={inputStyle}
+                placeholder="Petrova"
+              />
+            </FormField>
+          </FormRow>
+          <FormRow>
+            <FormField label="Email *">
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                style={inputStyle}
+                placeholder="alex@example.com"
+              />
+            </FormField>
+            <FormField label="Phone">
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                style={inputStyle}
+                placeholder="+358 40 000 0000"
+              />
+            </FormField>
+          </FormRow>
+        </FormSection>
+
+        <FormSection
+          title="03 · Anything we should know?"
+          hint="Allergies, accessibility needs, special requests"
+          optional
+        >
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            rows={3}
+            placeholder="Optional"
+            style={{
+              ...inputStyle,
+              resize: "vertical" as const,
+              fontFamily: "var(--font-space-grotesk), sans-serif",
+            }}
+          />
+        </FormSection>
+
+        <FormSection
+          title="04 · Payment"
+          hint={
+            pricePerPerson != null
+              ? "Enter your card details below."
+              : "No payment required — the provider will confirm your request."
+          }
+        >
+          {paymentSection}
+        </FormSection>
+      </div>
+
+      {/* Right: summary + pay button */}
+      <aside style={{ background: BG, borderTop: BORDER }}>
+        <div style={{ padding: "24px", position: "sticky", top: 0 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-jetbrains-mono), monospace",
+              fontSize: 10,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase" as const,
+              color: MUTED,
+              marginBottom: 16,
+            }}
+          >
+            Order summary
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              marginBottom: 18,
+              paddingBottom: 18,
+              borderBottom: BORDER,
+            }}
+          >
+            {product.cover_image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.cover_image}
+                alt=""
+                style={{
+                  width: 64,
+                  height: 64,
+                  objectFit: "cover",
+                  border: BORDER,
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 64,
+                  height: 64,
+                  background: "#C8C4BB",
+                  border: BORDER,
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontFamily: "var(--font-space-grotesk), sans-serif",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  lineHeight: 1.2,
+                }}
+              >
+                {product.name}
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{ padding: "14px 0", borderBottom: "1px dashed #0A0A0A" }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 10,
+                color: MUTED,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase" as const,
+                marginBottom: 4,
+              }}
+            >
+              When
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-space-grotesk), sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              {fmtDateLong(slot.date)}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 12,
+                color: MUTED,
+                marginTop: 2,
+              }}
+            >
+              {slot.time}
+              {formatDuration(product) && ` · ${formatDuration(product)}`}
+            </div>
+          </div>
+
+          <div
+            style={{ padding: "14px 0", borderBottom: "1px dashed #0A0A0A" }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-jetbrains-mono), monospace",
+                fontSize: 10,
+                color: MUTED,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase" as const,
+                marginBottom: 4,
+              }}
+            >
+              Travelers
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-space-grotesk), sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              {form.people}{" "}
+              {pricePerPerson != null ? `× €${pricePerPerson}` : "person(s)"}
+            </div>
+          </div>
+
+          {subtotal != null && (
+            <div style={{ padding: "16px 0", borderBottom: BORDER }}>
+              <LineItem label="Subtotal" value={fmtEUR(subtotal)} />
+              <LineItem
+                label="Service fee (4%)"
+                value={fmtEUR(serviceFee!)}
+                muted
+              />
+            </div>
+          )}
+
+          {total != null && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                padding: "16px 0",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-jetbrains-mono), monospace",
+                  fontSize: 11,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                Total
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-space-grotesk), sans-serif",
+                  fontWeight: 700,
+                  fontSize: 32,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {fmtEUR(total)}
+              </div>
+            </div>
+          )}
+
+          {payButton}
+
+          <button
+            onClick={onBack}
+            style={{
+              width: "100%",
+              marginTop: 8,
+              background: "transparent",
+              border: "none",
+              padding: 10,
+              fontFamily: "var(--font-space-grotesk), sans-serif",
+              fontWeight: 500,
+              fontSize: 13,
+              cursor: "pointer",
+              color: MUTED,
+              textDecoration: "underline",
+            }}
+          >
+            ← Back to slot
+          </button>
+        </div>
+      </aside>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .step3-grid { grid-template-columns: 1fr 420px !important; align-items: start !important; }
+          .step3-grid aside { border-top: none !important; border-left: ${BORDER} !important; min-height: 100vh; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function StepDetails({
   slug,
   product,

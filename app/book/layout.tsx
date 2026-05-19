@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import StripeProvider from "./StripeProvider";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -33,7 +34,7 @@ export default function BookLayout({
         color: "#0A0A0A",
       }}
     >
-      {children}
+      <StripeProvider>{children}</StripeProvider>
     </div>
   );
 }

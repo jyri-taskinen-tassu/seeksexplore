@@ -41,7 +41,7 @@ export async function POST(
   const { data: product } = await admin
     .schema(SCHEMA)
     .from("products")
-    .select("id, name")
+    .select("id")
     .eq("id", product_id)
     .eq("provider_id", provider.id)
     .single();
@@ -61,7 +61,6 @@ export async function POST(
       provider_id: provider.id,
       provider_name: provider.business_name ?? provider.official_name,
       product_id,
-      product_name: product.name,
       guests: String(guests),
       price_per_person: String(price_per_person),
     },
