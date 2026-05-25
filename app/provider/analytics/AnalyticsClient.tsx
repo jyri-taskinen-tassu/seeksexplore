@@ -29,11 +29,29 @@ interface CustomerSummary {
   avg_bookings_per_customer: number;
 }
 
+interface BookingTrend {
+  date: string;
+  net_bookings: number;
+  confirmed_bookings: number;
+  cancellations: number;
+}
+
+interface ResourceUtilization {
+  category_id: string;
+  category_name: string;
+  variant_id: string;
+  variant_name: string;
+  total_units: number;
+  booked_units: number;
+}
+
 interface AnalyticsProps {
   providerName: string;
   revenueData: RevenuePoint[];
   productPerformance: ProductPerformance[];
   customerSummary: CustomerSummary;
+  bookingTrends: BookingTrend[];
+  resourceUtilization: ResourceUtilization[];
 }
 
 // Icon components
@@ -205,7 +223,9 @@ export default function AnalyticsClient({
   providerName,
   revenueData,
   productPerformance,
-  customerSummary
+  customerSummary,
+  bookingTrends,
+  resourceUtilization
 }: AnalyticsProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("month");
   const [chartMetric, setChartMetric] = useState<ChartMetric>("revenue");
@@ -317,31 +337,69 @@ export default function AnalyticsClient({
             </div>
           </div>
 
-          <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6 space-y-6">
-            <h3 className="font-semibold text-[var(--green-900)]">Customer Insights</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-[var(--cream-50)] rounded-lg">
-                <div className="text-[10px] uppercase text-[var(--ink-sub)]">New</div>
-                <div className="text-xl font-bold">{customerSummary.new_customers}</div>
+          <div className="space-y-6">
+            <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6 space-y-6">
+              <h3 className="font-semibold text-[var(--green-900)]">Customer Insights</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-3 bg-[var(--cream-50)] rounded-lg">
+                  <div className="text-[10px] uppercase text-[var(--ink-sub)]">New</div>
+                  <div className="text-xl font-bold">{customerSummary.new_customers}</div>
+                </div>
+                <div className="p-3 bg-[var(--cream-50)] rounded-lg">
+                  <div className="text-[10px] uppercase text-[var(--ink-sub)]">Returning</div>
+                  <div className="text-xl font-bold">{customerSummary.returning_customers}</div>
+                </div>
               </div>
-              <div className="p-3 bg-[var(--cream-50)] rounded-lg">
-                <div className="text-[10px] uppercase text-[var(--ink-sub)]">Returning</div>
-                <div className="text-xl font-bold">{customerSummary.returning_customers}</div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-[var(--ink-sub)]">Total Customers</span>
+                  <span className="font-semibold">{customerSummary.total_customers}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-[var(--ink-sub)]">Avg Bookings</span>
+                  <span className="font-semibold">{customerSummary.avg_bookings_per_customer?.toFixed(1) || "0.0"}</span>
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--ink-sub)]">Total Customers</span>
-                <span className="font-semibold">{customerSummary.total_customers}</span>
+
+            <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6 space-y-4">
+              <h3 className="font-semibold text-[var(--green-900)]">Equipment Usage</h3>
+              <div className="space-y-3">
+                {resourceUtilization.map((r, i) => (
+                  <div key={i}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-[var(--ink)] font-medium">{r.variant_name}</span>
+                      <span className="text-[var(--ink-sub)]">{r.booked_units} / {r.total_units}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-[var(--cream-100)] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[var(--green-800)]" 
+                        style={{ width: `${Math.min((r.booked_units / (r.total_units || 1)) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--ink-sub)]">Avg Bookings</span>
-                <span className="font-semibold">{customerSummary.avg_bookings_per_customer.toFixed(1)}</span>
+            </div>
+
+            <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6">
+              <h3 className="font-semibold text-[var(--green-900)] mb-4">Daily Trends</h3>
+              <div className="space-y-3">
+                {bookingTrends.slice(-5).reverse().map((t, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs py-2 border-b border-[var(--line)] last:border-0">
+                    <span className="text-[var(--ink-sub)]">{t.date}</span>
+                    <div className="flex gap-3">
+                      <span className="text-emerald-600 font-bold">+{t.confirmed_bookings}</span>
+                      {t.cancellations > 0 && <span className="text-red-500">-{t.cancellations}</span>}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </main>
+
     </div>
   );
 }
