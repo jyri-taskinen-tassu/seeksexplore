@@ -22,13 +22,19 @@ export async function PATCH(
   const { id } = await params;
   const body = await request.json();
   const updates: Record<string, unknown> = {};
-  if (body.stage !== undefined) updates.stage = body.stage;
-  if (body.notes !== undefined) updates.notes = body.notes;
-  if (body.position !== undefined) updates.position = body.position;
+  
+  // Map frontend fields to DB pipeline fields
+  if (body.pipeline_stage !== undefined) updates.pipeline_stage = body.pipeline_stage;
+  if (body.pipeline_position !== undefined) updates.pipeline_position = body.pipeline_position;
+  if (body.pipeline_notes !== undefined) updates.pipeline_notes = body.pipeline_notes;
+  if (body.pipeline_estimated_value !== undefined) updates.pipeline_estimated_value = body.pipeline_estimated_value;
+  if (body.pipeline_guests !== undefined) updates.pipeline_guests = body.pipeline_guests;
+  if (body.pipeline_preferred_date !== undefined) updates.pipeline_preferred_date = body.pipeline_preferred_date;
+  if (body.pipeline_product_name !== undefined) updates.pipeline_product_name = body.pipeline_product_name;
 
   const { data, error } = await supabase
     .schema(SCHEMA)
-    .from("sales_opportunities")
+    .from("customers")
     .update(updates)
     .eq("id", id)
     .eq("provider_id", provider.id)

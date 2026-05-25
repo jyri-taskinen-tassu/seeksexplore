@@ -16,6 +16,16 @@ export type Customer = {
   firstBookingDate: string;
   lastBookingDate: string;
   notes?: string;
+  // Unified pipeline fields
+  pipelineStage: SalesStage;
+  pipelineEstimatedValue: number;
+  pipelineGuests: number;
+  pipelinePreferredDate?: string;
+  pipelineNotes?: string;
+  pipelinePosition: number;
+  pipelineProductName?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type BookingHistory = {
@@ -41,26 +51,9 @@ export type MessageHistory = {
   read: boolean;
 };
 
-export type SalesOpportunity = {
-  id: string;
-  customerId: string;
-  customerName: string;
-  customerEmail: string;
-  productName: string;
-  stage: SalesStage;
-  estimatedValue: number;
-  currency: string;
-  guests: number;
-  preferredDate?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 let customers: Customer[] = [];
 let bookingHistory: BookingHistory[] = [];
 let messageHistory: MessageHistory[] = [];
-let salesOpportunities: SalesOpportunity[] = [];
 
 function generateCustomers(): Customer[] {
   const firstNames = [
@@ -79,6 +72,15 @@ function generateCustomers(): Customer[] {
   
   const countries = ["Finland", "Sweden", "Norway", "Germany", "UK", "USA", "France", "Spain"];
   
+  const products = [
+    "Snowmobile Safari (Sport)",
+    "Snowmobile Safari (Touring)",
+    "E-bike Tour",
+    "Guided Hiking Tour",
+    "Northern Lights Tour",
+  ];
+
+  const stages: SalesStage[] = ["inquiry", "quoted", "followup", "booked", "completed"];
   const generated: Customer[] = [];
   
   for (let i = 0; i < 50; i++) {
@@ -105,6 +107,13 @@ function generateCustomers(): Customer[] {
     const lastBookingDate = new Date();
     lastBookingDate.setDate(lastBookingDate.getDate() - Math.floor(Math.random() * 30));
     
+    const createdAt = new Date();
+    createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 60));
+
+    const stage = stages[Math.floor(Math.random() * stages.length)];
+    const guests = Math.floor(1 + Math.random() * 5);
+    const pipelinePosition = i % 5; // Simple mock position
+
     generated.push({
       id: `customer-${i + 1}`,
       firstName,
@@ -119,6 +128,16 @@ function generateCustomers(): Customer[] {
       firstBookingDate: firstBookingDate.toISOString().split("T")[0],
       lastBookingDate: lastBookingDate.toISOString().split("T")[0],
       notes: Math.random() > 0.8 ? "Prefers morning tours" : undefined,
+      // Pipeline fields
+      pipelineStage: stage,
+      pipelineEstimatedValue: Math.round((100 + Math.random() * 200) * guests),
+      pipelineGuests: guests,
+      pipelinePreferredDate: stage !== "completed" ? new Date(Date.now() + 86400000 * 10).toISOString().split("T")[0] : undefined,
+      pipelineNotes: Math.random() > 0.7 ? "Interested in group discount" : undefined,
+      pipelinePosition,
+      pipelineProductName: products[Math.floor(Math.random() * products.length)],
+      createdAt: createdAt.toISOString(),
+      updatedAt: new Date().toISOString(),
     });
   }
   
@@ -252,100 +271,17 @@ export function searchCustomers(query: string): Customer[] {
   );
 }
 
-function generateSalesOpportunities(customers: Customer[]): SalesOpportunity[] {
-  const products = [
-    "Snowmobile Safari (Sport)",
-    "Snowmobile Safari (Touring)",
-    "E-bike Tour",
-    "Guided Hiking Tour",
-    "Northern Lights Tour",
-    "City Walk (English)",
-    "Food Market Experience",
-    "Reindeer Sleigh Ride",
-    "Private Sauna Experience",
-    "Ice Fishing Experience",
-    "Group Tour (20+ people)",
-    "Corporate Team Building",
-  ];
-  
-  const stages: SalesStage[] = ["inquiry", "quoted", "followup", "booked", "completed"];
-  const opportunities: SalesOpportunity[] = [];
-  
-  // Generate 30-40 opportunities
-  for (let i = 0; i < 35; i++) {
-    const customer = customers[Math.floor(Math.random() * customers.length)];
-    const productName = products[Math.floor(Math.random() * products.length)];
-    const stage = stages[Math.floor(Math.random() * stages.length)];
-    const guests = Math.floor(1 + Math.random() * 15);
-    const basePrice = 50 + Math.random() * 300;
-    const estimatedValue = Math.round(basePrice * guests);
-    
-    const createdAt = new Date();
-    createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 60));
-    
-    const updatedAt = new Date(createdAt);
-    updatedAt.setDate(updatedAt.getDate() + Math.floor(Math.random() * 30));
-    
-    const preferredDate = new Date();
-    preferredDate.setDate(preferredDate.getDate() + Math.floor(7 + Math.random() * 60));
-    
-    opportunities.push({
-      id: `opp-${i + 1}`,
-      customerId: customer.id,
-      customerName: `${customer.firstName} ${customer.lastName}`,
-      customerEmail: customer.email,
-      productName,
-      stage,
-      estimatedValue,
-      currency: "EUR",
-      guests,
-      preferredDate: stage !== "completed" ? preferredDate.toISOString().split("T")[0] : undefined,
-      notes: Math.random() > 0.7 ? "Interested in group discount" : undefined,
-      createdAt: createdAt.toISOString(),
-      updatedAt: updatedAt.toISOString(),
-    });
+export function getCustomersByPipelineStage(stage: SalesStage): Customer[] {
+  return getAllCustomers().filter((c) => c.pipelineStage === stage);
+}
+
+export function updateCustomerPipelineStage(id: string, newStage: SalesStage): void {
+  const customer = customers.find((c) => c.id === id);
+  if (customer) {
+    customer.pipelineStage = newStage;
+    customer.updatedAt = new Date().toISOString();
   }
-  
-  return opportunities;
-}
-
-export function seedSalesOpportunities() {
-  if (customers.length === 0) {
-    seedCustomersData();
-  }
-  salesOpportunities = generateSalesOpportunities(customers);
-}
-
-export function getAllSalesOpportunities(): SalesOpportunity[] {
-  if (salesOpportunities.length === 0) {
-    seedSalesOpportunities();
-  }
-  return [...salesOpportunities];
-}
-
-export function getSalesOpportunitiesByStage(stage: SalesStage): SalesOpportunity[] {
-  return getAllSalesOpportunities().filter((opp) => opp.stage === stage);
-}
-
-export function updateSalesOpportunityStage(id: string, newStage: SalesStage): void {
-  const opp = salesOpportunities.find((o) => o.id === id);
-  if (opp) {
-    opp.stage = newStage;
-    opp.updatedAt = new Date().toISOString();
-  }
-}
-
-export function addSalesOpportunity(opportunity: Omit<SalesOpportunity, "id" | "createdAt" | "updatedAt">): SalesOpportunity {
-  const newOpp: SalesOpportunity = {
-    ...opportunity,
-    id: `opp-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  salesOpportunities.push(newOpp);
-  return newOpp;
 }
 
 // Initialize on import
 seedCustomersData();
-seedSalesOpportunities();

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import CustomersClient, {
   type Booking,
   type Customer,
-  type SalesOpportunity,
 } from "./CustomersClient";
 
 const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
@@ -21,7 +20,6 @@ export default async function ProviderCustomersPage() {
 
   const [
     { data: customersData },
-    { data: opportunitiesData },
     { data: bookingsData },
   ] = await Promise.all([
     supabase
@@ -30,12 +28,6 @@ export default async function ProviderCustomersPage() {
       .select("*")
       .eq("provider_id", provider.id)
       .order("last_booking_date", { ascending: false, nullsFirst: false }),
-    supabase
-      .schema(SCHEMA)
-      .from("sales_opportunities")
-      .select("*")
-      .eq("provider_id", provider.id)
-      .order("created_at", { ascending: false }),
     supabase
       .schema(SCHEMA)
       .from("bookings")
@@ -57,7 +49,6 @@ export default async function ProviderCustomersPage() {
   return (
     <CustomersClient
       initialCustomers={(customersData ?? []) as Customer[]}
-      initialOpportunities={(opportunitiesData ?? []) as SalesOpportunity[]}
       initialBookingsByEmail={bookingsByEmail}
     />
   );

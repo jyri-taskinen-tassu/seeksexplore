@@ -23,12 +23,12 @@ export async function POST(request: Request) {
 
   const errors: string[] = [];
   for (const item of items) {
-    const updates: Record<string, unknown> = { position: item.position };
-    if (item.stage !== undefined) updates.stage = item.stage;
+    const updates: Record<string, unknown> = { pipeline_position: item.position };
+    if (item.stage !== undefined) updates.pipeline_stage = item.stage;
 
     const { error } = await supabase
       .schema(SCHEMA)
-      .from("sales_opportunities")
+      .from("customers")
       .update(updates)
       .eq("id", item.id)
       .eq("provider_id", provider.id);

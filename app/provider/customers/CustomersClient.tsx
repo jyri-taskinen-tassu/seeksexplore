@@ -32,6 +32,16 @@ export type Customer = {
   first_booking_date?: string | null;
   last_booking_date?: string | null;
   notes?: string | null;
+  // Pipeline fields (merged from sales_opportunities)
+  pipeline_stage: SalesStage;
+  pipeline_estimated_value: number;
+  pipeline_guests: number;
+  pipeline_preferred_date?: string | null;
+  pipeline_notes?: string | null;
+  pipeline_position: number;
+  pipeline_product_name?: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Booking = {
@@ -46,24 +56,6 @@ export type Booking = {
   total_price: number;
   currency: string;
   notes?: string | null;
-};
-
-export type SalesOpportunity = {
-  id: string;
-  provider_id: string;
-  customer_id?: string | null;
-  customer_name: string;
-  customer_email: string;
-  product_name: string;
-  stage: SalesStage;
-  estimated_value: number;
-  currency: string;
-  guests: number;
-  preferred_date?: string | null;
-  notes?: string | null;
-  position: number;
-  created_at: string;
-  updated_at: string;
 };
 
 function cx(...classes: Array<string | false | undefined | null>) {
@@ -92,7 +84,7 @@ function formatDate(dateStr: string | null | undefined): string {
 /** Simple inline tag badge for the customer card list (read-only) */
 function TagBadge({ tag }: { tag: string }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-[var(--color-forest)]/10 px-2 py-0.5 text-xs font-medium text-[var(--color-forest)] ring-1 ring-[var(--color-forest)]/20">
+    <span className="inline-flex items-center rounded-full bg-[var(--cream-100)] px-2 py-0.5 text-xs font-medium text-[var(--ink)] ring-1 ring-[var(--line)]">
       {tag}
     </span>
   );
@@ -113,31 +105,31 @@ function CustomerCard({
       className={cx(
         "w-full text-left rounded-lg border p-4 transition-all",
         selected
-          ? "border-neutral-900 bg-neutral-50 ring-2 ring-neutral-900"
-          : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm",
+          ? "border-[var(--green-800)] bg-white ring-2 ring-[var(--green-800)]/20"
+          : "border-[var(--line)] bg-white hover:border-[var(--green-800)]/30 hover:shadow-sm",
       )}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h3 className="font-semibold text-neutral-900">
+            <h3 className="font-semibold text-[var(--green-900)]">
               {customer.first_name} {customer.last_name}
             </h3>
             {customer.tags.map((tag) => (
               <TagBadge key={tag} tag={tag} />
             ))}
           </div>
-          <div className="text-sm text-neutral-600 space-y-0.5">
+          <div className="text-sm text-[var(--ink-sub)] space-y-0.5">
             <div>{customer.email}</div>
             {customer.phone && <div>{customer.phone}</div>}
             {customer.country && <div>{customer.country}</div>}
           </div>
         </div>
         <div className="text-right text-sm">
-          <div className="font-semibold text-neutral-900">
+          <div className="font-semibold text-[var(--green-900)]">
             {formatCurrency(customer.total_spent, customer.currency)}
           </div>
-          <div className="text-neutral-500">
+          <div className="text-[var(--ink-sub)] opacity-70">
             {customer.total_bookings}{" "}
             {customer.total_bookings === 1 ? "booking" : "bookings"}
           </div>
@@ -174,14 +166,14 @@ function NotesEditor({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={3}
-          className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-neutral-900 resize-none"
+          className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:border-[var(--green-800)] focus:ring-1 focus:ring-[var(--green-800)] outline-none resize-none"
           autoFocus
         />
         <div className="flex gap-2">
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
+            className="rounded-lg bg-[var(--green-900)] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
           </button>
@@ -190,7 +182,7 @@ function NotesEditor({
               setValue(initialNotes ?? "");
               setEditing(false);
             }}
-            className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-medium text-[var(--ink)] hover:bg-[var(--cream-50)]"
           >
             Cancel
           </button>
@@ -202,10 +194,10 @@ function NotesEditor({
   return (
     <button
       onClick={() => setEditing(true)}
-      className="w-full text-left rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700 hover:border-neutral-300 transition-colors min-h-[60px]"
+      className="w-full text-left rounded-lg border border-[var(--line)] bg-[var(--cream-50)]/50 p-3 text-sm text-[var(--ink)] hover:border-[var(--green-800)]/30 transition-colors min-h-[60px]"
     >
       {value || (
-        <span className="text-neutral-400 italic">Click to add notes…</span>
+        <span className="text-[var(--ink-sub)] opacity-50 italic">Click to add notes…</span>
       )}
     </button>
   );
@@ -220,7 +212,7 @@ const STATUS_STYLES: Record<
     label: "Confirmed",
   },
   pending: {
-    badge: "bg-amber-50 text-amber-700 ring-amber-200",
+    badge: "bg-[var(--terracotta)]/5 text-[var(--terracotta-dark)] ring-[var(--terracotta)]/20",
     label: "Pending",
   },
   cancelled: {
@@ -233,22 +225,22 @@ function BookingRow({ booking }: { booking: Booking }) {
   const style = STATUS_STYLES[booking.status];
   const dateObj = new Date(booking.booking_date);
   return (
-    <div className="flex items-start gap-4 rounded-lg border border-neutral-200 bg-white p-4">
+    <div className="flex items-start gap-4 rounded-lg border border-[var(--line)] bg-white p-4">
       <div className="flex-shrink-0 text-center min-w-[52px]">
-        <div className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+        <div className="text-xs font-semibold text-[var(--ink-sub)] uppercase tracking-wide opacity-70">
           {dateObj.toLocaleDateString("en-US", { month: "short" })}
         </div>
-        <div className="text-lg font-bold text-neutral-900 leading-none">
+        <div className="text-lg font-bold text-[var(--green-900)] leading-none">
           {dateObj.getUTCDate()}
         </div>
-        <div className="text-xs text-neutral-400 mt-0.5">
+        <div className="text-xs text-[var(--ink-sub)] mt-0.5 opacity-60">
           {booking.booking_time}
         </div>
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-neutral-900 truncate">
+          <span className="text-sm font-medium text-[var(--ink)] truncate">
             {booking.product_name}
           </span>
           <span
@@ -260,18 +252,18 @@ function BookingRow({ booking }: { booking: Booking }) {
             {style.label}
           </span>
         </div>
-        <div className="mt-0.5 text-xs text-neutral-500">
+        <div className="mt-0.5 text-xs text-[var(--ink-sub)]">
           {booking.guests} {booking.guests === 1 ? "guest" : "guests"}
         </div>
         {booking.notes && (
-          <div className="mt-1 text-xs text-neutral-500 italic truncate">
+          <div className="mt-1 text-xs text-[var(--ink-sub)] italic truncate opacity-70">
             {booking.notes}
           </div>
         )}
       </div>
 
       <div className="flex-shrink-0 text-right">
-        <div className="text-sm font-semibold text-neutral-900">
+        <div className="text-sm font-semibold text-[var(--green-900)]">
           {formatCurrency(Number(booking.total_price), booking.currency)}
         </div>
       </div>
@@ -296,9 +288,9 @@ function CustomerDetailPanel({
 
   return (
     <>
-      <div className="border-b border-neutral-200 px-6 py-4">
+      <div className="border-b border-[var(--line)] px-6 py-4">
         <div>
-          <h2 className="text-xl font-semibold text-neutral-900 mb-3">
+          <h2 className="text-xl font-semibold text-[var(--green-900)] mb-3">
             {customer.first_name} {customer.last_name}
           </h2>
           <CustomerTagInput
@@ -309,15 +301,15 @@ function CustomerDetailPanel({
         </div>
       </div>
 
-      <div className="border-b border-neutral-200 px-6">
+      <div className="border-b border-[var(--line)] px-6">
         <div className="flex gap-1">
           <button
             onClick={() => setActiveTab("overview")}
             className={cx(
               "px-4 py-2 text-sm font-medium transition-colors border-b-2",
               activeTab === "overview"
-                ? "border-neutral-900 text-neutral-900"
-                : "border-transparent text-neutral-600 hover:text-neutral-900",
+                ? "border-[var(--green-900)] text-[var(--green-900)]"
+                : "border-transparent text-[var(--ink-sub)] hover:text-[var(--ink)]",
             )}
           >
             Overview
@@ -327,13 +319,13 @@ function CustomerDetailPanel({
             className={cx(
               "px-4 py-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-1.5",
               activeTab === "bookings"
-                ? "border-neutral-900 text-neutral-900"
-                : "border-transparent text-neutral-600 hover:text-neutral-900",
+                ? "border-[var(--green-900)] text-[var(--green-900)]"
+                : "border-transparent text-[var(--ink-sub)] hover:text-[var(--ink)]",
             )}
           >
             Bookings
             {bookings.length > 0 && (
-              <span className="rounded-full bg-neutral-100 px-1.5 py-0.5 text-xs font-medium text-neutral-700">
+              <span className="rounded-full bg-[var(--cream-100)] px-1.5 py-0.5 text-xs font-medium text-[var(--ink)]">
                 {bookings.length}
               </span>
             )}
@@ -345,39 +337,39 @@ function CustomerDetailPanel({
         {activeTab === "overview" && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+              <h3 className="text-sm font-semibold text-[var(--green-900)] mb-3">
                 Contact Information
               </h3>
               <div className="space-y-2 text-sm">
                 <div>
-                  <span className="text-neutral-500">Email:</span>{" "}
-                  <span className="text-neutral-900">{customer.email}</span>
+                  <span className="text-[var(--ink-sub)] opacity-70">Email:</span>{" "}
+                  <span className="text-[var(--ink)] font-medium">{customer.email}</span>
                 </div>
                 {customer.phone && (
                   <div>
-                    <span className="text-neutral-500">Phone:</span>{" "}
-                    <span className="text-neutral-900">{customer.phone}</span>
+                    <span className="text-[var(--ink-sub)] opacity-70">Phone:</span>{" "}
+                    <span className="text-[var(--ink)] font-medium">{customer.phone}</span>
                   </div>
                 )}
                 {customer.country && (
                   <div>
-                    <span className="text-neutral-500">Country:</span>{" "}
-                    <span className="text-neutral-900">{customer.country}</span>
+                    <span className="text-[var(--ink-sub)] opacity-70">Country:</span>{" "}
+                    <span className="text-[var(--ink)] font-medium">{customer.country}</span>
                   </div>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg border border-neutral-200 p-4">
-                <div className="text-sm text-neutral-500">Total Bookings</div>
-                <div className="mt-1 text-2xl font-semibold text-neutral-900">
+              <div className="rounded-lg border border-[var(--line)] p-4 bg-[var(--cream-50)]/30">
+                <div className="text-sm text-[var(--ink-sub)]">Total Bookings</div>
+                <div className="mt-1 text-2xl font-semibold text-[var(--green-900)]">
                   {customer.total_bookings}
                 </div>
               </div>
-              <div className="rounded-lg border border-neutral-200 p-4">
-                <div className="text-sm text-neutral-500">Total Spent</div>
-                <div className="mt-1 text-2xl font-semibold text-neutral-900">
+              <div className="rounded-lg border border-[var(--line)] p-4 bg-[var(--cream-50)]/30">
+                <div className="text-sm text-[var(--ink-sub)]">Total Spent</div>
+                <div className="mt-1 text-2xl font-semibold text-[var(--green-900)]">
                   {formatCurrency(customer.total_spent, customer.currency)}
                 </div>
               </div>
@@ -385,21 +377,21 @@ function CustomerDetailPanel({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-sm text-neutral-500">First Booking</div>
-                <div className="mt-1 text-sm font-medium text-neutral-900">
+                <div className="text-sm text-[var(--ink-sub)]">First Booking</div>
+                <div className="mt-1 text-sm font-medium text-[var(--ink)]">
                   {formatDate(customer.first_booking_date)}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-neutral-500">Last Booking</div>
-                <div className="mt-1 text-sm font-medium text-neutral-900">
+                <div className="text-sm text-[var(--ink-sub)]">Last Booking</div>
+                <div className="mt-1 text-sm font-medium text-[var(--ink)]">
                   {formatDate(customer.last_booking_date)}
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-2">
+              <h3 className="text-sm font-semibold text-[var(--green-900)] mb-2">
                 Notes
               </h3>
               <NotesEditor
@@ -414,7 +406,7 @@ function CustomerDetailPanel({
         {activeTab === "bookings" && (
           <div>
             {bookings.length === 0 ? (
-              <div className="text-sm text-neutral-500 text-center py-12">
+              <div className="text-sm text-[var(--ink-sub)] text-center py-12">
                 No bookings found for this customer.
               </div>
             ) : (
@@ -432,11 +424,11 @@ function CustomerDetailPanel({
 }
 
 function KanbanCard({
-  opportunity,
+  customer,
   onClick,
   isDragging,
 }: {
-  opportunity: SalesOpportunity;
+  customer: Customer;
   onClick: () => void;
   isDragging: boolean;
 }) {
@@ -444,33 +436,37 @@ function KanbanCard({
     <div
       onClick={onClick}
       className={cx(
-        "rounded-lg border border-neutral-200 bg-white p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all select-none",
-        isDragging &&
-          "opacity-60 shadow-lg ring-2 ring-[var(--color-forest)]/30",
+        "rounded-lg border border-[var(--line)] bg-white p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all select-none hover:border-[var(--green-800)]/30",
+        isDragging && "opacity-60 shadow-lg ring-2 ring-[var(--green-800)]/20",
       )}
     >
       <div className="mb-1.5">
-        <div className="font-medium text-xs text-neutral-900 mb-0.5">
-          {opportunity.customer_name}
+        <div className="font-medium text-xs text-[var(--ink)] mb-0.5">
+          {customer.first_name} {customer.last_name}
         </div>
-        <div className="text-[11px] text-neutral-600">
-          {opportunity.product_name}
+        <div className="text-[11px] text-[var(--ink-sub)]">
+          {customer.pipeline_product_name || "No product"}
         </div>
       </div>
       <div className="flex items-center justify-between text-[11px] mb-1.5">
-        <span className="text-neutral-500">{opportunity.guests} guests</span>
-        <span className="font-semibold text-neutral-900">
-          {formatCurrency(opportunity.estimated_value, opportunity.currency)}
+        <span className="text-[var(--ink-sub)] opacity-70">
+          {customer.pipeline_guests} guests
+        </span>
+        <span className="font-semibold text-[var(--green-900)]">
+          {formatCurrency(
+            customer.pipeline_estimated_value,
+            customer.currency,
+          )}
         </span>
       </div>
-      {opportunity.preferred_date && (
-        <div className="text-[11px] text-neutral-500 mb-1.5">
-          {formatDate(opportunity.preferred_date)}
+      {customer.pipeline_preferred_date && (
+        <div className="text-[11px] text-[var(--ink-sub)] opacity-60 mb-1.5">
+          {formatDate(customer.pipeline_preferred_date)}
         </div>
       )}
-      {opportunity.notes && (
-        <div className="text-[11px] text-neutral-600 bg-neutral-50 rounded px-1.5 py-1 mt-1.5">
-          {opportunity.notes}
+      {customer.pipeline_notes && (
+        <div className="text-[11px] text-[var(--ink-sub)] bg-[var(--cream-50)] rounded px-1.5 py-1 mt-1.5 line-clamp-2">
+          {customer.pipeline_notes}
         </div>
       )}
     </div>
@@ -478,11 +474,11 @@ function KanbanCard({
 }
 
 function OpportunitySlideOver({
-  opportunity,
+  customer,
   onClose,
   onStageChange,
 }: {
-  opportunity: SalesOpportunity;
+  customer: Customer;
   onClose: () => void;
   onStageChange: (id: string, stage: SalesStage) => Promise<void>;
 }) {
@@ -497,21 +493,24 @@ function OpportunitySlideOver({
 
   const handleStageChange = async (stage: SalesStage) => {
     setSaving(true);
-    await onStageChange(opportunity.id, stage);
+    await onStageChange(customer.id, stage);
     setSaving(false);
   };
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl z-50 flex flex-col">
-        <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-neutral-900">
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40"
+        onClick={onClose}
+      />
+      <div className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[var(--line)]">
+        <div className="border-b border-[var(--line)] px-6 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-[var(--green-900)]">
             Lead Details
           </h2>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="text-[var(--ink-sub)] hover:text-[var(--green-900)] transition-colors p-1"
           >
             ✕
           </button>
@@ -520,62 +519,70 @@ function OpportunitySlideOver({
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+              <h3 className="text-sm font-semibold text-[var(--green-900)] mb-3">
                 Customer
               </h3>
               <div className="space-y-2">
                 <div>
-                  <div className="text-xs text-neutral-500">Name</div>
-                  <div className="text-sm font-medium text-neutral-900">
-                    {opportunity.customer_name}
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">
+                    Name
+                  </div>
+                  <div className="text-sm font-medium text-[var(--ink)]">
+                    {customer.first_name} {customer.last_name}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-neutral-500">Email</div>
-                  <div className="text-sm text-neutral-900">
-                    {opportunity.customer_email}
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">
+                    Email
+                  </div>
+                  <div className="text-sm text-[var(--ink)]">
+                    {customer.email}
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+              <h3 className="text-sm font-semibold text-[var(--green-900)] mb-3">
                 Opportunity
               </h3>
               <div className="space-y-2">
                 <div>
-                  <div className="text-xs text-neutral-500">Product</div>
-                  <div className="text-sm text-neutral-900">
-                    {opportunity.product_name}
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">
+                    Product
+                  </div>
+                  <div className="text-sm text-[var(--ink)]">
+                    {customer.pipeline_product_name || "—"}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-neutral-500">Guests</div>
-                    <div className="text-sm font-medium text-neutral-900">
-                      {opportunity.guests}
+                    <div className="text-xs text-[var(--ink-sub)] opacity-70">
+                      Guests
+                    </div>
+                    <div className="text-sm font-medium text-[var(--ink)]">
+                      {customer.pipeline_guests}
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-[var(--ink-sub)] opacity-70">
                       Estimated Value
                     </div>
-                    <div className="text-sm font-medium text-neutral-900">
+                    <div className="text-sm font-medium text-[var(--green-900)]">
                       {formatCurrency(
-                        opportunity.estimated_value,
-                        opportunity.currency,
+                        customer.pipeline_estimated_value,
+                        customer.currency,
                       )}
                     </div>
                   </div>
                 </div>
-                {opportunity.preferred_date && (
+                {customer.pipeline_preferred_date && (
                   <div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-[var(--ink-sub)] opacity-70">
                       Preferred Date
                     </div>
-                    <div className="text-sm text-neutral-900">
-                      {formatDate(opportunity.preferred_date)}
+                    <div className="text-sm text-[var(--ink)]">
+                      {formatDate(customer.pipeline_preferred_date)}
                     </div>
                   </div>
                 )}
@@ -583,16 +590,16 @@ function OpportunitySlideOver({
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+              <h3 className="text-sm font-semibold text-[var(--green-900)] mb-3">
                 Stage
               </h3>
               <select
-                value={opportunity.stage}
+                value={customer.pipeline_stage}
                 onChange={(e) =>
                   handleStageChange(e.target.value as SalesStage)
                 }
                 disabled={saving}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent text-sm disabled:opacity-50"
+                className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm disabled:opacity-50"
               >
                 {stages.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -601,36 +608,40 @@ function OpportunitySlideOver({
                 ))}
               </select>
               {saving && (
-                <p className="mt-1 text-xs text-neutral-400">Saving…</p>
+                <p className="mt-1 text-xs text-[var(--ink-sub)]">Saving…</p>
               )}
             </div>
 
-            {opportunity.notes && (
+            {customer.pipeline_notes && (
               <div>
-                <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+                <h3 className="text-sm font-semibold text-[var(--green-900)] mb-3">
                   Notes
                 </h3>
-                <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm text-neutral-700">
-                  {opportunity.notes}
+                <div className="rounded-lg border border-[var(--line)] bg-[var(--cream-50)]/50 p-3 text-sm text-[var(--ink)]">
+                  {customer.pipeline_notes}
                 </div>
               </div>
             )}
 
             <div>
-              <h3 className="text-sm font-semibold text-neutral-900 mb-3">
+              <h3 className="text-sm font-semibold text-[var(--green-900)] mb-3">
                 Timeline
               </h3>
               <div className="space-y-2 text-sm">
                 <div>
-                  <div className="text-xs text-neutral-500">Created</div>
-                  <div className="text-neutral-900">
-                    {formatDate(opportunity.created_at)}
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">
+                    Created
+                  </div>
+                  <div className="text-[var(--ink)]">
+                    {formatDate(customer.created_at)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-neutral-500">Last Updated</div>
-                  <div className="text-neutral-900">
-                    {formatDate(opportunity.updated_at)}
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">
+                    Last Updated
+                  </div>
+                  <div className="text-[var(--ink)]">
+                    {formatDate(customer.updated_at)}
                   </div>
                 </div>
               </div>
@@ -638,10 +649,10 @@ function OpportunitySlideOver({
           </div>
         </div>
 
-        <div className="border-t border-neutral-200 px-6 py-4">
+        <div className="border-t border-[var(--line)] px-6 py-4">
           <button
             onClick={onClose}
-            className="w-full rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+            className="w-full rounded-lg bg-[var(--green-900)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
           >
             Close
           </button>
@@ -705,20 +716,20 @@ function AddLeadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
-        className="rounded-xl border border-neutral-200 bg-white p-6 w-full max-w-md shadow-xl"
+        className="rounded-xl border border-[var(--line)] bg-white p-6 w-full max-w-md shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-neutral-900">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-[var(--green-900)]">
             Add New Lead
           </h2>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600"
+            className="text-[var(--ink-sub)] hover:text-[var(--green-900)] transition-colors p-1"
           >
             ✕
           </button>
@@ -726,7 +737,7 @@ function AddLeadModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
               Customer Name *
             </label>
             <input
@@ -736,12 +747,12 @@ function AddLeadModal({
               onChange={(e) =>
                 setFormData({ ...formData, customerName: e.target.value })
               }
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
               Email *
             </label>
             <input
@@ -751,12 +762,12 @@ function AddLeadModal({
               onChange={(e) =>
                 setFormData({ ...formData, customerEmail: e.target.value })
               }
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
               Product
             </label>
             <select
@@ -764,7 +775,7 @@ function AddLeadModal({
               onChange={(e) =>
                 setFormData({ ...formData, productName: e.target.value })
               }
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm"
             >
               <option value="">Select a product…</option>
               {products.map((p) => (
@@ -777,7 +788,7 @@ function AddLeadModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
                 Guests *
               </label>
               <input
@@ -791,11 +802,11 @@ function AddLeadModal({
                     guests: parseInt(e.target.value) || 1,
                   })
                 }
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
                 Estimated Value (EUR) *
               </label>
               <input
@@ -809,13 +820,13 @@ function AddLeadModal({
                     estimatedValue: parseFloat(e.target.value) || 0,
                   })
                 }
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
               Preferred Date
             </label>
             <input
@@ -824,12 +835,12 @@ function AddLeadModal({
               onChange={(e) =>
                 setFormData({ ...formData, preferredDate: e.target.value })
               }
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
               Notes
             </label>
             <textarea
@@ -838,22 +849,22 @@ function AddLeadModal({
                 setFormData({ ...formData, notes: e.target.value })
               }
               rows={3}
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none text-sm resize-none"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-neutral-700 border border-neutral-300 rounded-lg hover:bg-neutral-50"
+              className="px-4 py-2 text-sm font-medium text-[var(--ink)] border border-[var(--line)] rounded-lg hover:bg-[var(--cream-50)] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-[var(--green-900)] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity shadow-sm"
             >
               {saving ? "Adding…" : "Add Lead"}
             </button>
@@ -874,50 +885,58 @@ const STAGES: {
   {
     id: "inquiry",
     label: "Inquiry",
-    color: "bg-[var(--color-sky)]/5",
-    borderColor: "border-[var(--color-sky)]/20",
-    headerColor: "text-[var(--color-sky)]",
+    color: "bg-[var(--cream-50)]",
+    borderColor: "border-[var(--line)]",
+    headerColor: "text-[var(--ink)]",
   },
   {
     id: "quoted",
     label: "Quoted",
-    color: "bg-[var(--color-accent)]/5",
-    borderColor: "border-[var(--color-accent)]/20",
-    headerColor: "text-[var(--color-accent)]",
+    color: "bg-[var(--terracotta)]/5",
+    borderColor: "border-[var(--terracotta)]/20",
+    headerColor: "text-[var(--terracotta-dark)]",
   },
   {
     id: "followup",
     label: "Follow-up",
-    color: "bg-[var(--color-sage)]/5",
-    borderColor: "border-[var(--color-sage)]/20",
-    headerColor: "text-[var(--color-sage)]",
+    color: "bg-[var(--cream-100)]",
+    borderColor: "border-[var(--line)]",
+    headerColor: "text-[var(--ink)]",
   },
   {
     id: "booked",
     label: "Booked",
-    color: "bg-[var(--color-forest)]/10",
-    borderColor: "border-[var(--color-forest)]/30",
-    headerColor: "text-[var(--color-forest)]",
+    color: "bg-emerald-50",
+    borderColor: "border-emerald-200",
+    headerColor: "text-emerald-800",
   },
   {
     id: "completed",
     label: "Completed",
-    color: "bg-neutral-50",
-    borderColor: "border-neutral-200",
-    headerColor: "text-neutral-500",
+    color: "bg-white",
+    borderColor: "border-[var(--line)]",
+    headerColor: "text-[var(--ink-sub)]",
   },
 ];
 
 function KanbanView({
-  initialOpportunities,
+  initialCustomers,
+  onUpdateCustomer,
 }: {
-  initialOpportunities: SalesOpportunity[];
+  initialCustomers: Customer[];
+  onUpdateCustomer: (customer: Customer) => void;
 }) {
-  const [opportunities, setOpportunities] =
-    useState<SalesOpportunity[]>(initialOpportunities);
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedOpp, setSelectedOpp] = useState<SalesOpportunity | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
+
+  // Keep internal state in sync with parent when it changes (e.g. from list view)
+  useEffect(() => {
+    setCustomers(initialCustomers);
+  }, [initialCustomers]);
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
@@ -930,41 +949,47 @@ function KanbanView({
         return;
 
       const targetStage = destination.droppableId as SalesStage;
-      const opp = opportunities.find((o) => o.id === draggableId);
-      if (!opp) return;
+      const customer = customers.find((c) => c.id === draggableId);
+      if (!customer) return;
 
-      const previousOpportunities = opportunities;
+      const previousCustomers = customers;
 
       // Same column — reorder within stage
-      if (opp.stage === targetStage) {
-        let reorderedStage: SalesOpportunity[] = [];
-        setOpportunities((prev) => {
-          const stageItems = prev.filter((o) => o.stage === targetStage);
-          const otherItems = prev.filter((o) => o.stage !== targetStage);
+      if (customer.pipeline_stage === targetStage) {
+        let reorderedStage: Customer[] = [];
+        const newCustomers = (() => {
+          const stageItems = customers.filter(
+            (c) => c.pipeline_stage === targetStage,
+          );
+          const otherItems = customers.filter(
+            (c) => c.pipeline_stage !== targetStage,
+          );
           reorderedStage = [...stageItems];
           const [moved] = reorderedStage.splice(source.index, 1);
           reorderedStage.splice(destination.index, 0, moved);
-          reorderedStage = reorderedStage.map((o, i) => ({
-            ...o,
-            position: i,
+          reorderedStage = reorderedStage.map((c, i) => ({
+            ...c,
+            pipeline_position: i,
           }));
           return [...otherItems, ...reorderedStage];
-        });
+        })();
+
+        setCustomers(newCustomers);
         setError(null);
         try {
-          const res = await fetch("/api/provider/sales-opportunities/reorder", {
+          const res = await fetch("/api/provider/customers/reorder-pipeline", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              items: reorderedStage.map((o) => ({
-                id: o.id,
-                position: o.position,
+              items: reorderedStage.map((c) => ({
+                id: c.id,
+                position: c.pipeline_position,
               })),
             }),
           });
           if (!res.ok) throw new Error(`Server error: ${res.status}`);
         } catch (err) {
-          setOpportunities(previousOpportunities);
+          setCustomers(previousCustomers);
           setError(
             err instanceof Error
               ? err.message
@@ -975,48 +1000,56 @@ function KanbanView({
       }
 
       // Cross-column — update stage + insert at destination index
-      const destStageItems = opportunities.filter(
-        (o) => o.stage === targetStage,
+      const destStageItems = customers.filter(
+        (c) => c.pipeline_stage === targetStage,
       );
       const insertPosition = destination.index;
 
-      // Optimistic update: move item to new stage at destination index, shift others
-      setOpportunities((prev) => {
-        const withoutMoved = prev.filter((o) => o.id !== draggableId);
+      // Optimistic update
+      const newCustomers = (() => {
+        const withoutMoved = customers.filter((c) => c.id !== draggableId);
         const destItems = withoutMoved
-          .filter((o) => o.stage === targetStage)
-          .map((o, i) => ({ ...o, position: i >= insertPosition ? i + 1 : i }));
+          .filter((c) => c.pipeline_stage === targetStage)
+          .map((c, i) => ({
+            ...c,
+            pipeline_position: i >= insertPosition ? i + 1 : i,
+          }));
         const movedItem = {
-          ...opp,
-          stage: targetStage,
-          position: insertPosition,
+          ...customer,
+          pipeline_stage: targetStage,
+          pipeline_position: insertPosition,
           updated_at: new Date().toISOString(),
         };
-        const otherItems = withoutMoved.filter((o) => o.stage !== targetStage);
+        const otherItems = withoutMoved.filter(
+          (c) => c.pipeline_stage !== targetStage,
+        );
         return [...otherItems, movedItem, ...destItems];
-      });
-      if (selectedOpp?.id === draggableId) {
-        setSelectedOpp((o) => (o ? { ...o, stage: targetStage } : o));
+      })();
+
+      setCustomers(newCustomers);
+      if (selectedCustomer?.id === draggableId) {
+        setSelectedCustomer((c) =>
+          c ? { ...c, pipeline_stage: targetStage } : c,
+        );
       }
       setError(null);
 
-      // Persist to Supabase — update moved item + shift affected dest items
       try {
         const shiftedItems = destStageItems
           .slice(insertPosition)
-          .map((o, i) => ({ id: o.id, position: insertPosition + 1 + i }));
+          .map((c, i) => ({ id: c.id, position: insertPosition + 1 + i }));
 
         const [stageRes, reorderRes] = await Promise.all([
-          fetch(`/api/provider/sales-opportunities/${draggableId}`, {
+          fetch(`/api/provider/customers/${draggableId}/pipeline`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              stage: targetStage,
-              position: insertPosition,
+              pipeline_stage: targetStage,
+              pipeline_position: insertPosition,
             }),
           }),
           shiftedItems.length > 0
-            ? fetch("/api/provider/sales-opportunities/reorder", {
+            ? fetch("/api/provider/customers/reorder-pipeline", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ items: shiftedItems }),
@@ -1028,14 +1061,12 @@ function KanbanView({
         if (!reorderRes.ok)
           throw new Error(`Server error: ${reorderRes.status}`);
 
-        const updated: SalesOpportunity = await stageRes.json();
-        setOpportunities((prev) =>
-          prev.map((o) => (o.id === draggableId ? updated : o)),
-        );
+        const updated: Customer = await stageRes.json();
+        onUpdateCustomer(updated);
       } catch (err) {
-        setOpportunities(previousOpportunities);
-        if (selectedOpp?.id === draggableId) {
-          setSelectedOpp(opp);
+        setCustomers(previousCustomers);
+        if (selectedCustomer?.id === draggableId) {
+          setSelectedCustomer(customer);
         }
         setError(
           err instanceof Error
@@ -1044,41 +1075,38 @@ function KanbanView({
         );
       }
     },
-    [opportunities, selectedOpp],
+    [customers, selectedCustomer, onUpdateCustomer],
   );
 
   const handleStageChange = useCallback(
     async (id: string, stage: SalesStage) => {
-      const opp = opportunities.find((o) => o.id === id);
-      if (!opp) return;
+      const customer = customers.find((c) => c.id === id);
+      if (!customer) return;
 
-      const previousOpportunities = opportunities;
+      const previousCustomers = customers;
 
       // Optimistic update
-      setOpportunities((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, stage } : o)),
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, pipeline_stage: stage } : c)),
       );
-      if (selectedOpp?.id === id) {
-        setSelectedOpp((o) => (o ? { ...o, stage } : o));
+      if (selectedCustomer?.id === id) {
+        setSelectedCustomer((c) => (c ? { ...c, pipeline_stage: stage } : c));
       }
       setError(null);
 
       try {
-        const res = await fetch(`/api/provider/sales-opportunities/${id}`, {
+        const res = await fetch(`/api/provider/customers/${id}/pipeline`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stage }),
+          body: JSON.stringify({ pipeline_stage: stage }),
         });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        const updated: SalesOpportunity = await res.json();
-        setOpportunities((prev) =>
-          prev.map((o) => (o.id === id ? updated : o)),
-        );
+        const updated: Customer = await res.json();
+        onUpdateCustomer(updated);
       } catch (err) {
-        // Rollback
-        setOpportunities(previousOpportunities);
-        if (selectedOpp?.id === id) {
-          setSelectedOpp(opp);
+        setCustomers(previousCustomers);
+        if (selectedCustomer?.id === id) {
+          setSelectedCustomer(customer);
         }
         setError(
           err instanceof Error
@@ -1087,7 +1115,7 @@ function KanbanView({
         );
       }
     },
-    [opportunities, selectedOpp],
+    [customers, selectedCustomer, onUpdateCustomer],
   );
 
   const handleAddLead = async (data: {
@@ -1099,14 +1127,30 @@ function KanbanView({
     preferredDate?: string;
     notes?: string;
   }) => {
-    const res = await fetch("/api/provider/sales-opportunities", {
+    // Splits name into first/last for the new customer record
+    const nameParts = data.customerName.split(" ");
+    const firstName = nameParts[0] || "New";
+    const lastName = nameParts.slice(1).join(" ") || "Customer";
+
+    const res = await fetch("/api/provider/customers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email: data.customerEmail,
+        pipeline_stage: "inquiry",
+        pipeline_product_name: data.productName,
+        pipeline_estimated_value: data.estimatedValue,
+        pipeline_guests: data.guests,
+        pipeline_preferred_date: data.preferredDate,
+        pipeline_notes: data.notes,
+      }),
     });
+
     if (res.ok) {
-      const newOpp: SalesOpportunity = await res.json();
-      setOpportunities((prev) => [newOpp, ...prev]);
+      const newCustomer: Customer = await res.json();
+      onUpdateCustomer(newCustomer);
     }
     setShowAddModal(false);
   };
@@ -1114,12 +1158,12 @@ function KanbanView({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm text-neutral-600">
-          Drag cards between columns to update stage
+        <div className="text-sm text-[var(--ink-sub)]">
+          All customers are shown here. Drag cards to update their stage.
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+          className="rounded-lg bg-[var(--green-900)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 shadow-sm transition-opacity"
         >
           + Add Lead
         </button>
@@ -1130,7 +1174,7 @@ function KanbanView({
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
-            className="text-red-400 hover:text-red-600 ml-4"
+            className="text-red-400 hover:text-red-600 ml-4 p-1"
             aria-label="Dismiss error"
           >
             ✕
@@ -1145,10 +1189,10 @@ function KanbanView({
         />
       )}
 
-      {selectedOpp && (
+      {selectedCustomer && (
         <OpportunitySlideOver
-          opportunity={selectedOpp}
-          onClose={() => setSelectedOpp(null)}
+          customer={selectedCustomer}
+          onClose={() => setSelectedCustomer(null)}
           onStageChange={handleStageChange}
         />
       )}
@@ -1157,23 +1201,23 @@ function KanbanView({
         <div className="overflow-x-auto">
           <div className="flex gap-3 min-w-max pb-4">
             {STAGES.map((stage) => {
-              const stageOpps = opportunities.filter(
-                (o) => o.stage === stage.id,
-              );
-              const stageValue = stageOpps.reduce(
-                (s, o) => s + o.estimated_value,
+              const stageCustomers = customers
+                .filter((c) => c.pipeline_stage === stage.id)
+                .sort((a, b) => a.pipeline_position - b.pipeline_position);
+              const stageValue = stageCustomers.reduce(
+                (s, c) => s + c.pipeline_estimated_value,
                 0,
               );
               return (
                 <div
                   key={stage.id}
                   className={cx(
-                    "flex-shrink-0 w-72 rounded-lg border p-3",
+                    "flex-shrink-0 w-72 rounded-xl border p-3 shadow-sm",
                     stage.color,
                     stage.borderColor,
                   )}
                 >
-                  <div className="mb-3 pb-3 border-b border-neutral-200">
+                  <div className="mb-3 pb-3 border-b border-[var(--line)]">
                     <div className="flex items-center justify-between mb-1">
                       <h3
                         className={cx(
@@ -1183,11 +1227,11 @@ function KanbanView({
                       >
                         {stage.label}
                       </h3>
-                      <span className="text-xs font-medium text-neutral-600 bg-neutral-100 rounded-full px-2 py-0.5">
-                        {stageOpps.length}
+                      <span className="text-xs font-medium text-[var(--ink)] bg-white/50 rounded-full px-2 py-0.5 ring-1 ring-[var(--line)]">
+                        {stageCustomers.length}
                       </span>
                     </div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-[var(--ink-sub)] opacity-70">
                       {formatCurrency(stageValue)}
                     </div>
                   </div>
@@ -1200,18 +1244,19 @@ function KanbanView({
                         className={cx(
                           "space-y-2 min-h-[120px] max-h-[650px] overflow-y-auto rounded-md transition-colors",
                           snapshot.isDraggingOver &&
-                            "bg-[var(--color-forest)]/5 ring-2 ring-[var(--color-forest)]/20",
+                            "bg-white/20 ring-2 ring-[var(--green-800)]/20",
                         )}
                       >
-                        {stageOpps.length === 0 && !snapshot.isDraggingOver ? (
-                          <div className="text-xs text-neutral-400 text-center py-8 border-2 border-dashed border-neutral-200 rounded">
+                        {stageCustomers.length === 0 &&
+                        !snapshot.isDraggingOver ? (
+                          <div className="text-xs text-[var(--ink-sub)] opacity-40 text-center py-8 border-2 border-dashed border-[var(--line)] rounded">
                             Drop here
                           </div>
                         ) : (
-                          stageOpps.map((opp, index) => (
+                          stageCustomers.map((customer, index) => (
                             <Draggable
-                              key={opp.id}
-                              draggableId={opp.id}
+                              key={customer.id}
+                              draggableId={customer.id}
                               index={index}
                             >
                               {(dragProvided, dragSnapshot) => (
@@ -1221,9 +1266,11 @@ function KanbanView({
                                   {...dragProvided.dragHandleProps}
                                 >
                                   <KanbanCard
-                                    opportunity={opp}
+                                    customer={customer}
                                     isDragging={dragSnapshot.isDragging}
-                                    onClick={() => setSelectedOpp(opp)}
+                                    onClick={() =>
+                                      setSelectedCustomer(customer)
+                                    }
                                   />
                                 </div>
                               )}
@@ -1243,14 +1290,11 @@ function KanbanView({
     </div>
   );
 }
-
 export default function CustomersClient({
   initialCustomers,
-  initialOpportunities,
   initialBookingsByEmail = {},
 }: {
   initialCustomers: Customer[];
-  initialOpportunities: SalesOpportunity[];
   initialBookingsByEmail?: Record<string, Booking[]>;
 }) {
   const [view, setView] = useState<"list" | "kanban">("list");
@@ -1305,14 +1349,14 @@ export default function CustomersClient({
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--cream-50)]">
       <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">
+            <h1 className="text-2xl font-semibold text-[var(--green-900)]">
               Customers
             </h1>
-            <p className="mt-1 text-sm text-neutral-600">
+            <p className="mt-1 text-sm text-[var(--ink-sub)]">
               Manage customer relationships, view history, and track
               interactions.
             </p>
@@ -1321,10 +1365,10 @@ export default function CustomersClient({
             <button
               onClick={() => setView("list")}
               className={cx(
-                "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                "rounded-lg border px-3 py-2 text-sm font-medium transition-all shadow-sm",
                 view === "list"
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                  ? "border-[var(--green-900)] bg-[var(--green-900)] text-white"
+                  : "border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
               )}
             >
               List
@@ -1332,10 +1376,10 @@ export default function CustomersClient({
             <button
               onClick={() => setView("kanban")}
               className={cx(
-                "rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+                "rounded-lg border px-3 py-2 text-sm font-medium transition-all shadow-sm",
                 view === "kanban"
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                  ? "border-[var(--green-900)] bg-[var(--green-900)] text-white"
+                  : "border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
               )}
             >
               Sales Pipeline
@@ -1344,17 +1388,26 @@ export default function CustomersClient({
         </div>
 
         {view === "kanban" ? (
-          <KanbanView initialOpportunities={initialOpportunities} />
+          <KanbanView
+            initialCustomers={customers}
+            onUpdateCustomer={(updated) => {
+              setCustomers((prev) =>
+                prev.map((c) => (c.id === updated.id ? updated : c)),
+              );
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
             <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Search customers…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search customers…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 border border-[var(--line)] rounded-lg focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] outline-none bg-white shadow-sm"
+                />
+              </div>
 
               {/* Dynamic tag filter — derived from current customer tags */}
               {(() => {
@@ -1366,10 +1419,10 @@ export default function CustomersClient({
                     <button
                       onClick={() => setSelectedTag("all")}
                       className={cx(
-                        "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                        "rounded-lg border px-3 py-1.5 text-sm font-medium transition-all shadow-sm",
                         selectedTag === "all"
-                          ? "border-neutral-900 bg-neutral-900 text-white"
-                          : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                          ? "border-[var(--green-900)] bg-[var(--green-900)] text-white"
+                          : "border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
                       )}
                     >
                       All
@@ -1379,22 +1432,22 @@ export default function CustomersClient({
                         key={tag}
                         onClick={() => setSelectedTag(tag)}
                         className={cx(
-                          "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+                          "rounded-lg border px-3 py-1.5 text-sm font-medium transition-all shadow-sm flex items-center",
                           selectedTag === tag
-                            ? "border-neutral-900 bg-neutral-900 text-white"
-                            : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50",
+                            ? "border-[var(--green-900)] bg-[var(--green-900)] text-white"
+                            : "border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
                         )}
                       >
-                        <TagBadge tag={tag} />
+                        {tag}
                       </button>
                     ))}
                   </div>
                 );
               })()}
 
-              <div className="space-y-2 max-h-[600px] overflow-y-auto">
+              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
                 {filtered.length === 0 ? (
-                  <div className="text-sm text-neutral-500 text-center py-8">
+                  <div className="text-sm text-[var(--ink-sub)] opacity-50 text-center py-8">
                     No customers found
                   </div>
                 ) : (
@@ -1410,7 +1463,7 @@ export default function CustomersClient({
               </div>
             </div>
 
-            <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+            <div className="rounded-xl border border-[var(--line)] bg-white overflow-hidden shadow-sm">
               {selectedCustomer ? (
                 <CustomerDetailPanel
                   customer={selectedCustomer}
@@ -1423,7 +1476,7 @@ export default function CustomersClient({
                   onNotesChange={handleNotesChange}
                 />
               ) : (
-                <div className="flex items-center justify-center h-96 text-neutral-500">
+                <div className="flex items-center justify-center h-96 text-[var(--ink-sub)] opacity-50">
                   Select a customer to view details
                 </div>
               )}
