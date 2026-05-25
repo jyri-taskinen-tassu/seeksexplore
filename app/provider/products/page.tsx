@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProviderForUser } from "@/lib/supabase/getProviderData";
+import { SafeImage } from "@/app/components/SafeImage";
 
 const SCHEMA = process.env.NEXT_PUBLIC_APP_SCHEMA ?? "seeks_and_explore_demo";
 
@@ -100,8 +101,7 @@ export default async function ProviderProductsPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
                         {coverImg && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <SafeImage
                             src={coverImg.thumbnail_url ?? coverImg.large_url}
                             alt={enInfo?.name ?? ""}
                             className="w-16 h-16 object-cover rounded-lg flex-shrink-0 border border-[var(--line)]"
