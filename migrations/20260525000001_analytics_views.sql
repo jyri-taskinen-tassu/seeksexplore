@@ -24,7 +24,7 @@ SELECT
     SUM(b.guests) as total_guests,
     -- Simple occupancy rate based on capacity_max if available
     CASE 
-        WHEN p.capacity_max > 0 THEN (SUM(b.guests)::numeric / (COUNT(DISTINCT b.booking_date || b.booking_time) * p.capacity_max)) * 100
+        WHEN p.capacity_max > 0 THEN (SUM(b.guests)::numeric / (NULLIF(COUNT(DISTINCT b.booking_date || b.booking_time), 0) * p.capacity_max)) * 100
         ELSE 0 
     END as occupancy_rate
 FROM seeks_and_explore_demo.bookings b
