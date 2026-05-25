@@ -204,15 +204,15 @@ export function NewBookingModal({
   const matches = filteredCustomers();
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-          <h2 className="text-lg font-semibold text-neutral-900">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-[var(--line)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--line)]">
+          <h2 className="text-lg font-semibold text-[var(--green-900)]">
             New Booking
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-neutral-500 hover:bg-neutral-100 transition-colors"
+            className="rounded-lg p-1.5 text-[var(--ink-sub)] hover:bg-[var(--cream-50)] hover:text-[var(--green-900)] transition-colors"
             aria-label="Close"
           >
             <svg
@@ -235,14 +235,14 @@ export function NewBookingModal({
 
           {/* Customer search combobox */}
           <div ref={searchRef} className="relative col-span-2">
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
-              Guest <span className="text-red-500">*</span>
+            <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+              Guest <span className="text-[var(--terracotta)]">*</span>
             </label>
 
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
                 <svg
-                  className="w-4 h-4 text-neutral-400"
+                  className="w-4 h-4 text-[var(--ink-sub)] opacity-50"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -268,16 +268,16 @@ export function NewBookingModal({
                   if (e.key === "Escape") setShowDropdown(false);
                 }}
                 placeholder="Search existing customers or enter new…"
-                className="w-full rounded-lg border border-neutral-200 pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                className="w-full rounded-lg border border-[var(--line)] pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm"
                 autoComplete="off"
               />
             </div>
 
             {/* Selected customer chip */}
             {selectedCustomer && (
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium bg-[var(--color-sage)]/15 text-[var(--color-forest)] border border-[var(--color-sage)]/40">
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold bg-[var(--cream-100)] text-[var(--green-900)] border border-[var(--line)] shadow-sm animate-in zoom-in-95 duration-200">
                 <svg
-                  className="w-3.5 h-3.5 text-[var(--color-sage)]"
+                  className="w-3.5 h-3.5 text-[var(--green-800)]"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -286,13 +286,13 @@ export function NewBookingModal({
                 <span>
                   {selectedCustomer.first_name} {selectedCustomer.last_name}
                 </span>
-                <span className="text-neutral-400 text-xs">
+                <span className="text-[var(--ink-sub)] text-xs font-normal opacity-70">
                   {selectedCustomer.email}
                 </span>
                 <button
                   type="button"
                   onClick={clearCustomer}
-                  className="ml-0.5 text-neutral-400 hover:text-neutral-700 transition-colors"
+                  className="ml-0.5 text-[var(--ink-sub)] hover:text-[var(--terracotta)] transition-colors"
                   aria-label="Clear selected customer"
                 >
                   <svg
@@ -308,9 +308,9 @@ export function NewBookingModal({
 
             {/* Dropdown */}
             {showDropdown && !selectedCustomer && (
-              <div className="absolute left-0 right-0 top-full mt-1 z-[60] bg-white rounded-xl border border-neutral-200 shadow-lg overflow-hidden">
+              <div className="absolute left-0 right-0 top-full mt-1 z-[60] bg-white rounded-xl border border-[var(--line)] shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                 {matches.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-neutral-400 italic">
+                  <div className="px-4 py-3 text-sm text-[var(--ink-sub)] italic opacity-50">
                     No existing customers found — fill in details below
                   </div>
                 ) : (
@@ -323,12 +323,12 @@ export function NewBookingModal({
                             e.preventDefault();
                             selectCustomer(c);
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 transition-colors group"
+                          className="w-full text-left px-4 py-3 hover:bg-[var(--cream-50)] transition-colors group"
                         >
-                          <span className="block text-sm font-semibold text-neutral-900 group-hover:text-[var(--color-forest)]">
+                          <span className="block text-sm font-bold text-[var(--ink)] group-hover:text-[var(--green-900)]">
                             {c.first_name} {c.last_name}
                           </span>
-                          <span className="block text-xs text-neutral-400 mt-0.5">
+                          <span className="block text-xs text-[var(--ink-sub)] mt-0.5 opacity-70">
                             {c.email}
                             {c.phone ? ` · ${c.phone}` : ""}
                           </span>
@@ -345,23 +345,23 @@ export function NewBookingModal({
             {/* Manual entry fields — hidden when a customer is selected */}
             {!selectedCustomer && (
               <>
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Full Name <span className="text-red-500">*</span>
+                <div className="col-span-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+                    Full Name <span className="text-[var(--terracotta)]">*</span>
                   </label>
                   <input
                     name="customer_name"
                     value={form.customer_name}
                     onChange={handleChange}
                     required={!selectedCustomer}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                    className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm"
                     placeholder="Full name"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Email <span className="text-red-500">*</span>
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+                    Email <span className="text-[var(--terracotta)]">*</span>
                   </label>
                   <input
                     name="customer_email"
@@ -369,13 +369,13 @@ export function NewBookingModal({
                     value={form.customer_email}
                     onChange={handleChange}
                     required={!selectedCustomer}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                    className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm"
                     placeholder="email@example.com"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
                     Phone
                   </label>
                   <input
@@ -383,7 +383,7 @@ export function NewBookingModal({
                     type="tel"
                     value={form.customer_phone}
                     onChange={handleChange}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                    className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm"
                     placeholder="+358 40 000 0000"
                   />
                 </div>
@@ -391,8 +391,8 @@ export function NewBookingModal({
             )}
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Activity <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+                Activity <span className="text-[var(--terracotta)]">*</span>
               </label>
               <select
                 name="product_id"
@@ -400,7 +400,7 @@ export function NewBookingModal({
                 onChange={handleChange}
                 required
                 disabled={loadingProducts}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)] bg-white disabled:opacity-60"
+                className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white disabled:opacity-60 shadow-sm font-medium"
               >
                 {loadingProducts ? (
                   <option value="">Loading activities…</option>
@@ -417,8 +417,8 @@ export function NewBookingModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Date <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+                Date <span className="text-[var(--terracotta)]">*</span>
               </label>
               <input
                 name="booking_date"
@@ -426,13 +426,13 @@ export function NewBookingModal({
                 value={form.booking_date}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Time <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+                Time <span className="text-[var(--terracotta)]">*</span>
               </label>
               <input
                 name="booking_time"
@@ -440,13 +440,13 @@ export function NewBookingModal({
                 value={form.booking_time}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Guests <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
+                Guests <span className="text-[var(--terracotta)]">*</span>
               </label>
               <input
                 name="guests"
@@ -456,12 +456,12 @@ export function NewBookingModal({
                 value={form.guests}
                 onChange={handleChange}
                 required
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)]"
+                className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm font-bold"
               />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-xs font-bold text-[var(--green-900)] mb-1.5 uppercase tracking-wider opacity-70">
                 Notes
               </label>
               <textarea
@@ -469,24 +469,24 @@ export function NewBookingModal({
                 value={form.notes}
                 onChange={handleChange}
                 rows={3}
-                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-forest)] resize-none"
+                className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] outline-none bg-white shadow-sm resize-none"
                 placeholder="Special requests, dietary requirements…"
               />
             </div>
           </div>
 
-          <div className="flex gap-3 justify-end pt-2">
+          <div className="flex gap-3 justify-end pt-4 border-t border-[var(--line)]">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+              className="rounded-lg border border-[var(--line)] px-5 py-2.5 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-[var(--color-forest)] px-4 py-2 text-sm font-medium text-white hover:bg-[#14301f] transition-colors disabled:opacity-50"
+              className="rounded-lg bg-[var(--green-900)] px-6 py-2.5 text-sm font-bold text-white hover:opacity-90 transition-opacity disabled:opacity-50 shadow-lg shadow-[var(--green-900)]/10"
             >
               {submitting ? "Creating…" : "Create Booking"}
             </button>

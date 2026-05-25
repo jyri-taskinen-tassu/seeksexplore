@@ -15,10 +15,10 @@ function StatCard({
   return (
     <Link
       href={href}
-      className="block rounded-xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+      className="block rounded-xl border border-[var(--line)] bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
     >
-      <p className="text-sm text-neutral-500">{label}</p>
-      <p className="mt-1 text-3xl font-semibold text-[var(--color-forest)]">
+      <p className="text-sm text-[var(--ink-sub)]">{label}</p>
+      <p className="mt-1 text-3xl font-semibold text-[var(--green-900)]">
         {value}
       </p>
     </Link>
@@ -55,10 +55,10 @@ export default async function AdminDashboard() {
   return (
     <div className="p-6">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-[var(--color-forest)]">
+        <h1 className="text-xl font-semibold text-[var(--green-900)]">
           Platform Overview
         </h1>
-        <p className="text-sm text-neutral-500 mt-0.5">
+        <p className="text-sm text-[var(--ink-sub)] mt-0.5">
           {new Date().toLocaleDateString("en-FI", {
             weekday: "long",
             year: "numeric",
@@ -94,13 +94,13 @@ export default async function AdminDashboard() {
       <div className="flex gap-3">
         <Link
           href="/admin/providers/import"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--color-forest)] hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-[var(--green-800)] hover:opacity-90 transition-opacity"
         >
           Import Provider from Business Finland
         </Link>
         <Link
           href="/admin/providers"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-[var(--color-forest)] border border-[var(--color-forest)]/30 hover:bg-[var(--color-forest)]/5 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-[var(--green-800)] border border-[var(--green-800)]/30 hover:bg-[var(--green-800)]/5 transition-colors"
         >
           View all providers
         </Link>

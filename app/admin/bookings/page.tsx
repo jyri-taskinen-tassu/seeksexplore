@@ -24,27 +24,27 @@ export default async function AdminBookingsPage() {
   return (
     <div className="p-6">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-[var(--color-forest)]">
+        <h1 className="text-xl font-semibold text-[var(--green-900)]">
           All Bookings
         </h1>
-        <p className="text-sm text-neutral-500 mt-0.5">
+        <p className="text-sm text-[var(--ink-sub)] mt-0.5">
           Platform-wide — {bookings?.length ?? 0} most recent
         </p>
       </header>
 
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-left bg-neutral-50">
-              <th className="px-4 py-3 font-medium text-neutral-500">
+            <tr className="border-b border-[var(--line)] text-left bg-[var(--cream-100)]">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">
                 Customer
               </th>
-              <th className="px-4 py-3 font-medium text-neutral-500">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">
                 Product
               </th>
-              <th className="px-4 py-3 font-medium text-neutral-500">Date</th>
-              <th className="px-4 py-3 font-medium text-neutral-500">Status</th>
-              <th className="px-4 py-3 font-medium text-neutral-500 text-right">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">Date</th>
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">Status</th>
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)] text-right">
                 Total
               </th>
             </tr>
@@ -53,16 +53,16 @@ export default async function AdminBookingsPage() {
             {(bookings ?? []).map((b) => (
               <tr
                 key={b.id}
-                className="border-b last:border-0 hover:bg-neutral-50"
+                className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--cream-50)]"
               >
                 <td className="px-4 py-3">
-                  <p className="font-medium text-neutral-900">
+                  <p className="font-medium text-[var(--ink)]">
                     {b.customer_name}
                   </p>
-                  <p className="text-xs text-neutral-500">{b.customer_email}</p>
+                  <p className="text-xs text-[var(--ink-sub)]">{b.customer_email}</p>
                 </td>
-                <td className="px-4 py-3 text-neutral-700">{b.product_name}</td>
-                <td className="px-4 py-3 text-neutral-500">
+                <td className="px-4 py-3 text-[var(--ink)]">{b.product_name}</td>
+                <td className="px-4 py-3 text-[var(--ink-sub)]">
                   {new Date(b.booking_date).toLocaleDateString("en-FI")}
                 </td>
                 <td className="px-4 py-3">
@@ -72,7 +72,7 @@ export default async function AdminBookingsPage() {
                     {b.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right text-neutral-700 font-medium">
+                <td className="px-4 py-3 text-right text-[var(--ink)] font-medium">
                   {Number(b.total_price).toLocaleString("en-FI", {
                     style: "currency",
                     currency: b.currency ?? "EUR",
@@ -84,7 +84,7 @@ export default async function AdminBookingsPage() {
               <tr>
                 <td
                   colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-neutral-400"
+                  className="px-4 py-8 text-center text-sm text-[var(--ink-sub)]/50"
                 >
                   No bookings yet.
                 </td>

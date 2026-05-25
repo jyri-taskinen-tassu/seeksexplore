@@ -158,7 +158,7 @@ function groupByCategory(
 function StatusPill({ status }: { status: UiStatus }) {
   const map = {
     ok: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    attention: "bg-amber-50 text-amber-700 ring-amber-200",
+    attention: "bg-[var(--terracotta)]/5 text-[var(--terracotta-dark)] ring-[var(--terracotta)]/20",
     problem: "bg-red-50 text-red-700 ring-red-200",
   } as const;
   const label =
@@ -178,7 +178,7 @@ function StatusPill({ status }: { status: UiStatus }) {
         className={cx(
           "h-2 w-2 rounded-full",
           status === "ok" && "bg-emerald-500",
-          status === "attention" && "bg-amber-500",
+          status === "attention" && "bg-[var(--terracotta)]",
           status === "problem" && "bg-red-500",
         )}
       />
@@ -198,7 +198,7 @@ function ResourceSummaryBar({
 }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-500">
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--cream-50)]/50 p-4 text-xs text-[var(--ink-sub)]">
         Loading resource summary…
       </div>
     );
@@ -210,7 +210,7 @@ function ResourceSummaryBar({
 
   if (active.length === 0) {
     return (
-      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-center text-xs text-neutral-500">
+      <div className="rounded-lg border border-[var(--line)] bg-[var(--cream-50)]/50 p-3 text-center text-xs text-[var(--ink-sub)]">
         No resources configured
       </div>
     );
@@ -232,15 +232,15 @@ function ResourceSummaryBar({
           <div
             key={cat.category_id}
             className={cx(
-              "rounded-lg border p-3",
-              over ? "border-red-200 bg-red-50" : "border-neutral-200 bg-white",
+              "rounded-lg border p-3 transition-colors",
+              over ? "border-red-200 bg-red-50" : "border-[var(--line)] bg-white hover:border-[var(--green-800)]/20",
             )}
           >
             <div className="flex items-center justify-between mb-1.5">
               <div
                 className={cx(
                   "text-xs font-medium",
-                  over ? "text-red-800" : "text-neutral-700",
+                  over ? "text-red-800" : "text-[var(--ink)]",
                 )}
               >
                 {cat.category_name}
@@ -251,7 +251,7 @@ function ResourceSummaryBar({
               <div
                 className={cx(
                   "text-xs font-mono",
-                  over ? "text-red-700 font-semibold" : "text-neutral-600",
+                  over ? "text-red-700 font-semibold" : "text-[var(--ink-sub)]",
                 )}
               >
                 {totalBooked}/{totalCap}
@@ -259,15 +259,15 @@ function ResourceSummaryBar({
             </div>
 
             {/* Progress bar */}
-            <div className="h-1.5 w-full rounded-full bg-neutral-200 overflow-hidden">
+            <div className="h-1.5 w-full rounded-full bg-[var(--cream-100)] overflow-hidden">
               <div
                 className={cx(
-                  "h-full rounded-full transition-all",
+                  "h-full rounded-full transition-all duration-500",
                   over
                     ? "bg-red-500"
                     : pct >= 80
-                      ? "bg-amber-400"
-                      : "bg-emerald-500",
+                      ? "bg-[var(--terracotta)]"
+                      : "bg-[var(--green-800)]",
                 )}
                 style={{ width: `${pct}%` }}
               />
@@ -279,7 +279,7 @@ function ResourceSummaryBar({
                 {cat.variants.map((v) => (
                   <div
                     key={v.variant_id}
-                    className="flex items-center justify-between text-[11px] text-neutral-500"
+                    className="flex items-center justify-between text-[11px] text-[var(--ink-sub)] opacity-70"
                   >
                     <span>{v.variant_name}</span>
                     <span
@@ -321,7 +321,7 @@ function DayCell({
   const dotColor = hasCancelled
     ? "bg-red-500"
     : hasPending
-      ? "bg-amber-500"
+      ? "bg-[var(--terracotta)]"
       : "bg-emerald-500";
 
   return (
@@ -329,11 +329,11 @@ function DayCell({
       type="button"
       onClick={() => onSelect(day)}
       className={cx(
-        "relative w-full text-left p-3 min-h-[100px] border border-neutral-200 transition",
+        "relative w-full text-left p-3 min-h-[100px] border border-[var(--line)] transition-all",
         inMonth
-          ? "bg-white hover:bg-neutral-50"
-          : "bg-neutral-50 text-neutral-400",
-        selected && "ring-2 ring-neutral-900",
+          ? "bg-white hover:bg-[var(--cream-50)]"
+          : "bg-[var(--cream-50)]/30 text-[var(--ink-sub)]/40",
+        selected && "ring-2 ring-[var(--green-900)] ring-inset z-10 bg-[var(--cream-50)]",
       )}
     >
       <div className="flex items-start justify-between mb-2">
@@ -341,10 +341,10 @@ function DayCell({
           className={cx(
             "text-sm font-medium",
             selected
-              ? "text-neutral-900"
+              ? "text-[var(--green-900)]"
               : inMonth
-                ? "text-neutral-800"
-                : "text-neutral-400",
+                ? "text-[var(--ink)]"
+                : "text-[var(--ink-sub)]/40",
           )}
         >
           {day.dayNumber}
@@ -356,18 +356,18 @@ function DayCell({
 
       {hasBookings && inMonth ? (
         <div className="space-y-1">
-          <div className="text-xs font-medium text-neutral-900">
+          <div className="text-xs font-semibold text-[var(--green-900)]">
             {day.bookings.length}{" "}
             {day.bookings.length === 1 ? "booking" : "bookings"}
           </div>
           {totalGuests > 0 && (
-            <div className="text-[11px] text-neutral-600">
+            <div className="text-[11px] text-[var(--ink-sub)]">
               {totalGuests} {totalGuests === 1 ? "guest" : "guests"}
             </div>
           )}
         </div>
       ) : inMonth ? (
-        <div className="mt-4 text-xs text-neutral-400">No bookings</div>
+        <div className="mt-4 text-xs text-[var(--ink-sub)] opacity-30 font-light italic">No bookings</div>
       ) : null}
     </button>
   );
@@ -386,7 +386,7 @@ function BookingRow({
     <button
       type="button"
       onClick={() => onClick(b)}
-      className="w-full text-left rounded-lg border border-neutral-200 bg-white p-4 hover:border-neutral-400 hover:bg-neutral-50 transition"
+      className="w-full text-left rounded-lg border border-[var(--line)] bg-white p-4 hover:border-[var(--green-800)]/30 hover:bg-[var(--cream-50)]/50 transition-all shadow-sm group"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
@@ -395,19 +395,19 @@ function BookingRow({
               className={cx(
                 "h-2.5 w-2.5 rounded-full shrink-0",
                 b.status === "ok" && "bg-emerald-500",
-                b.status === "attention" && "bg-amber-500",
+                b.status === "attention" && "bg-[var(--terracotta)]",
                 b.status === "problem" && "bg-red-500",
               )}
             />
-            <div className="font-medium text-neutral-900">{b.title}</div>
+            <div className="font-medium text-[var(--ink)] group-hover:text-[var(--green-900)] transition-colors">{b.title}</div>
           </div>
-          <div className="mt-1 text-sm text-neutral-600">
+          <div className="mt-1 text-sm text-[var(--ink-sub)]">
             {b.time} · {b.guestsBooked} guest{b.guestsBooked !== 1 ? "s" : ""}
             {b.guestsCap > 0 && (
-              <span className="text-neutral-400"> / {b.guestsCap} cap</span>
+              <span className="opacity-50"> / {b.guestsCap} cap</span>
             )}
           </div>
-          <div className="mt-0.5 text-xs text-neutral-500">
+          <div className="mt-0.5 text-xs text-[var(--ink-sub)] opacity-70">
             {b.customerName}
           </div>
         </div>
@@ -446,20 +446,20 @@ function WeekView({
         return (
           <div
             key={date}
-            className="border border-neutral-200 rounded-lg bg-white"
+            className="border border-[var(--line)] rounded-lg bg-white overflow-hidden shadow-sm"
           >
             <div
               className={cx(
-                "border-b border-neutral-200 px-3 py-2 text-sm font-medium",
-                date === selectedDate && "bg-neutral-900 text-white",
+                "border-b border-[var(--line)] px-3 py-2 text-sm font-medium transition-colors",
+                date === selectedDate ? "bg-[var(--green-900)] text-white" : "text-[var(--ink)]",
               )}
             >
               <div>{dayNames[idx]}</div>
-              <div className="text-xs font-normal">{dayNum}</div>
+              <div className={cx("text-xs font-normal", date === selectedDate ? "text-white/70" : "text-[var(--ink-sub)]")}>{dayNum}</div>
             </div>
-            <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto">
+            <div className="p-3 space-y-2 max-h-[600px] overflow-y-auto bg-white">
               {bookings.length === 0 ? (
-                <div className="text-xs text-neutral-400 text-center py-4">
+                <div className="text-xs text-[var(--ink-sub)] opacity-30 text-center py-4 italic">
                   No bookings
                 </div>
               ) : (
@@ -470,25 +470,25 @@ function WeekView({
                       onSelectDay(date);
                       onBookingClick(b);
                     }}
-                    className="w-full text-left p-2 rounded border border-neutral-200 hover:bg-neutral-50 transition"
+                    className="w-full text-left p-2 rounded border border-[var(--line)] hover:border-[var(--green-800)]/30 hover:bg-[var(--cream-50)] transition-all"
                   >
                     <div className="flex items-center gap-1.5">
                       <span
                         className={cx(
                           "h-1.5 w-1.5 rounded-full shrink-0",
                           b.status === "ok" && "bg-emerald-500",
-                          b.status === "attention" && "bg-amber-500",
+                          b.status === "attention" && "bg-[var(--terracotta)]",
                           b.status === "problem" && "bg-red-500",
                         )}
                       />
-                      <div className="text-xs font-medium text-neutral-900 truncate">
+                      <div className="text-xs font-semibold text-[var(--green-900)] truncate">
                         {b.time}
                       </div>
                     </div>
-                    <div className="text-xs text-neutral-600 mt-0.5 truncate">
+                    <div className="text-xs text-[var(--ink)] mt-0.5 truncate font-medium">
                       {b.title}
                     </div>
-                    <div className="text-xs text-neutral-500 mt-0.5">
+                    <div className="text-[10px] text-[var(--ink-sub)] mt-0.5 opacity-70">
                       {b.guestsBooked} guest{b.guestsBooked !== 1 ? "s" : ""}
                     </div>
                   </button>
@@ -556,21 +556,21 @@ function BookingSlideOver({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full overflow-hidden">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white shadow-2xl flex flex-col h-full overflow-hidden border-l border-[var(--line)]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-[var(--line)] px-6 py-4 shrink-0">
           <div>
-            <h2 className="text-base font-semibold text-neutral-900">
+            <h2 className="text-base font-semibold text-[var(--green-900)]">
               {editing ? "Edit Booking" : "Booking Details"}
             </h2>
-            <div className="text-xs text-neutral-500 mt-0.5">
+            <div className="text-xs text-[var(--ink-sub)] mt-0.5 opacity-70">
               {raw.booking_date} · {booking.time}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-neutral-500 hover:text-neutral-900 transition text-lg leading-none"
+            className="text-[var(--ink-sub)] hover:text-[var(--green-900)] transition text-lg leading-none p-1"
           >
             ✕
           </button>
@@ -581,7 +581,7 @@ function BookingSlideOver({
           {!editing ? (
             <>
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-neutral-900 text-base">
+                <h3 className="font-semibold text-[var(--green-900)] text-base">
                   {raw.product_name}
                 </h3>
                 <StatusPill status={booking.status} />
@@ -589,20 +589,20 @@ function BookingSlideOver({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-neutral-500">Customer</div>
-                  <div className="text-sm font-medium text-neutral-900 mt-0.5">
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">Customer</div>
+                  <div className="text-sm font-medium text-[var(--ink)] mt-0.5">
                     {raw.customer_name}
                   </div>
-                  <div className="text-xs text-neutral-500 mt-0.5">
+                  <div className="text-xs text-[var(--ink-sub)] mt-0.5">
                     {raw.customer_email}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-neutral-500">Guests</div>
-                  <div className="text-sm font-medium text-neutral-900 mt-0.5">
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">Guests</div>
+                  <div className="text-sm font-medium text-[var(--ink)] mt-0.5">
                     {raw.guests}
                     {raw.product_capacity && (
-                      <span className="text-neutral-400">
+                      <span className="opacity-40">
                         {" "}
                         / {raw.product_capacity} cap
                       </span>
@@ -610,15 +610,15 @@ function BookingSlideOver({
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-neutral-500">Time</div>
-                  <div className="text-sm font-medium text-neutral-900 mt-0.5">
+                  <div className="text-xs text-[var(--ink-sub)] opacity-70">Time</div>
+                  <div className="text-sm font-medium text-[var(--ink)] mt-0.5">
                     {booking.time}
                   </div>
                 </div>
                 {price && (
                   <div>
-                    <div className="text-xs text-neutral-500">Total</div>
-                    <div className="text-sm font-medium text-neutral-900 mt-0.5">
+                    <div className="text-xs text-[var(--ink-sub)] opacity-70">Total</div>
+                    <div className="text-sm font-bold text-[var(--green-900)] mt-0.5">
                       {price}
                     </div>
                   </div>
@@ -627,16 +627,18 @@ function BookingSlideOver({
 
               {raw.notes && (
                 <div>
-                  <div className="text-xs font-medium text-neutral-700 mb-1">
+                  <div className="text-xs font-semibold text-[var(--green-900)] mb-1 opacity-70">
                     Notes
                   </div>
-                  <p className="text-sm text-neutral-600">{raw.notes}</p>
+                  <div className="text-sm text-[var(--ink)] bg-[var(--cream-50)] p-3 rounded-lg border border-[var(--line)]">
+                    {raw.notes}
+                  </div>
                 </div>
               )}
 
               {raw.cancelled_reason && (
                 <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
-                  <div className="text-xs font-medium text-red-700 mb-1">
+                  <div className="text-xs font-semibold text-red-700 mb-1">
                     Cancellation reason
                   </div>
                   <p className="text-sm text-red-800">{raw.cancelled_reason}</p>
@@ -646,7 +648,7 @@ function BookingSlideOver({
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
                   Status
                 </label>
                 <select
@@ -656,7 +658,7 @@ function BookingSlideOver({
                       e.target.value as "pending" | "confirmed" | "cancelled",
                     )
                   }
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                  className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)]"
                 >
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
@@ -666,27 +668,27 @@ function BookingSlideOver({
 
               {status === "cancelled" && (
                 <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
+                  <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
                     Cancellation reason
                   </label>
                   <input
                     type="text"
                     value={cancelledReason}
                     onChange={(e) => setCancelledReason(e.target.value)}
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                    className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)]"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
+                <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
                   Notes
                 </label>
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 resize-none"
+                  rows={4}
+                  className="w-full rounded-lg border border-[var(--line)] px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] focus:border-[var(--green-800)] resize-none"
                 />
               </div>
             </div>
@@ -700,12 +702,12 @@ function BookingSlideOver({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-neutral-200 px-6 py-4 shrink-0">
+        <div className="border-t border-[var(--line)] px-6 py-4 shrink-0 bg-[var(--cream-50)]/30">
           {!editing ? (
             <div className="flex items-center justify-end">
               <button
                 onClick={() => setEditing(true)}
-                className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition"
+                className="rounded-lg bg-[var(--green-900)] px-6 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity shadow-sm"
               >
                 Edit
               </button>
@@ -717,14 +719,14 @@ function BookingSlideOver({
                   setEditing(false);
                   setError(null);
                 }}
-                className="rounded-lg border border-neutral-200 px-4 py-2 text-sm hover:bg-neutral-50 transition"
+                className="rounded-lg border border-[var(--line)] px-4 py-2 text-sm font-medium text-[var(--ink)] hover:bg-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition disabled:opacity-50"
+                className="rounded-lg bg-[var(--green-900)] px-6 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save changes"}
               </button>
@@ -864,14 +866,14 @@ export default function AvailabilityClient({
 
   return (
     <>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[var(--cream-50)]">
         <div className="mx-auto max-w-[1400px] px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-neutral-900">
+              <h1 className="text-xl font-semibold text-[var(--green-900)]">
                 Availability
               </h1>
-              <p className="mt-1 text-sm text-neutral-600">
+              <p className="mt-1 text-sm text-[var(--ink-sub)]">
                 {view === "month"
                   ? "Month view. Click a day to review bookings and resource usage."
                   : "Week view. Click a booking to see details."}
@@ -882,10 +884,10 @@ export default function AvailabilityClient({
               <button
                 onClick={() => setView("month")}
                 className={cx(
-                  "rounded-lg border px-3 py-2 text-sm",
+                  "rounded-lg border px-3 py-2 text-sm font-medium transition-all shadow-sm",
                   view === "month"
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 bg-white hover:bg-neutral-50",
+                    ? "border-[var(--green-900)] bg-[var(--green-900)] text-white"
+                    : "border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
                 )}
               >
                 Month
@@ -893,10 +895,10 @@ export default function AvailabilityClient({
               <button
                 onClick={() => setView("week")}
                 className={cx(
-                  "rounded-lg border px-3 py-2 text-sm",
+                  "rounded-lg border px-3 py-2 text-sm font-medium transition-all shadow-sm",
                   view === "week"
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 bg-white hover:bg-neutral-50",
+                    ? "border-[var(--green-900)] bg-[var(--green-900)] text-white"
+                    : "border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
                 )}
               >
                 Week
@@ -906,8 +908,8 @@ export default function AvailabilityClient({
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_420px]">
             {/* Calendar / Week View */}
-            <div className="rounded-xl border border-neutral-200 bg-white">
-              <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+            <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between border-b border-[var(--line)] px-4 py-3 bg-[var(--cream-50)]/30">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {
@@ -916,12 +918,12 @@ export default function AvailabilityClient({
                       else d.setDate(d.getDate() - 7);
                       setCurrentDate(d);
                     }}
-                    className="h-9 w-9 rounded-lg border border-neutral-200 hover:bg-neutral-50"
+                    className="h-9 w-9 rounded-lg border border-[var(--line)] bg-white hover:bg-[var(--cream-50)] text-[var(--ink)] transition-colors flex items-center justify-center"
                     aria-label="Previous"
                   >
                     ‹
                   </button>
-                  <div className="text-base font-medium text-neutral-900">
+                  <div className="text-base font-bold text-[var(--green-900)]">
                     {monthTitle}
                   </div>
                   <button
@@ -931,23 +933,23 @@ export default function AvailabilityClient({
                       else d.setDate(d.getDate() + 7);
                       setCurrentDate(d);
                     }}
-                    className="h-9 w-9 rounded-lg border border-neutral-200 hover:bg-neutral-50"
+                    className="h-9 w-9 rounded-lg border border-[var(--line)] bg-white hover:bg-[var(--cream-50)] text-[var(--ink)] transition-colors flex items-center justify-center"
                     aria-label="Next"
                   >
                     ›
                   </button>
                 </div>
-                <div className="text-xs text-neutral-500">
+                <div className="text-xs font-medium text-[var(--ink-sub)] opacity-70 uppercase tracking-wider">
                   {view === "month" ? "5 weeks view" : "Week view"}
                 </div>
               </div>
 
               {view === "month" ? (
                 <>
-                  <div className="grid grid-cols-7 border-b border-neutral-200 text-xs text-neutral-500">
+                  <div className="grid grid-cols-7 border-b border-[var(--line)] text-[10px] font-bold text-[var(--ink-sub)] uppercase tracking-widest bg-[var(--cream-50)]/10">
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
                       (w) => (
-                        <div key={w} className="px-3 py-2">
+                        <div key={w} className="px-3 py-2 text-center">
                           {w}
                         </div>
                       ),
@@ -958,7 +960,7 @@ export default function AvailabilityClient({
                       <div
                         key={day.date}
                         className={cx(
-                          "border-b border-r border-neutral-200",
+                          "border-b border-r border-[var(--line)]",
                           idx % 7 === 6 && "border-r-0",
                           idx >= calendarDays.length - 7 && "border-b-0",
                         )}
@@ -973,7 +975,7 @@ export default function AvailabilityClient({
                   </div>
                 </>
               ) : (
-                <div className="p-4">
+                <div className="p-4 bg-[var(--cream-50)]/10">
                   <WeekView
                     weekDates={weekDates}
                     allBookings={allBookings}
@@ -986,36 +988,40 @@ export default function AvailabilityClient({
             </div>
 
             {/* Selected day panel */}
-            <aside className="rounded-xl border border-neutral-200 bg-white">
-              <div className="border-b border-neutral-200 px-5 py-4">
-                <div className="text-sm font-medium text-neutral-900">
+            <aside className="rounded-xl border border-[var(--line)] bg-white shadow-sm overflow-hidden h-fit sticky top-24">
+              <div className="border-b border-[var(--line)] px-5 py-4 bg-[var(--green-900)] text-white">
+                <div className="text-xs font-bold uppercase tracking-widest opacity-70">
                   Selected day
                 </div>
-                <div className="mt-1 text-sm text-neutral-600">
-                  {selectedDate}
+                <div className="mt-1 text-lg font-semibold">
+                  {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-FI", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
                 </div>
               </div>
 
-              <div className="px-5 py-4 space-y-5">
+              <div className="px-5 py-5 space-y-6">
                 {/* Summary row */}
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-neutral-700">
-                    <span className="font-medium">{totalBookings}</span>{" "}
+                  <div className="text-sm text-[var(--ink)] font-medium">
+                    <span className="text-[var(--green-900)] text-base">{totalBookings}</span>{" "}
                     {totalBookings === 1 ? "booking" : "bookings"}{" "}
-                    <span className="text-neutral-400">·</span>{" "}
-                    <span className="font-medium">{totalGuests}</span>{" "}
+                    <span className="opacity-30 mx-1">·</span>{" "}
+                    <span className="text-[var(--green-900)] text-base">{totalGuests}</span>{" "}
                     {totalGuests === 1 ? "guest" : "guests"}
                   </div>
                   {hasAnyConflict && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 ring-1 ring-red-200">
-                      ⚠ Resource conflict
+                    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700 ring-1 ring-red-200 uppercase tracking-tight">
+                      ⚠ Conflict
                     </span>
                   )}
                 </div>
 
                 {/* Resource summary */}
                 <div>
-                  <div className="text-xs font-medium text-neutral-700 mb-2">
+                  <div className="text-[10px] font-bold text-[var(--ink-sub)] uppercase tracking-widest mb-3 opacity-70">
                     Resources
                   </div>
                   <ResourceSummaryBar
@@ -1027,18 +1033,18 @@ export default function AvailabilityClient({
                 {/* Bookings list */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-sm font-medium text-neutral-900">
+                    <div className="text-[10px] font-bold text-[var(--ink-sub)] uppercase tracking-widest opacity-70">
                       Bookings
                     </div>
                     <button
                       onClick={() => setShowAddModal(true)}
-                      className="text-sm text-neutral-900 underline underline-offset-4 hover:text-neutral-700"
+                      className="text-xs font-bold text-[var(--green-900)] hover:underline underline-offset-4"
                     >
-                      Add
+                      + ADD NEW
                     </button>
                   </div>
 
-                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                     {selectedDayData.bookings.length ? (
                       selectedDayData.bookings.map((b) => (
                         <BookingRow
@@ -1048,8 +1054,8 @@ export default function AvailabilityClient({
                         />
                       ))
                     ) : (
-                      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600">
-                        No bookings for this day.
+                      <div className="rounded-lg border border-dashed border-[var(--line)] bg-[var(--cream-50)]/30 p-8 text-center">
+                        <p className="text-xs text-[var(--ink-sub)] italic">No bookings for this day.</p>
                       </div>
                     )}
                   </div>

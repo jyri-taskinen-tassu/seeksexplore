@@ -220,19 +220,19 @@ export function ProviderNav() {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-neutral-200 bg-white shadow-sm">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-white/5 bg-[var(--green-900)] shadow-sm">
       <div className="flex h-full flex-col">
         {/* Logo/Brand */}
-        <div className="border-b border-neutral-200 bg-gradient-to-br from-neutral-50 to-white px-6 py-4">
+        <div className="border-b border-white/10 px-6 py-4">
           <Link href="/provider" className="flex items-center gap-3 group">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-800 text-white shadow-md group-hover:shadow-lg transition-shadow">
-              <span className="text-lg font-bold">T</span>
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white shadow-md group-hover:bg-white/20 transition-colors">
+              <span className="text-lg font-bold text-[var(--terracotta)]">S</span>
             </div>
             <div>
-              <div className="text-sm font-bold text-neutral-900 tracking-tight">
-                Trailion
+              <div className="text-sm font-bold text-white tracking-tight">
+                Seeks <span className="text-[var(--terracotta)]">&amp;</span> Explore
               </div>
-              <div className="text-xs text-neutral-500 font-medium">
+              <div className="text-xs text-white/60 font-medium">
                 Provider
               </div>
             </div>
@@ -253,8 +253,8 @@ export function ProviderNav() {
                   className={cx(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 relative group",
                     isActive
-                      ? "bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-900 shadow-sm"
-                      : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 hover:shadow-sm",
+                      ? "bg-white/15 text-white shadow-sm"
+                      : "text-white/70 hover:bg-white/10 hover:text-white hover:shadow-sm",
                   )}
                 >
                   <span
@@ -266,14 +266,14 @@ export function ProviderNav() {
                     <item.icon
                       className={cx(
                         isActive
-                          ? "text-neutral-900"
-                          : "text-neutral-500 group-hover:text-neutral-700",
+                          ? "text-white"
+                          : "text-white/60 group-hover:text-white",
                       )}
                     />
                   </span>
                   <span className="font-medium">{item.label}</span>
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-neutral-900 rounded-r-full" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[var(--terracotta)] rounded-r-full" />
                   )}
                 </Link>
               );
@@ -282,25 +282,25 @@ export function ProviderNav() {
         </nav>
 
         {/* Logout */}
-        <div className="shrink-0 border-t border-neutral-200 px-3 py-3">
+        <div className="shrink-0 border-t border-white/10 px-3 py-3">
           <button
             onClick={handleLogout}
             disabled={loggingOut}
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group"
             style={{
-              backgroundColor: "var(--color-cream)",
-              color: "var(--color-forest)",
+              backgroundColor: "rgba(246, 241, 231, 0.1)",
+              color: "rgba(246, 241, 231, 0.7)",
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "var(--color-accent)";
+                "rgba(246, 241, 231, 0.2)";
               (e.currentTarget as HTMLButtonElement).style.color = "#fff";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "var(--color-cream)";
+                "rgba(246, 241, 231, 0.1)";
               (e.currentTarget as HTMLButtonElement).style.color =
-                "var(--color-forest)";
+                "rgba(246, 241, 231, 0.7)";
             }}
           >
             <IconLogout className="shrink-0 transition-transform duration-200 group-hover:scale-110" />

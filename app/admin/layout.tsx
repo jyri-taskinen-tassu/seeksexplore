@@ -28,7 +28,7 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <AdminNav />
-      <div className="flex-1 ml-64 bg-neutral-50">{children}</div>
+      <div className="flex-1 ml-64 bg-[var(--cream-50)]">{children}</div>
     </div>
   );
 }

@@ -67,11 +67,11 @@ function cx(...classes: Array<string | false | undefined | null>) {
 
 function confidenceBadge(c: Confidence) {
   const base =
-    "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs";
+    "inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider";
   if (c === "high")
     return cx(base, "border-emerald-200 bg-emerald-50 text-emerald-700");
   if (c === "medium")
-    return cx(base, "border-amber-200 bg-amber-50 text-amber-700");
+    return cx(base, "border-[var(--terracotta)]/20 bg-[var(--terracotta)]/5 text-[var(--terracotta-dark)]");
   return cx(base, "border-red-200 bg-red-50 text-red-700");
 }
 
@@ -391,19 +391,19 @@ export default function ProviderProductNewPage() {
   const publishDisabled = missingRequired.length > 0;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--cream-50)]">
       {/* Header */}
-      <header className="border-b border-neutral-200 px-6 py-4">
+      <header className="border-b border-[var(--line)] bg-white px-6 py-4 sticky top-0 z-20">
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-neutral-900 text-white">
-              <span className="text-sm font-semibold">P</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--green-900)] text-white shadow-lg">
+              <span className="text-lg font-bold">P</span>
             </div>
             <div>
-              <div className="text-lg font-medium text-neutral-900">
-                Add product
+              <div className="text-lg font-bold text-[var(--green-900)] tracking-tight">
+                Add Product
               </div>
-              <div className="text-sm text-neutral-500">
+              <div className="text-xs text-[var(--ink-sub)] font-medium opacity-70">
                 Create a draft fast, verify the essentials, publish without
                 chaos.
               </div>
@@ -411,7 +411,7 @@ export default function ProviderProductNewPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="hidden rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700 md:inline-flex">
+            <span className="hidden rounded-full border border-[var(--line)] bg-[var(--cream-50)] px-3 py-1 text-[10px] font-bold text-[var(--green-900)] uppercase tracking-widest md:inline-flex shadow-sm">
               Infrastructure-first • Provider MVP
             </span>
           </div>
@@ -420,30 +420,33 @@ export default function ProviderProductNewPage() {
 
       <main className="mx-auto w-full max-w-[1440px] px-6 py-6">
         {step === "start" ? (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Left: AI import */}
-            <section className="rounded-xl border border-neutral-200 bg-white p-6 lg:col-span-2">
-              <div className="flex items-start justify-between gap-4">
+            <section className="rounded-2xl border border-[var(--line)] bg-white p-8 lg:col-span-2 shadow-sm">
+              <div className="flex items-start justify-between gap-4 border-b border-[var(--line)] pb-6 mb-8">
                 <div>
-                  <div className="text-sm font-medium text-neutral-900">
-                    A) AI import (P0)
+                  <div className="text-base font-bold text-[var(--green-900)] flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-[var(--terracotta)] rounded-full" />
+                    AI-Powered Import
                   </div>
-                  <div className="mt-1 text-sm text-neutral-600">
+                  <div className="mt-1 text-sm text-[var(--ink-sub)]">
                     Drop a brochure or link. We extract a draft — you review &
                     publish.
                   </div>
                 </div>
-                <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
+                <span className="rounded-full border border-[var(--line)] bg-[var(--cream-50)] px-3 py-1 text-[10px] font-bold text-[var(--green-900)] uppercase tracking-tight">
                   Draft only — never auto-publish
                 </span>
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-5">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
                 <div className="md:col-span-3">
                   <div
                     className={cx(
-                      "flex min-h-[168px] flex-col items-center justify-center rounded-xl border border-dashed px-4 text-center",
-                      "border-neutral-300 bg-neutral-50",
+                      "flex min-h-[200px] flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 text-center transition-all",
+                      droppedName 
+                        ? "border-[var(--green-800)] bg-[var(--cream-50)]/50" 
+                        : "border-[var(--line)] bg-[var(--cream-50)]/20 hover:border-[var(--green-800)]/30 hover:bg-[var(--cream-50)]/40",
                     )}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -452,128 +455,143 @@ export default function ProviderProductNewPage() {
                       if (f) setDroppedName(f.name);
                     }}
                   >
-                    <div className="text-sm font-medium text-neutral-900">
-                      Drop PDF / JPG / PNG / DOCX
+                    <div className="w-12 h-12 rounded-full bg-white border border-[var(--line)] flex items-center justify-center mb-4 shadow-sm">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green-900)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                     </div>
-                    <div className="mt-1 text-sm text-neutral-600">
-                      Or paste a URL on the right.
+                    <div className="text-sm font-bold text-[var(--green-900)]">
+                      Drop PDF, JPG, PNG or Word
+                    </div>
+                    <div className="mt-1 text-xs text-[var(--ink-sub)] font-medium">
+                      Or use the URL importer on the right
                     </div>
 
-                    <div className="mt-4 w-full">
-                      <label className="block text-left text-xs text-neutral-500">
-                        Selected file (mock)
-                      </label>
-                      <div className="mt-1 flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
-                        <span className="text-sm text-neutral-700">
+                    <div className="mt-6 w-full max-w-[240px]">
+                      <div className={cx(
+                        "flex items-center justify-between rounded-xl border px-3 py-2 transition-all",
+                        droppedName ? "border-[var(--green-800)] bg-white shadow-md" : "border-[var(--line)] bg-white/50 opacity-50"
+                      )}>
+                        <span className="text-xs font-bold text-[var(--green-900)] truncate">
                           {droppedName ? droppedName : "No file selected"}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => setDroppedName("")}
-                          className="text-xs text-neutral-500 hover:text-neutral-700"
-                        >
-                          Clear
-                        </button>
+                        {droppedName && (
+                          <button
+                            type="button"
+                            onClick={() => setDroppedName("")}
+                            className="text-xs text-[var(--terracotta)] hover:text-red-700 font-black p-1"
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 text-xs text-neutral-500">
-                    MVP: this is UI-only. Later: upload + AI parsing pipeline.
+                  <div className="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-100 flex gap-3">
+                    <div className="shrink-0 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold">i</div>
+                    <div className="text-[11px] text-blue-800 leading-relaxed">
+                      <span className="font-bold">MVP Note:</span> This interface is UI-only for now. Later: automated AI parsing pipeline for Visit Finland, brochure and PDF data.
+                    </div>
                   </div>
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-neutral-900">
-                    Or import from URL
-                  </label>
-                  <div className="mt-2">
+                <div className="md:col-span-2 space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-[var(--green-900)] mb-2 uppercase tracking-widest opacity-60">
+                      Import from URL
+                    </label>
                     <input
                       value={urlValue}
                       onChange={(e) => setUrlValue(e.target.value)}
-                      placeholder="https://... (provider website / PDF link)"
-                      className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                      placeholder="https://..."
+                      className="w-full rounded-xl border border-[var(--line)] bg-white px-4 py-2.5 text-sm text-[var(--ink)] placeholder:[var(--ink-sub)]/30 focus:outline-none focus:ring-1 focus:ring-[var(--green-800)] shadow-sm"
                     />
                   </div>
 
-                  <div className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                    <div className="text-sm font-medium text-neutral-900">
-                      AI extracts
+                  <div className="rounded-2xl border border-[var(--line)] bg-[var(--cream-50)]/30 p-5">
+                    <div className="text-[10px] font-black text-[var(--green-900)] mb-3 uppercase tracking-widest opacity-60">
+                      AI extraction scope
                     </div>
-                    <ul className="mt-2 list-disc pl-5 text-sm text-neutral-700">
-                      <li>
-                        Title, description, duration, location, meeting point
-                      </li>
-                      <li>Price, capacity hints, included / not included</li>
-                      <li>Requirements, cancellation policy suggestion</li>
+                    <ul className="space-y-2">
+                      {[
+                        "Title, description, duration",
+                        "Pricing & capacity hints",
+                        "Requirements & policies",
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-2 text-xs font-medium text-[var(--ink)]">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green-800)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          {item}
+                        </li>
+                      ))}
                     </ul>
-                    <div className="mt-3 text-xs text-neutral-500">
-                      You always review before publish. 👍
-                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={!canProceedToEditor}
-                    onClick={() => createAIDraft("snowmobile")}
-                    className={cx(
-                      "mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-medium",
-                      canProceedToEditor
-                        ? "bg-neutral-900 text-white hover:bg-neutral-800"
-                        : "cursor-not-allowed bg-neutral-200 text-neutral-500",
-                    )}
-                  >
-                    Create AI draft → Review & publish
-                  </button>
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      disabled={!canProceedToEditor}
+                      onClick={() => createAIDraft("snowmobile")}
+                      className={cx(
+                        "w-full rounded-xl px-6 py-3 text-sm font-bold shadow-lg transition-all",
+                        canProceedToEditor
+                          ? "bg-[var(--green-900)] text-white hover:opacity-90 shadow-[var(--green-900)]/20"
+                          : "cursor-not-allowed bg-neutral-200 text-neutral-500 shadow-none",
+                      )}
+                    >
+                      CREATE AI DRAFT
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => createAIDraft("snowmobile")}
-                    className="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                  >
-                    Use example import (Snowmobile)
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => createAIDraft("snowmobile")}
+                      className="w-full rounded-xl border border-[var(--line)] bg-white px-6 py-2.5 text-[11px] font-bold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-all shadow-sm"
+                    >
+                      USE EXAMPLE (SNOWMOBILE)
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => createAIDraft("hiking")}
-                    className="mt-2 w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-                  >
-                    Use example import (Hiking)
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => createAIDraft("hiking")}
+                      className="w-full rounded-xl border border-[var(--line)] bg-white px-6 py-2.5 text-[11px] font-bold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-all shadow-sm"
+                    >
+                      USE EXAMPLE (HIKING)
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
 
             {/* Right: Manual */}
-            <aside className="rounded-xl border border-neutral-200 bg-white p-6">
-              <div className="text-sm font-medium text-neutral-900">
-                B) Start from scratch (P0)
-              </div>
-              <div className="mt-1 text-sm text-neutral-600">
-                Use the same editor, without prefill.
-              </div>
-
-              <button
-                type="button"
-                onClick={startManual}
-                className="mt-4 w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
-              >
-                Start manually → Editor
-              </button>
-
-              <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                <div className="text-sm font-medium text-neutral-900">
-                  Legal (important)
+            <aside className="space-y-6">
+              <section className="rounded-2xl border border-[var(--line)] bg-white p-8 shadow-sm">
+                <div className="text-base font-bold text-[var(--green-900)] flex items-center gap-2 mb-2">
+                  <span className="w-1.5 h-6 bg-[var(--green-800)] rounded-full" />
+                  Manual Entry
                 </div>
-                <div className="mt-2 text-sm text-neutral-700">
-                  This product must be{" "}
-                  <span className="font-medium">your own service</span>. No
-                  bundling other providers into one product.
+                <div className="text-sm text-[var(--ink-sub)] mb-6">
+                  Build your product from scratch using our step-by-step editor.
                 </div>
-                <div className="mt-2 text-xs text-neutral-500">
-                  Cross-sell later = recommendations/link-outs, not packaged
-                  checkout.
+
+                <button
+                  type="button"
+                  onClick={startManual}
+                  className="w-full rounded-xl border-2 border-[var(--green-900)] bg-white px-6 py-3 text-sm font-bold text-[var(--green-900)] hover:bg-[var(--green-900)] hover:text-white transition-all shadow-md active:scale-95"
+                >
+                  START MANUALLY
+                </button>
+              </section>
+
+              <div className="rounded-2xl border border-[var(--line)] bg-[var(--green-900)] p-6 shadow-xl text-white">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  </div>
+                  <div className="text-sm font-bold uppercase tracking-widest opacity-80">Provider Guidelines</div>
+                </div>
+                <div className="text-sm leading-relaxed mb-4 font-medium opacity-90">
+                  This product must be <span className="text-[var(--terracotta)] font-bold">your own service</span>. Seeks & Explore currently focuses on direct operator relationships.
+                </div>
+                <div className="pt-4 border-t border-white/10 text-[11px] font-medium text-white/60 italic leading-relaxed">
+                  Cross-provider bundling is not supported in the MVP.
                 </div>
               </div>
             </aside>
@@ -581,44 +599,42 @@ export default function ProviderProductNewPage() {
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left: Editor */}
-            <section className="rounded-xl border border-neutral-200 bg-white p-6 lg:col-span-2">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <section className="rounded-2xl border border-[var(--line)] bg-white p-8 lg:col-span-2 shadow-sm overflow-hidden">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[var(--line)] pb-6 mb-8">
                 <div>
-                  <div className="text-sm font-medium text-neutral-900">
-                    Product editor
-                  </div>
-                  <div className="mt-1 text-sm text-neutral-600">
+                  <div className="text-lg font-bold text-[var(--green-900)] flex items-center gap-2">
                     {isAIDraft ? (
                       <>
-                        <span className="font-medium">AI draft</span> — review
-                        essentials, then publish.
+                        <span className="w-1.5 h-6 bg-[var(--terracotta)] rounded-full" />
+                        AI Draft Review
                       </>
                     ) : (
-                      <>Manual draft — fill essentials, then publish.</>
+                      <>
+                        <span className="w-1.5 h-6 bg-[var(--green-800)] rounded-full" />
+                        New Product Draft
+                      </>
                     )}
+                  </div>
+                  <div className="mt-1 text-sm text-[var(--ink-sub)] font-medium">
+                    {isAIDraft ? "Review extracted data and fill in any missing details." : "Define your experience, pricing and inventory rules."}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {aiDraftCreated && (
-                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
-                      AI draft created
-                    </span>
-                  )}
-                  {isAIDraft && (
-                    <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs text-neutral-700">
-                      AI confidence per field
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-700 uppercase tracking-tight ring-1 ring-emerald-200 shadow-sm">
+                      AI DRAFT CREATED
                     </span>
                   )}
                   <span
                     className={cx(
-                      "rounded-full border px-3 py-1 text-xs",
+                      "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tight ring-1 shadow-sm",
                       publishDisabled
-                        ? "border-amber-200 bg-amber-50 text-amber-800"
-                        : "border-emerald-200 bg-emerald-50 text-emerald-800",
+                        ? "bg-[var(--terracotta)]/5 text-[var(--terracotta-dark)] ring-[var(--terracotta)]/20"
+                        : "bg-emerald-50 text-emerald-700 ring-emerald-200",
                     )}
                   >
-                    {publishDisabled ? "Needs review" : "Ready to publish"}
+                    {publishDisabled ? "NEEDS REVIEW" : "READY TO PUBLISH"}
                   </span>
                 </div>
               </div>

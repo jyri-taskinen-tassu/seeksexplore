@@ -27,10 +27,10 @@ function ToolBtn({
         onClick();
       }}
       title={title}
-      className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+      className={`rounded px-2.5 py-1.5 text-xs font-bold transition-all ${
         active
-          ? "bg-neutral-200 text-neutral-900"
-          : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
+          ? "bg-[var(--green-900)] text-white shadow-sm"
+          : "text-[var(--ink-sub)] hover:bg-[var(--cream-100)] hover:text-[var(--green-900)]"
       }`}
     >
       {children}
@@ -49,14 +49,14 @@ export default function TiptapEditor({ content, onChange }: Props) {
     editorProps: {
       attributes: {
         class:
-          "rich-text min-h-[160px] px-3 py-2.5 text-sm text-neutral-900 focus:outline-none",
+          "rich-text min-h-[200px] px-4 py-3 text-sm text-[var(--ink)] focus:outline-none bg-white",
       },
     },
   });
 
   return (
-    <div className="rounded-lg border border-neutral-300 focus-within:border-neutral-900 focus-within:ring-1 focus-within:ring-neutral-900 transition-colors overflow-hidden">
-      <div className="flex flex-wrap gap-0.5 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5">
+    <div className="rounded-xl border border-[var(--line)] focus-within:border-[var(--green-800)] focus-within:ring-1 focus-within:ring-[var(--green-800)] transition-all overflow-hidden shadow-sm">
+      <div className="flex flex-wrap items-center gap-1 border-b border-[var(--line)] bg-[var(--cream-50)]/50 px-3 py-2">
         <ToolBtn
           active={editor?.isActive("bold")}
           onClick={() => editor?.chain().focus().toggleBold().run()}
@@ -71,7 +71,7 @@ export default function TiptapEditor({ content, onChange }: Props) {
         >
           <em>I</em>
         </ToolBtn>
-        <span className="mx-1 self-center text-neutral-200">|</span>
+        <span className="mx-1 self-center h-4 w-px bg-[var(--line)]" />
         <ToolBtn
           active={editor?.isActive("heading", { level: 2 })}
           onClick={() =>
@@ -90,7 +90,7 @@ export default function TiptapEditor({ content, onChange }: Props) {
         >
           H3
         </ToolBtn>
-        <span className="mx-1 self-center text-neutral-200">|</span>
+        <span className="mx-1 self-center h-4 w-px bg-[var(--line)]" />
         <ToolBtn
           active={editor?.isActive("bulletList")}
           onClick={() => editor?.chain().focus().toggleBulletList().run()}
@@ -105,7 +105,7 @@ export default function TiptapEditor({ content, onChange }: Props) {
         >
           1. List
         </ToolBtn>
-        <span className="mx-1 self-center text-neutral-200">|</span>
+        <span className="mx-1 self-center h-4 w-px bg-[var(--line)]" />
         <ToolBtn
           active={editor?.isActive("blockquote")}
           onClick={() => editor?.chain().focus().toggleBlockquote().run()}

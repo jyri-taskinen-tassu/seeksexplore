@@ -108,18 +108,18 @@ function KPICard({
         : formatNumber(metric.value);
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200">
+    <div className="rounded-xl border border-[var(--line)] bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <div className="text-sm font-medium text-neutral-600 mb-1">
+          <div className="text-sm font-semibold text-[var(--ink-sub)] mb-1 uppercase tracking-wider text-[10px] opacity-70">
             {metric.label}
           </div>
-          <div className="text-2xl font-bold tracking-tight text-neutral-900 mb-2">
+          <div className="text-2xl font-bold tracking-tight text-[var(--green-900)] mb-2">
             {formattedValue}
           </div>
           <div
             className={cx(
-              "flex items-center gap-1 text-xs font-medium",
+              "flex items-center gap-1 text-xs font-bold",
               isPositive ? "text-emerald-600" : "text-red-600",
             )}
           >
@@ -134,7 +134,7 @@ function KPICard({
             </span>
           </div>
         </div>
-        <div className="grid h-10 w-10 place-items-center rounded-lg bg-gradient-to-br from-neutral-50 to-neutral-100 text-neutral-700">
+        <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--cream-50)] text-[var(--green-900)] shadow-inner">
           <IconChart className="h-5 w-5" />
         </div>
       </div>

@@ -91,22 +91,22 @@ export default function ProviderResourcesPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-sm text-neutral-500">Loading resources…</div>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--cream-50)]">
+        <div className="text-sm text-[var(--ink-sub)] opacity-50 animate-pulse">Loading resources…</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--cream-50)]">
       {/* Header */}
-      <header className="border-b border-neutral-200 px-6 py-4">
+      <header className="border-b border-[var(--line)] bg-white px-6 py-4">
         <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between">
           <div>
-            <div className="text-lg font-medium text-neutral-900">
+            <div className="text-lg font-semibold text-[var(--green-900)]">
               Resources
             </div>
-            <div className="text-sm text-neutral-500">
+            <div className="text-sm text-[var(--ink-sub)]">
               Manage your inventory: vehicles, equipment, guides
             </div>
           </div>
@@ -117,28 +117,28 @@ export default function ProviderResourcesPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left: Categories */}
           <aside className="lg:col-span-1">
-            <div className="rounded-xl border border-neutral-200 bg-white p-6">
+            <div className="rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="text-sm font-medium text-neutral-900">
+                <div className="text-sm font-bold text-[var(--green-900)] uppercase tracking-widest opacity-70">
                   Categories
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsAddingCategory(true)}
-                  className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                  className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--green-900)] hover:bg-[var(--cream-50)] transition-colors"
                 >
                   + Add
                 </button>
               </div>
 
               {isAddingCategory && (
-                <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                <div className="mb-4 rounded-lg border border-[var(--line)] bg-[var(--cream-50)]/50 p-3">
                   <input
                     type="text"
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="Category name"
-                    className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                    className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleAddCategory();
                       if (e.key === "Escape") {
@@ -152,7 +152,7 @@ export default function ProviderResourcesPage() {
                     <button
                       type="button"
                       onClick={handleAddCategory}
-                      className="rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800"
+                      className="rounded-lg bg-[var(--green-900)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition-opacity shadow-sm"
                     >
                       Add
                     </button>
@@ -162,7 +162,7 @@ export default function ProviderResourcesPage() {
                         setIsAddingCategory(false);
                         setNewCategoryName("");
                       }}
-                      className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                      className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors"
                     >
                       Cancel
                     </button>
@@ -177,15 +177,15 @@ export default function ProviderResourcesPage() {
                     type="button"
                     onClick={() => setSelectedCategoryId(category.id)}
                     className={cx(
-                      "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                      "w-full rounded-lg px-3 py-2 text-left text-sm transition-all",
                       selectedCategoryId === category.id
-                        ? "bg-neutral-900 text-white"
-                        : "bg-neutral-50 text-neutral-900 hover:bg-neutral-100",
+                        ? "bg-[var(--green-900)] text-white shadow-sm"
+                        : "bg-white text-[var(--ink)] hover:bg-[var(--cream-50)]",
                     )}
                   >
-                    <div className="font-medium">{category.name}</div>
+                    <div className="font-semibold">{category.name}</div>
                     {category.description && (
-                      <div className="mt-0.5 text-xs opacity-70">
+                      <div className={cx("mt-0.5 text-xs", selectedCategoryId === category.id ? "opacity-70" : "text-[var(--ink-sub)]")}>
                         {category.description}
                       </div>
                     )}
@@ -198,14 +198,14 @@ export default function ProviderResourcesPage() {
           {/* Right: Category detail with variants */}
           <section className="lg:col-span-2">
             {selectedCategory ? (
-              <div className="rounded-xl border border-neutral-200 bg-white p-6">
-                <div className="flex items-center justify-between mb-6">
+              <div className="rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-8 border-b border-[var(--line)] pb-6">
                   <div>
-                    <div className="text-sm font-medium text-neutral-900">
+                    <div className="text-xl font-bold text-[var(--green-900)]">
                       {selectedCategory.name}
                     </div>
                     {selectedCategory.description && (
-                      <div className="mt-1 text-sm text-neutral-600">
+                      <div className="mt-1 text-sm text-[var(--ink-sub)]">
                         {selectedCategory.description}
                       </div>
                     )}
@@ -213,38 +213,38 @@ export default function ProviderResourcesPage() {
                   <button
                     type="button"
                     onClick={handleAddVariant}
-                    className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                    className="rounded-lg bg-[var(--green-800)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--green-900)] transition-colors shadow-sm"
                   >
                     + Add variant
                   </button>
                 </div>
 
                 {categoryVariants.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center">
-                    <div className="text-sm text-neutral-500">
+                  <div className="rounded-xl border-2 border-dashed border-[var(--line)] bg-[var(--cream-50)]/30 p-12 text-center">
+                    <div className="text-sm text-[var(--ink-sub)] italic opacity-50">
                       No variants yet. Click &ldquo;Add variant&rdquo; to create
                       one.
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {categoryVariants.map((variant) => (
                       <div
                         key={variant.id}
-                        className="rounded-lg border border-neutral-200 bg-white p-4"
+                        className="rounded-xl border border-[var(--line)] bg-white p-5 hover:border-[var(--green-800)]/30 transition-all group"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
-                              <div className="text-sm font-medium text-neutral-900">
+                              <div className="text-base font-bold text-[var(--green-900)]">
                                 {variant.name}
                               </div>
                               <span
                                 className={cx(
-                                  "rounded-full border px-2 py-0.5 text-xs",
+                                  "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1",
                                   variant.status === "active"
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : "border-amber-200 bg-amber-50 text-amber-700",
+                                    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                    : "bg-[var(--terracotta)]/5 text-[var(--terracotta-dark)] ring-[var(--terracotta)]/20",
                                 )}
                               >
                                 {variant.status === "active"
@@ -252,48 +252,40 @@ export default function ProviderResourcesPage() {
                                   : "Maintenance"}
                               </span>
                             </div>
-                            <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                               <div>
-                                <span className="text-neutral-500">
-                                  Capacity:
-                                </span>{" "}
-                                <span className="font-medium text-neutral-900">
+                                <div className="text-[var(--ink-sub)] mb-1 uppercase tracking-widest text-[9px] font-bold opacity-60">Capacity</div>
+                                <div className="font-semibold text-[var(--ink)]">
                                   {variant.capacityPerUnit
-                                    ? `${variant.capacityPerUnit} ppl / ${variant.unitLabel}`
-                                    : `1 ppl / ${variant.unitLabel}`}
-                                </span>
+                                    ? `${variant.capacityPerUnit} pax / ${variant.unitLabel}`
+                                    : `1 pax / ${variant.unitLabel}`}
+                                </div>
                               </div>
                               <div>
-                                <span className="text-neutral-500">
-                                  Total units:
-                                </span>{" "}
-                                <span className="font-medium text-neutral-900">
+                                <div className="text-[var(--ink-sub)] mb-1 uppercase tracking-widest text-[9px] font-bold opacity-60">Total units</div>
+                                <div className="font-semibold text-[var(--ink)]">
                                   {variant.totalUnits}
-                                </span>
+                                </div>
                               </div>
                               <div>
-                                <span className="text-neutral-500">
-                                  Buffer:
-                                </span>{" "}
-                                <span className="font-medium text-neutral-900">
+                                <div className="text-[var(--ink-sub)] mb-1 uppercase tracking-widest text-[9px] font-bold opacity-60">Buffer</div>
+                                <div className="font-semibold text-[var(--ink)]">
                                   {variant.bufferUnits}
-                                </span>
+                                </div>
                               </div>
                               <div>
-                                <span className="text-neutral-500">
-                                  Available:
-                                </span>{" "}
-                                <span className="font-medium text-emerald-700">
+                                <div className="text-[var(--ink-sub)] mb-1 uppercase tracking-widest text-[9px] font-bold opacity-60">Available</div>
+                                <div className="font-bold text-emerald-700">
                                   {getAvailableUnits(variant)}
-                                </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               type="button"
                               onClick={() => setEditingVariant(variant)}
-                              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+                              className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--ink)] hover:bg-[var(--cream-50)]"
                             >
                               Edit
                             </button>
@@ -301,20 +293,20 @@ export default function ProviderResourcesPage() {
                               type="button"
                               onClick={() => toggleMaintenance(variant.id)}
                               className={cx(
-                                "rounded-lg border px-3 py-1.5 text-xs font-medium",
+                                "rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors",
                                 variant.status === "active"
-                                  ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-                                  : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+                                  ? "border-[var(--terracotta)]/30 bg-[var(--terracotta)]/5 text-[var(--terracotta-dark)] hover:bg-[var(--terracotta)]/10"
+                                  : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
                               )}
                             >
                               {variant.status === "active"
-                                ? "Set maintenance"
+                                ? "Maintenance"
                                 : "Set active"}
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteVariant(variant.id)}
-                              className="rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+                              className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-100"
                             >
                               Delete
                             </button>
@@ -326,8 +318,8 @@ export default function ProviderResourcesPage() {
                 )}
               </div>
             ) : (
-              <div className="rounded-xl border border-neutral-200 bg-white p-12 text-center">
-                <div className="text-sm text-neutral-500">
+              <div className="rounded-xl border border-[var(--line)] bg-white p-12 text-center shadow-sm">
+                <div className="text-sm text-[var(--ink-sub)] italic opacity-50">
                   Select a category to view variants, or create a new category.
                 </div>
               </div>
@@ -385,32 +377,32 @@ function MaintenanceModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-xl border border-neutral-200 bg-white p-6 shadow-lg"
+        className="w-full max-w-sm rounded-xl border border-[var(--line)] bg-white p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-neutral-900">
+            <div className="text-sm font-bold text-[var(--green-900)]">
               Set maintenance units
             </div>
-            <div className="mt-1 text-xs text-neutral-600">{variant.name}</div>
+            <div className="mt-1 text-xs text-[var(--ink-sub)] opacity-70">{variant.name}</div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600"
+            className="text-[var(--ink-sub)] hover:text-[var(--green-900)] transition-colors p-1"
           >
             ✕
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-2">
+            <label className="block text-xs font-semibold text-[var(--green-900)] mb-2 opacity-70">
               How many units are under maintenance?
             </label>
             <input
@@ -419,40 +411,40 @@ function MaintenanceModal({
               onChange={(e) => onChange(e.target.value)}
               min="0"
               max={maxUnits}
-              className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+              className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
               autoFocus
             />
-            <div className="mt-2 text-xs text-neutral-500">
+            <div className="mt-2 text-[10px] text-[var(--ink-sub)] opacity-50">
               Range: 0 to {maxUnits} (total units).
             </div>
             {!isValid && (
-              <div className="mt-2 text-xs text-red-600">
+              <div className="mt-2 text-xs text-red-600 font-medium">
                 Please enter a number between 0 and {maxUnits}.
               </div>
             )}
           </div>
 
-          <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-[var(--line)] bg-[var(--cream-50)]/50 p-4 text-xs">
+            <div className="grid grid-cols-2 gap-y-3 gap-x-4">
               <div>
-                <span className="text-neutral-500">Total units:</span>{" "}
-                <span className="font-medium text-neutral-900">
+                <span className="text-[var(--ink-sub)] opacity-60">Total units:</span>{" "}
+                <span className="font-semibold text-[var(--ink)]">
                   {variant.totalUnits}
                 </span>
               </div>
               <div>
-                <span className="text-neutral-500">Buffer:</span>{" "}
-                <span className="font-medium text-neutral-900">
+                <span className="text-[var(--ink-sub)] opacity-60">Buffer:</span>{" "}
+                <span className="font-semibold text-[var(--ink)]">
                   {variant.bufferUnits}
                 </span>
               </div>
               <div>
-                <span className="text-neutral-500">Maintenance:</span>{" "}
-                <span className="font-medium text-neutral-900">{numValue}</span>
+                <span className="text-[var(--ink-sub)] opacity-60">Maintenance:</span>{" "}
+                <span className="font-bold text-[var(--terracotta-dark)]">{numValue}</span>
               </div>
               <div>
-                <span className="text-neutral-500">Available:</span>{" "}
-                <span className="font-medium text-emerald-700">
+                <span className="text-[var(--ink-sub)] opacity-60">Available:</span>{" "}
+                <span className="font-bold text-emerald-700">
                   {Math.max(
                     0,
                     variant.totalUnits - variant.bufferUnits - numValue,
@@ -463,11 +455,11 @@ function MaintenanceModal({
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="mt-8 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-lg border border-[var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors"
           >
             Cancel
           </button>
@@ -476,10 +468,10 @@ function MaintenanceModal({
             onClick={handleSave}
             disabled={!isValid}
             className={cx(
-              "rounded-lg px-4 py-2 text-sm font-medium",
+              "rounded-lg px-6 py-2 text-sm font-bold shadow-sm transition-all",
               isValid
-                ? "bg-neutral-900 text-white hover:bg-neutral-800"
-                : "cursor-not-allowed bg-neutral-200 text-neutral-500",
+                ? "bg-[var(--green-900)] text-white hover:opacity-90"
+                : "cursor-not-allowed bg-neutral-200 text-neutral-500 shadow-none",
             )}
           >
             Save
@@ -521,10 +513,10 @@ function VariantEditor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-xl border border-neutral-200 bg-white p-6 shadow-lg">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="text-sm font-medium text-neutral-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+      <div className="w-full max-w-md rounded-xl border border-[var(--line)] bg-white p-6 shadow-2xl">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="text-lg font-bold text-[var(--green-900)]">
             {variant.id.startsWith("var-") && !variant.name
               ? "Add variant"
               : "Edit variant"}
@@ -532,29 +524,29 @@ function VariantEditor({
           <button
             type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600"
+            className="text-[var(--ink-sub)] hover:text-[var(--green-900)] transition-colors p-1"
           >
             ✕
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-1">
-              Variant name <span className="text-amber-700">*</span>
+            <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
+              Variant name <span className="text-[var(--terracotta)]">*</span>
             </label>
             <input
               type="text"
               value={edited.name}
               onChange={(e) => setEdited({ ...edited, name: e.target.value })}
               placeholder="e.g., Sport (1-seat)"
-              className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+              className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-1">
+            <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
               Capacity per unit (people)
             </label>
             <input
@@ -570,15 +562,15 @@ function VariantEditor({
               }
               placeholder="e.g., 1 or 2"
               min="1"
-              className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+              className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
             />
-            <div className="mt-1 text-xs text-neutral-500">
+            <div className="mt-1.5 text-[10px] text-[var(--ink-sub)] opacity-50 italic">
               How many people can use this unit? Leave empty if not applicable.
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-neutral-700 mb-1">
+            <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
               Unit label
             </label>
             <select
@@ -589,7 +581,7 @@ function VariantEditor({
                   unitLabel: e.target.value as ResourceVariant["unitLabel"],
                 })
               }
-              className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+              className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
             >
               {unitLabels.map((label) => (
                 <option key={label} value={label}>
@@ -601,7 +593,7 @@ function VariantEditor({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
+              <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
                 Total units
               </label>
               <input
@@ -614,11 +606,11 @@ function VariantEditor({
                   })
                 }
                 min="0"
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-neutral-700 mb-1">
+              <label className="block text-xs font-semibold text-[var(--green-900)] mb-1.5 opacity-70">
                 Buffer units
               </label>
               <input
@@ -631,24 +623,24 @@ function VariantEditor({
                   })
                 }
                 min="0"
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                className="w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--green-800)]"
               />
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="mt-8 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            className="rounded-lg border border-[var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+            className="rounded-lg bg-[var(--green-900)] px-6 py-2 text-sm font-bold text-white hover:opacity-90 transition-opacity shadow-sm"
           >
             Save
           </button>

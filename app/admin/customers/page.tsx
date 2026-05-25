@@ -17,31 +17,31 @@ export default async function AdminCustomersPage() {
   return (
     <div className="p-6">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-[var(--color-forest)]">
+        <h1 className="text-xl font-semibold text-[var(--green-900)]">
           All Customers
         </h1>
-        <p className="text-sm text-neutral-500 mt-0.5">
+        <p className="text-sm text-[var(--ink-sub)] mt-0.5">
           Platform-wide — {customers?.length ?? 0} most recent
         </p>
       </header>
 
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-left bg-neutral-50">
-              <th className="px-4 py-3 font-medium text-neutral-500">
+            <tr className="border-b border-[var(--line)] text-left bg-[var(--cream-100)]">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">
                 Customer
               </th>
-              <th className="px-4 py-3 font-medium text-neutral-500">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">
                 Country
               </th>
-              <th className="px-4 py-3 font-medium text-neutral-500">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">
                 Bookings
               </th>
-              <th className="px-4 py-3 font-medium text-neutral-500">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)]">
                 Last booking
               </th>
-              <th className="px-4 py-3 font-medium text-neutral-500 text-right">
+              <th className="px-4 py-3 font-medium text-[var(--ink-sub)] text-right">
                 Total spent
               </th>
             </tr>
@@ -50,26 +50,26 @@ export default async function AdminCustomersPage() {
             {(customers ?? []).map((c) => (
               <tr
                 key={c.id}
-                className="border-b last:border-0 hover:bg-neutral-50"
+                className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--cream-50)]"
               >
                 <td className="px-4 py-3">
-                  <p className="font-medium text-neutral-900">
+                  <p className="font-medium text-[var(--ink)]">
                     {[c.first_name, c.last_name].filter(Boolean).join(" ")}
                   </p>
-                  <p className="text-xs text-neutral-500">{c.email}</p>
+                  <p className="text-xs text-[var(--ink-sub)]">{c.email}</p>
                 </td>
-                <td className="px-4 py-3 text-neutral-500">
+                <td className="px-4 py-3 text-[var(--ink-sub)]">
                   {c.country ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-neutral-700">
+                <td className="px-4 py-3 text-[var(--ink)]">
                   {c.total_bookings}
                 </td>
-                <td className="px-4 py-3 text-neutral-500">
+                <td className="px-4 py-3 text-[var(--ink-sub)]">
                   {c.last_booking_date
                     ? new Date(c.last_booking_date).toLocaleDateString("en-FI")
                     : "—"}
                 </td>
-                <td className="px-4 py-3 text-right text-neutral-700 font-medium">
+                <td className="px-4 py-3 text-right text-[var(--ink)] font-medium">
                   {Number(c.total_spent).toLocaleString("en-FI", {
                     style: "currency",
                     currency: c.currency ?? "EUR",
@@ -81,7 +81,7 @@ export default async function AdminCustomersPage() {
               <tr>
                 <td
                   colSpan={5}
-                  className="px-4 py-8 text-center text-sm text-neutral-400"
+                  className="px-4 py-8 text-center text-sm text-[var(--ink-sub)]/50"
                 >
                   No customers yet.
                 </td>
