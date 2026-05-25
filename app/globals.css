@@ -50,6 +50,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+input, select, textarea {
+  color: var(--ink);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--ink-sub);
+  opacity: 1; /* Firefox fix */
+}
+
 /* Landing page design system utilities */
 .container {
   width: 100%;
