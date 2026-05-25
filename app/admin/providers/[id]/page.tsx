@@ -64,7 +64,7 @@ export default async function ProviderDetailPage({
       <Link
         href="/admin/providers"
         className="inline-flex items-center gap-1.5 text-sm mb-6 transition-opacity hover:opacity-60"
-        style={{ color: "var(--color-sage)" }}
+        style={{ color: "var(--ink-sub)" }}
       >
         <svg
           width="14"
@@ -82,9 +82,9 @@ export default async function ProviderDetailPage({
       </Link>
 
       {/* Provider profile card */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8 border border-[var(--line)]">
         {/* Top strip with forest green */}
-        <div className="h-2" style={{ background: "var(--color-forest)" }} />
+        <div className="h-2" style={{ background: "var(--green-900)" }} />
 
         <div className="p-6">
           <div className="flex items-start gap-5">
@@ -96,12 +96,12 @@ export default async function ProviderDetailPage({
                   src={provider.logo_url}
                   alt={provider.official_name}
                   className="w-20 h-20 object-contain rounded-xl border bg-white"
-                  style={{ borderColor: "var(--color-cream)" }}
+                  style={{ borderColor: "var(--line)" }}
                 />
               ) : (
                 <div
                   className="w-20 h-20 rounded-xl flex items-center justify-center text-white font-bold text-xl"
-                  style={{ background: "var(--color-forest)" }}
+                  style={{ background: "var(--green-800)" }}
                 >
                   {(provider.official_name || "P")
                     .split(" ")
@@ -117,7 +117,7 @@ export default async function ProviderDetailPage({
             <div className="flex-1 min-w-0">
               <h1
                 className="text-xl font-bold tracking-tight"
-                style={{ color: "var(--color-forest)" }}
+                style={{ color: "var(--green-900)" }}
               >
                 {provider.official_name}
               </h1>
@@ -125,7 +125,7 @@ export default async function ProviderDetailPage({
                 provider.business_name !== provider.official_name && (
                   <p
                     className="text-sm mt-0.5"
-                    style={{ color: "var(--color-sage)" }}
+                    style={{ color: "var(--ink-sub)" }}
                   >
                     {provider.business_name}
                   </p>
@@ -133,7 +133,7 @@ export default async function ProviderDetailPage({
               {provider.description && (
                 <p
                   className="text-sm mt-2 leading-relaxed max-w-2xl"
-                  style={{ color: "var(--color-sage)" }}
+                  style={{ color: "var(--ink-sub)" }}
                 >
                   {provider.description}
                 </p>
@@ -142,7 +142,7 @@ export default async function ProviderDetailPage({
               {/* Contact row */}
               <div
                 className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs"
-                style={{ color: "var(--color-sage)" }}
+                style={{ color: "var(--ink-sub)" }}
               >
                 {provider.city && (
                   <span className="flex items-center gap-1.5">
@@ -185,50 +185,6 @@ export default async function ProviderDetailPage({
                     {provider.email}
                   </a>
                 )}
-                {provider.phone && (
-                  <a
-                    href={`tel:${provider.phone}`}
-                    className="flex items-center gap-1.5 hover:underline"
-                  >
-                    <svg
-                      width="11"
-                      height="11"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.4 2 2 0 0 1 3.6 2.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.16 6.16l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.92 17z" />
-                    </svg>
-                    {provider.phone}
-                  </a>
-                )}
-                {provider.website_url && (
-                  <a
-                    href={provider.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 hover:underline"
-                  >
-                    <svg
-                      width="11"
-                      height="11"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="2" y1="12" x2="22" y2="12" />
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
-                    {provider.website_url}
-                  </a>
-                )}
               </div>
 
               {/* Social chips */}
@@ -242,8 +198,8 @@ export default async function ProviderDetailPage({
                       rel="noopener noreferrer"
                       className="text-xs px-2.5 py-1 rounded-full border font-medium transition-opacity hover:opacity-70 capitalize"
                       style={{
-                        borderColor: "var(--color-sage)",
-                        color: "var(--color-sage)",
+                        borderColor: "var(--line)",
+                        color: "var(--ink-sub)",
                       }}
                     >
                       {platform.replace(/_/g, " ")}
@@ -256,7 +212,7 @@ export default async function ProviderDetailPage({
             {/* Meta right */}
             <div
               className="flex-shrink-0 text-right text-xs space-y-2"
-              style={{ color: "var(--color-sage)" }}
+              style={{ color: "var(--ink-sub)" }}
             >
               <div>
                 <p className="uppercase tracking-wider font-semibold text-[10px] mb-0.5">
@@ -264,7 +220,7 @@ export default async function ProviderDetailPage({
                 </p>
                 <p
                   className="font-mono text-[11px] break-all max-w-[160px] ml-auto"
-                  style={{ color: "var(--color-forest)" }}
+                  style={{ color: "var(--green-900)" }}
                 >
                   {provider.bf_company_id}
                 </p>
@@ -287,7 +243,7 @@ export default async function ProviderDetailPage({
                 </p>
                 <p
                   className="text-lg font-bold"
-                  style={{ color: "var(--color-forest)" }}
+                  style={{ color: "var(--green-900)" }}
                 >
                   {products?.length ?? 0}
                 </p>
@@ -301,12 +257,12 @@ export default async function ProviderDetailPage({
       <div className="flex items-center justify-between mb-4">
         <h2
           className="text-base font-bold tracking-tight"
-          style={{ color: "var(--color-forest)" }}
+          style={{ color: "var(--green-900)" }}
         >
           Products
           <span
             className="ml-2 text-sm font-normal"
-            style={{ color: "var(--color-sage)" }}
+            style={{ color: "var(--ink-sub)" }}
           >
             {products?.length ?? 0}
           </span>
@@ -316,9 +272,9 @@ export default async function ProviderDetailPage({
       {!products?.length ? (
         <div
           className="text-center py-16 rounded-2xl border-2 border-dashed"
-          style={{ borderColor: "var(--color-cream)" }}
+          style={{ borderColor: "var(--line)" }}
         >
-          <p className="text-sm" style={{ color: "var(--color-sage)" }}>
+          <p className="text-sm" style={{ color: "var(--ink-sub)" }}>
             No products imported for this provider.
           </p>
         </div>
@@ -339,7 +295,7 @@ export default async function ProviderDetailPage({
             return (
               <div
                 key={p.id}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden"
+                className="bg-white rounded-2xl shadow-sm overflow-hidden border border-[var(--line)]"
               >
                 {/* Product main row */}
                 <div className="flex gap-5 p-5">
@@ -356,15 +312,15 @@ export default async function ProviderDetailPage({
                       <div className="min-w-0">
                         <p
                           className="font-semibold text-sm leading-snug"
-                          style={{ color: "var(--color-forest)" }}
+                          style={{ color: "var(--green-900)" }}
                         >
                           {enInfo?.name ?? p.type}
                         </p>
                         <span
                           className="inline-block text-xs px-2 py-0.5 rounded-full mt-1 font-medium"
                           style={{
-                            background: "var(--color-cream)",
-                            color: "var(--color-forest)",
+                            background: "var(--cream-100)",
+                            color: "var(--green-900)",
                           }}
                         >
                           {p.type}
@@ -374,18 +330,18 @@ export default async function ProviderDetailPage({
                       {/* Price & stats */}
                       <div
                         className="flex-shrink-0 text-right text-xs space-y-1"
-                        style={{ color: "var(--color-sage)" }}
+                        style={{ color: "var(--ink-sub)" }}
                       >
                         {p.price_from != null && (
                           <p
                             className="font-bold text-sm"
-                            style={{ color: "var(--color-accent)" }}
+                            style={{ color: "var(--terracotta)" }}
                           >
                             €{p.price_from}
                             {p.price_to ? `–€${p.price_to}` : ""}
                             <span
                               className="font-normal ml-1"
-                              style={{ color: "var(--color-sage)" }}
+                              style={{ color: "var(--ink-sub)" }}
                             >
                               / {p.pricing_unit ?? "unit"}
                             </span>
@@ -417,110 +373,17 @@ export default async function ProviderDetailPage({
                               .join(" ")}
                           </p>
                         )}
-                        {(p.capacity_min != null || p.capacity_max != null) && (
-                          <p className="flex items-center justify-end gap-1">
-                            <svg
-                              width="10"
-                              height="10"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                              <circle cx="9" cy="7" r="4" />
-                              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                            {p.capacity_min ?? ""}–{p.capacity_max ?? "∞"} pax
-                          </p>
-                        )}
-                        {p.accessible && (
-                          <p className="flex items-center justify-end gap-1">
-                            <svg
-                              width="10"
-                              height="10"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <circle cx="12" cy="4" r="2" />
-                              <path d="M19 13v-2a7 7 0 0 0-14 0v2" />
-                              <path d="M5 13h14l-2 7H7z" />
-                            </svg>
-                            Accessible
-                          </p>
-                        )}
                       </div>
                     </div>
 
                     {enInfo?.description && (
                       <p
                         className="text-xs mt-2 line-clamp-2 leading-relaxed"
-                        style={{ color: "var(--color-sage)" }}
+                        style={{ color: "var(--ink-sub)" }}
                       >
                         {enInfo.description}
                       </p>
                     )}
-
-                    <div
-                      className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 text-xs"
-                      style={{ color: "var(--color-sage)" }}
-                    >
-                      {enInfo?.url && (
-                        <a
-                          href={enInfo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          <svg
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="2" y1="12" x2="22" y2="12" />
-                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                          </svg>
-                          Product page
-                        </a>
-                      )}
-                      {enInfo?.webshop_url && (
-                        <a
-                          href={enInfo.webshop_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          <svg
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <circle cx="9" cy="21" r="1" />
-                            <circle cx="20" cy="21" r="1" />
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                          </svg>
-                          Webshop
-                        </a>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -528,17 +391,17 @@ export default async function ProviderDetailPage({
                 <div
                   className="grid grid-cols-2 md:grid-cols-4 divide-x border-t text-xs"
                   style={{
-                    borderColor: "var(--color-cream)",
-                    color: "var(--color-sage)",
+                    borderColor: "var(--line)",
+                    color: "var(--ink-sub)",
                   }}
                 >
                   <div
                     className="p-3"
-                    style={{ borderColor: "var(--color-cream)" }}
+                    style={{ borderColor: "var(--line)" }}
                   >
                     <p
                       className="font-semibold text-[10px] uppercase tracking-wider mb-1.5"
-                      style={{ color: "var(--color-forest)", opacity: 0.7 }}
+                      style={{ color: "var(--green-900)", opacity: 0.7 }}
                     >
                       Languages
                     </p>
@@ -549,8 +412,8 @@ export default async function ProviderDetailPage({
                             key={i.language}
                             className="px-1.5 py-0.5 rounded text-[10px] font-medium uppercase"
                             style={{
-                              background: "var(--color-cream)",
-                              color: "var(--color-forest)",
+                              background: "var(--cream-100)",
+                              color: "var(--green-900)",
                             }}
                           >
                             {i.language}
@@ -564,11 +427,11 @@ export default async function ProviderDetailPage({
 
                   <div
                     className="p-3"
-                    style={{ borderColor: "var(--color-cream)" }}
+                    style={{ borderColor: "var(--line)" }}
                   >
                     <p
                       className="font-semibold text-[10px] uppercase tracking-wider mb-1.5"
-                      style={{ color: "var(--color-forest)", opacity: 0.7 }}
+                      style={{ color: "var(--green-900)", opacity: 0.7 }}
                     >
                       Tags
                     </p>
@@ -579,21 +442,13 @@ export default async function ProviderDetailPage({
                             key={t.tag}
                             className="px-1.5 py-0.5 rounded text-[10px]"
                             style={{
-                              background: "var(--color-cream)",
-                              color: "var(--color-sage)",
+                              background: "var(--cream-50)",
+                              color: "var(--ink-sub)",
                             }}
                           >
                             {t.tag.replace(/_/g, " ")}
                           </span>
                         ))}
-                        {tags.length > 4 && (
-                          <span
-                            className="px-1.5 py-0.5 rounded text-[10px] opacity-60"
-                            style={{ color: "var(--color-sage)" }}
-                          >
-                            +{tags.length - 4}
-                          </span>
-                        )}
                       </div>
                     ) : (
                       <p className="italic opacity-50">—</p>
@@ -602,11 +457,11 @@ export default async function ProviderDetailPage({
 
                   <div
                     className="p-3"
-                    style={{ borderColor: "var(--color-cream)" }}
+                    style={{ borderColor: "var(--line)" }}
                   >
                     <p
                       className="font-semibold text-[10px] uppercase tracking-wider mb-1.5"
-                      style={{ color: "var(--color-forest)", opacity: 0.7 }}
+                      style={{ color: "var(--green-900)", opacity: 0.7 }}
                     >
                       Target
                     </p>
@@ -617,8 +472,8 @@ export default async function ProviderDetailPage({
                             key={tg.target_group}
                             className="px-1.5 py-0.5 rounded text-[10px] uppercase font-medium"
                             style={{
-                              background: "rgba(150,176,187,0.2)",
-                              color: "var(--color-sky)",
+                              background: "var(--cream-100)",
+                              color: "var(--green-800)",
                             }}
                           >
                             {tg.target_group}
@@ -633,7 +488,7 @@ export default async function ProviderDetailPage({
                   <div className="p-3">
                     <p
                       className="font-semibold text-[10px] uppercase tracking-wider mb-1.5"
-                      style={{ color: "var(--color-forest)", opacity: 0.7 }}
+                      style={{ color: "var(--green-900)", opacity: 0.7 }}
                     >
                       Months
                     </p>
@@ -649,36 +504,18 @@ export default async function ProviderDetailPage({
                   </div>
                 </div>
 
-                {/* Image strip */}
-                {images?.length > 1 && (
-                  <div
-                    className="border-t p-3 flex gap-2 overflow-x-auto"
-                    style={{ borderColor: "var(--color-cream)" }}
-                  >
-                    {images.map((img, i) => (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        key={i}
-                        src={img.thumbnail_url ?? img.large_url}
-                        alt={img.alt_text ?? ""}
-                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                      />
-                    ))}
-                  </div>
-                )}
-
                 {/* Certificates */}
                 {certs?.length > 0 && (
                   <div
                     className="border-t p-4 text-xs"
                     style={{
-                      borderColor: "var(--color-cream)",
-                      color: "var(--color-sage)",
+                      borderColor: "var(--line)",
+                      color: "var(--ink-sub)",
                     }}
                   >
                     <p
                       className="font-semibold text-[10px] uppercase tracking-wider mb-2"
-                      style={{ color: "var(--color-forest)", opacity: 0.7 }}
+                      style={{ color: "var(--green-900)", opacity: 0.7 }}
                     >
                       Certificates
                     </p>
@@ -686,10 +523,9 @@ export default async function ProviderDetailPage({
                       {certs.map((c) => (
                         <span
                           key={c.name}
-                          className="px-2.5 py-1 rounded-full border font-medium"
+                          className="px-2.5 py-1 rounded-full border border-[var(--line)] font-medium"
                           style={{
-                            borderColor: "var(--color-sage)",
-                            opacity: 0.8,
+                            color: "var(--ink-sub)",
                           }}
                         >
                           {c.name}
@@ -699,53 +535,11 @@ export default async function ProviderDetailPage({
                   </div>
                 )}
 
-                {/* Multilingual accordion */}
-                {infos?.length > 1 && (
-                  <details
-                    className="border-t"
-                    style={{ borderColor: "var(--color-cream)" }}
-                  >
-                    <summary
-                      className="px-5 py-2.5 text-xs cursor-pointer font-medium transition-opacity hover:opacity-70"
-                      style={{ color: "var(--color-sage)" }}
-                    >
-                      All languages ({infos.length})
-                    </summary>
-                    <div className="px-5 pb-5 grid gap-4 pt-1">
-                      {infos.map((info) => (
-                        <div key={info.language}>
-                          <p
-                            className="text-[10px] font-bold uppercase tracking-wider mb-1"
-                            style={{ color: "var(--color-forest)" }}
-                          >
-                            {info.language}
-                          </p>
-                          <p
-                            className="text-xs font-semibold"
-                            style={{ color: "var(--color-forest)" }}
-                          >
-                            {info.name}
-                          </p>
-                          {info.description && (
-                            <p
-                              className="text-xs mt-1 line-clamp-3 leading-relaxed"
-                              style={{ color: "var(--color-sage)" }}
-                            >
-                              {info.description}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                )}
-
                 {/* BF ID footer */}
                 <div
-                  className="border-t px-5 py-2 text-[10px] font-mono"
+                  className="border-t px-5 py-2 text-[10px] font-mono border-[var(--line)]"
                   style={{
-                    borderColor: "var(--color-cream)",
-                    color: "var(--color-sage)",
+                    color: "var(--ink-sub)",
                     opacity: 0.6,
                   }}
                 >

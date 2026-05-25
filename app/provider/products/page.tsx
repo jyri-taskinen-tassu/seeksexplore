@@ -19,27 +19,27 @@ export default async function ProviderProductsPage() {
     : [];
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      <header className="border-b border-neutral-200 bg-white px-6 py-4 sticky top-0 z-10">
+    <div className="flex-1 flex flex-col bg-[var(--cream-50)]">
+      <header className="border-b border-[var(--line)] bg-white px-6 py-4 sticky top-0 z-10">
         <div className="flex w-full items-center justify-between">
           <div>
-            <div className="text-lg font-semibold text-neutral-900">
+            <div className="text-lg font-semibold text-[var(--green-900)]">
               Products
             </div>
-            <div className="mt-1 text-sm text-neutral-500">
+            <div className="mt-1 text-sm text-[var(--ink-sub)]">
               Manage your product catalog
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href="/provider/products/new"
-              className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+              className="rounded-lg border border-[var(--line)] bg-white px-4 py-2 text-sm font-medium text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors"
             >
               Create Product
             </Link>
             <Link
               href="/provider/products/new-ai"
-              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+              className="rounded-lg bg-[var(--green-800)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--green-900)] transition-colors shadow-sm"
             >
               Create with AI
             </Link>
@@ -48,24 +48,24 @@ export default async function ProviderProductsPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto px-6 py-6">
-        <section className="rounded-xl border border-neutral-200 bg-white shadow-sm">
-          <div className="border-b border-neutral-200 px-6 py-4">
-            <div className="text-base font-semibold text-neutral-900">
+        <section className="rounded-xl border border-[var(--line)] bg-white shadow-sm">
+          <div className="border-b border-[var(--line)] px-6 py-4">
+            <div className="text-base font-semibold text-[var(--green-900)]">
               Products
             </div>
-            <div className="mt-1 text-sm text-neutral-500">
+            <div className="mt-1 text-sm text-[var(--ink-sub)]">
               {products.length} product{products.length !== 1 ? "s" : ""}
             </div>
           </div>
-          <div className="divide-y divide-neutral-100">
+          <div className="divide-y divide-[var(--line)]">
             {products.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="text-sm text-neutral-500 mb-4">
+                <div className="text-sm text-[var(--ink-sub)] mb-4 opacity-50">
                   No products yet
                 </div>
                 <Link
                   href="/provider/products/new"
-                  className="inline-block rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                  className="inline-block rounded-lg bg-[var(--green-900)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 shadow-sm transition-opacity"
                 >
                   Create your first product
                 </Link>
@@ -95,7 +95,7 @@ export default async function ProviderProductsPage() {
                 return (
                   <div
                     key={product.id}
-                    className="p-6 hover:bg-neutral-50 transition-colors"
+                    className="p-6 hover:bg-[var(--cream-50)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex gap-4 flex-1">
@@ -104,31 +104,31 @@ export default async function ProviderProductsPage() {
                           <img
                             src={coverImg.thumbnail_url ?? coverImg.large_url}
                             alt={enInfo?.name ?? ""}
-                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0 border border-[var(--line)]"
                           />
                         )}
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-base font-semibold text-neutral-900">
+                            <h3 className="text-base font-semibold text-[var(--ink)]">
                               {enInfo?.name ?? product.type}
                             </h3>
-                            <span className="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+                            <span className="inline-flex items-center rounded-full bg-[var(--cream-100)] px-2.5 py-0.5 text-xs font-medium text-[var(--ink)] ring-1 ring-[var(--line)]">
                               {product.type}
                             </span>
                             {product.accessible && (
-                              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                              <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
                                 Accessible
                               </span>
                             )}
                           </div>
                           {enInfo?.description && (
-                            <p className="text-sm text-neutral-600 mb-2 line-clamp-2">
+                            <p className="text-sm text-[var(--ink-sub)] mb-2 line-clamp-2">
                               {enInfo.description}
                             </p>
                           )}
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--ink-sub)]">
                             {product.price_from != null && (
-                              <span>
+                              <span className="font-medium text-[var(--terracotta-dark)]">
                                 From €{product.price_from}
                                 {product.price_to
                                   ? `–€${product.price_to}`
@@ -140,7 +140,7 @@ export default async function ProviderProductsPage() {
                             )}
                             {(product.duration_hours != null ||
                               product.duration_days != null) && (
-                              <span>
+                              <span className="opacity-70">
                                 {[
                                   product.duration_days &&
                                     `${product.duration_days}d`,
@@ -154,7 +154,7 @@ export default async function ProviderProductsPage() {
                               </span>
                             )}
                             {product.available_months?.length > 0 && (
-                              <span>
+                              <span className="opacity-70">
                                 {(product.available_months as string[])
                                   .map((m: string) => m.slice(0, 3))
                                   .join(", ")}
@@ -163,7 +163,7 @@ export default async function ProviderProductsPage() {
                             {tags.slice(0, 3).map((t) => (
                               <span
                                 key={t.tag}
-                                className="rounded-full border border-neutral-200 px-2 py-0.5"
+                                className="rounded-full border border-[var(--line)] px-2 py-0.5 bg-white opacity-70"
                               >
                                 {t.tag.replace(/_/g, " ")}
                               </span>
@@ -174,13 +174,13 @@ export default async function ProviderProductsPage() {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Link
                           href={`/provider/products/${product.id}`}
-                          className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+                          className="rounded-lg border border-[var(--line)] bg-white px-3 py-2 text-sm font-medium text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors"
                         >
                           View
                         </Link>
                         <Link
                           href={`/provider/products/${product.id}/edit`}
-                          className="rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                          className="rounded-lg bg-[var(--green-900)] px-3 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity shadow-sm"
                         >
                           Edit
                         </Link>

@@ -20,11 +20,11 @@ export default async function ProvidersPage() {
         <div>
           <h1
             className="text-2xl font-bold tracking-tight"
-            style={{ color: "var(--color-forest)" }}
+            style={{ color: "var(--green-900)" }}
           >
             Providers
           </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--color-sage)" }}>
+          <p className="text-sm mt-1" style={{ color: "var(--ink-sub)" }}>
             {providers?.length ?? 0} registered operator
             {providers?.length !== 1 ? "s" : ""}
           </p>
@@ -32,7 +32,7 @@ export default async function ProvidersPage() {
         <Link
           href="/admin/providers/import"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-          style={{ background: "var(--color-forest)" }}
+          style={{ background: "var(--green-800)" }}
         >
           <svg
             width="14"
@@ -55,7 +55,7 @@ export default async function ProvidersPage() {
       {!providers?.length ? (
         <div
           className="text-center py-24 rounded-2xl border-2 border-dashed"
-          style={{ borderColor: "var(--color-cream)" }}
+          style={{ borderColor: "var(--line)" }}
         >
           <svg
             className="mx-auto mb-4"
@@ -67,24 +67,24 @@ export default async function ProvidersPage() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ color: "var(--color-sage)", opacity: 0.6 }}
+            style={{ color: "var(--ink-sub)", opacity: 0.6 }}
           >
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
             <polyline points="9 22 9 12 15 12 15 22" />
           </svg>
-          <p className="font-semibold" style={{ color: "var(--color-forest)" }}>
+          <p className="font-semibold" style={{ color: "var(--green-900)" }}>
             No providers yet
           </p>
           <p
             className="text-sm mt-1"
-            style={{ color: "var(--color-sage)", opacity: 0.8 }}
+            style={{ color: "var(--ink-sub)", opacity: 0.8 }}
           >
             Import your first operator from Business Finland
           </p>
           <Link
             href="/admin/providers/import"
             className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "var(--color-accent)" }}
+            style={{ background: "var(--terracotta)" }}
           >
             Import now
           </Link>
@@ -102,7 +102,7 @@ export default async function ProvidersPage() {
             return (
               <div
                 key={p.id}
-                className="group relative bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200"
+                className="group relative bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-[var(--line)]"
               >
                 <Link
                   href={`/admin/providers/${p.id}`}
@@ -121,12 +121,12 @@ export default async function ProvidersPage() {
                         }
                         alt={p.official_name}
                         className="w-12 h-12 object-contain rounded-xl border bg-white"
-                        style={{ borderColor: "var(--color-cream)" }}
+                        style={{ borderColor: "var(--line)" }}
                       />
                     ) : (
                       <div
                         className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                        style={{ background: "var(--color-forest)" }}
+                        style={{ background: "var(--green-800)" }}
                       >
                         {initials}
                       </div>
@@ -136,21 +136,21 @@ export default async function ProvidersPage() {
                   <div className="flex-1 min-w-0">
                     <p
                       className="font-semibold text-sm leading-tight group-hover:opacity-70 transition-opacity"
-                      style={{ color: "var(--color-forest)" }}
+                      style={{ color: "var(--green-900)" }}
                     >
                       {p.official_name}
                     </p>
                     {p.business_name && p.business_name !== p.official_name && (
                       <p
                         className="text-xs mt-0.5 truncate"
-                        style={{ color: "var(--color-sage)" }}
+                        style={{ color: "var(--ink-sub)" }}
                       >
                         {p.business_name}
                       </p>
                     )}
                     <div
                       className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs"
-                      style={{ color: "var(--color-sage)" }}
+                      style={{ color: "var(--ink-sub)" }}
                     >
                       {p.city && (
                         <span className="flex items-center gap-1">
@@ -170,35 +170,17 @@ export default async function ProvidersPage() {
                           {p.city}
                         </span>
                       )}
-                      {p.email && (
-                        <span className="flex items-center gap-1 truncate max-w-[160px]">
-                          <svg
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                            <polyline points="22,6 12,13 2,6" />
-                          </svg>
-                          <span className="truncate">{p.email}</span>
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
 
                 <div
                   className="mt-4 pt-4 border-t flex items-center justify-between"
-                  style={{ borderColor: "var(--color-cream)" }}
+                  style={{ borderColor: "var(--line)" }}
                 >
                   <span
                     className="text-xs"
-                    style={{ color: "var(--color-sage)", opacity: 0.8 }}
+                    style={{ color: "var(--ink-sub)", opacity: 0.8 }}
                   >
                     {new Date(p.imported_at).toLocaleDateString("en-FI", {
                       day: "numeric",
@@ -214,8 +196,8 @@ export default async function ProvidersPage() {
                         rel="noopener noreferrer"
                         className="relative z-10 text-xs px-2.5 py-1 rounded-lg font-medium transition-opacity hover:opacity-70 flex items-center gap-1"
                         style={{
-                          background: "var(--color-cream)",
-                          color: "var(--color-forest)",
+                          background: "var(--cream-100)",
+                          color: "var(--green-900)",
                         }}
                       >
                         Book
@@ -238,7 +220,7 @@ export default async function ProvidersPage() {
                     <span
                       className="text-xs px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1"
                       style={{
-                        background: "var(--color-forest)",
+                        background: "var(--green-800)",
                         color: "white",
                       }}
                     >

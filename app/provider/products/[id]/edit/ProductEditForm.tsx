@@ -83,12 +83,15 @@ function SectionCard({
   return (
     <div
       id={`section-${id}`}
-      className="rounded-xl border border-neutral-200 bg-white shadow-sm scroll-mt-20"
+      className="rounded-2xl border border-[var(--line)] bg-white shadow-sm scroll-mt-24 transition-all hover:border-[var(--green-800)]/20"
     >
-      <div className="border-b border-neutral-100 px-6 py-4">
-        <h2 className="text-base font-semibold text-neutral-900">{title}</h2>
+      <div className="border-b border-[var(--line)] px-6 py-4 bg-[var(--cream-50)]/30">
+        <h2 className="text-base font-bold text-[var(--green-900)] flex items-center gap-2">
+          <span className="w-1 h-4 bg-[var(--terracotta)] rounded-full" />
+          {title}
+        </h2>
       </div>
-      <div className="p-6">{children}</div>
+      <div className="p-8">{children}</div>
     </div>
   );
 }
@@ -101,9 +104,9 @@ function Label({
   required?: boolean;
 }) {
   return (
-    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+    <label className="block text-[10px] font-black text-[var(--green-900)] mb-1.5 uppercase tracking-widest opacity-60">
       {children}
-      {required && <span className="ml-0.5 text-red-500">*</span>}
+      {required && <span className="ml-1 text-[var(--terracotta)]">*</span>}
     </label>
   );
 }
@@ -114,7 +117,7 @@ function Input({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors ${className}`}
+      className={`w-full rounded-xl border border-[var(--line)] bg-white px-4 py-2.5 text-sm text-[var(--ink)] placeholder:[var(--ink-sub)]/30 outline-none focus:border-[var(--green-800)] focus:ring-1 focus:ring-[var(--green-800)] transition-all shadow-sm ${className}`}
       {...props}
     />
   );
@@ -126,7 +129,7 @@ function Textarea({
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={`w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors resize-none ${className}`}
+      className={`w-full rounded-xl border border-[var(--line)] bg-white px-4 py-2.5 text-sm text-[var(--ink)] placeholder:[var(--ink-sub)]/30 outline-none focus:border-[var(--green-800)] focus:ring-1 focus:ring-[var(--green-800)] transition-all shadow-sm resize-none leading-relaxed ${className}`}
       {...props}
     />
   );
@@ -141,7 +144,7 @@ function Select({
 }) {
   return (
     <select
-      className={`w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition-colors bg-white ${className}`}
+      className={`w-full rounded-xl border border-[var(--line)] bg-white px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--green-800)] focus:ring-1 focus:ring-[var(--green-800)] transition-all bg-white shadow-sm font-medium ${className}`}
       {...props}
     >
       {children}
@@ -300,14 +303,14 @@ export default function ProductEditForm({
     infos.find((i) => i.language === "en")?.name ?? (product.type as string);
 
   return (
-    <div className="flex h-screen flex-col bg-neutral-50 overflow-hidden">
+    <div className="flex h-screen flex-col bg-[var(--cream-50)] overflow-hidden">
       {/* Top bar */}
-      <header className="flex-shrink-0 z-30 border-b border-neutral-200 bg-white">
+      <header className="flex-shrink-0 z-30 border-b border-[var(--line)] bg-white/95 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               href={`/provider/products/${product.id as string}`}
-              className="rounded-lg border border-neutral-200 p-1.5 text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+              className="rounded-lg border border-[var(--line)] p-2 text-[var(--ink-sub)] hover:bg-[var(--cream-50)] hover:text-[var(--green-900)] transition-all shadow-sm group"
             >
               <svg
                 width="16"
@@ -315,54 +318,58 @@ export default function ProductEditForm({
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="transition-transform group-hover:-translate-x-0.5"
               >
                 <path d="M19 12H5M12 5l-7 7 7 7" />
               </svg>
             </Link>
             <div>
-              <div className="text-sm font-semibold text-neutral-900 truncate max-w-[320px]">
+              <div className="text-sm font-bold text-[var(--green-900)] truncate max-w-[320px]">
                 {enName}
               </div>
-              <div className="text-xs text-neutral-500">Editing product</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-[var(--ink-sub)] opacity-50">Editing product</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
             {dirty && !saved && (
-              <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 inline-block" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--terracotta)] flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--terracotta)] animate-pulse" />
                 Unsaved changes
               </span>
             )}
             {saved && (
-              <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
-                Saved
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                All changes saved
               </span>
             )}
-            <Link
-              href={`/provider/products/${product.id as string}`}
-              className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-            >
-              Cancel
-            </Link>
-            <button
-              onClick={handleSave}
-              disabled={saving || !dirty}
-              className="rounded-lg bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-40 transition-all"
-            >
-              {saving ? "Saving…" : "Save changes"}
-            </button>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/provider/products/${product.id as string}`}
+                className="rounded-lg border border-[var(--line)] bg-white px-4 py-2 text-xs font-bold text-[var(--ink)] hover:bg-[var(--cream-50)] transition-colors shadow-sm"
+              >
+                CANCEL
+              </Link>
+              <button
+                onClick={handleSave}
+                disabled={saving || !dirty}
+                className="rounded-lg bg-[var(--green-900)] px-6 py-2 text-xs font-bold text-white hover:opacity-90 disabled:opacity-30 transition-all shadow-lg shadow-[var(--green-900)]/10"
+              >
+                {saving ? "SAVING…" : "SAVE CHANGES"}
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar nav */}
-        <aside className="flex-shrink-0 w-52 border-r border-neutral-200 bg-white overflow-y-auto">
-          <nav className="p-3 space-y-0.5 pt-4">
+        <aside className="flex-shrink-0 w-64 border-r border-[var(--line)] bg-white/50 backdrop-blur-sm overflow-y-auto">
+          <nav className="p-4 space-y-1.5 pt-6">
+            <div className="px-3 mb-4 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--ink-sub)] opacity-40">Sections</div>
             {SECTIONS.map((s) => (
               <button
                 key={s.id}
@@ -371,10 +378,10 @@ export default function ProductEditForm({
                   el?.scrollIntoView({ behavior: "smooth", block: "start" });
                   setActiveSection(s.id);
                 }}
-                className={`w-full text-left rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`w-full text-left rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                   activeSection === s.id
-                    ? "bg-neutral-100 text-neutral-900"
-                    : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
+                    ? "bg-[var(--green-900)] text-white shadow-md shadow-[var(--green-900)]/10 scale-[1.02]"
+                    : "text-[var(--ink-sub)] hover:bg-[var(--cream-100)] hover:text-[var(--green-900)]"
                 }`}
               >
                 {s.label}
@@ -384,13 +391,13 @@ export default function ProductEditForm({
         </aside>
 
         {/* Scrollable form */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-2xl px-6 py-6 space-y-6">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-smooth">
+          <div className="mx-auto max-w-3xl px-8 py-10 space-y-10">
             {/* Product info */}
-            <SectionCard id="info" title="Product info">
-              <div className="space-y-4">
+            <SectionCard id="info" title="General Information">
+              <div className="space-y-8">
                 <div>
-                  <Label>Type</Label>
+                  <Label>Activity Category</Label>
                   <Select
                     value={type}
                     onChange={(e) => {
@@ -405,16 +412,16 @@ export default function ProductEditForm({
                     ))}
                   </Select>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3">
+                <div className="flex items-center justify-between rounded-2xl border border-[var(--line)] bg-[var(--cream-50)]/30 px-6 py-4 transition-all hover:border-[var(--green-800)]/20">
                   <div>
-                    <div className="text-sm font-medium text-neutral-900">
-                      Accessible
+                    <div className="text-sm font-bold text-[var(--green-900)]">
+                      Accessible Experience
                     </div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-[var(--ink-sub)] mt-1 opacity-70">
                       Product is accessible for people with disabilities
                     </div>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer group">
                     <input
                       type="checkbox"
                       checked={accessible}
@@ -424,30 +431,30 @@ export default function ProductEditForm({
                       }}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-neutral-200 rounded-full peer peer-checked:bg-neutral-900 peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all" />
+                    <div className="w-11 h-6 bg-[var(--cream-200)] rounded-full peer peer-checked:bg-[var(--green-800)] peer-checked:after:translate-x-5 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner" />
                   </label>
                 </div>
               </div>
             </SectionCard>
 
             {/* Languages */}
-            <SectionCard id="languages" title="Languages">
+            <SectionCard id="languages" title="Content & Translations">
               {availLangs.length === 0 ? (
-                <p className="text-sm text-neutral-400 italic">
+                <p className="text-sm text-[var(--ink-sub)] italic opacity-50 text-center py-8">
                   No multilingual content imported.
                 </p>
               ) : (
-                <div>
+                <div className="space-y-8">
                   {/* Lang picker */}
-                  <div className="flex gap-1 mb-4 border border-neutral-200 rounded-lg p-1 bg-neutral-50 overflow-x-auto">
+                  <div className="flex gap-1.5 p-1.5 border border-[var(--line)] rounded-xl bg-[var(--cream-50)]/50 overflow-x-auto">
                     {availLangs.map((lang) => (
                       <button
                         key={lang}
                         onClick={() => setActiveLang(lang)}
-                        className={`flex-shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        className={`flex-shrink-0 rounded-lg px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
                           activeLang === lang
-                            ? "bg-white text-neutral-900 shadow-sm"
-                            : "text-neutral-500 hover:text-neutral-700"
+                            ? "bg-white text-[var(--green-900)] shadow-sm scale-105"
+                            : "text-[var(--ink-sub)] hover:text-[var(--green-900)] opacity-60 hover:opacity-100"
                         }`}
                       >
                         {LANG_LABELS[lang] ?? lang.toUpperCase()}
@@ -456,9 +463,9 @@ export default function ProductEditForm({
                   </div>
 
                   {activeInfo && (
-                    <div className="space-y-4">
+                    <div className="space-y-8 animate-in fade-in duration-500">
                       <div>
-                        <Label>Name</Label>
+                        <Label>Localized Name</Label>
                         <Input
                           value={activeInfo.name ?? ""}
                           onChange={(e) =>
@@ -468,7 +475,7 @@ export default function ProductEditForm({
                         />
                       </div>
                       <div>
-                        <Label>Description</Label>
+                        <Label>Full Description</Label>
                         <TiptapEditor
                           content={activeInfo.description ?? ""}
                           onChange={(html) =>
@@ -476,9 +483,9 @@ export default function ProductEditForm({
                           }
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <Label>Product URL</Label>
+                          <Label>Public Product URL</Label>
                           <Input
                             type="url"
                             value={activeInfo.url ?? ""}
@@ -489,7 +496,7 @@ export default function ProductEditForm({
                           />
                         </div>
                         <div>
-                          <Label>Booking URL</Label>
+                          <Label>Booking/Webshop URL</Label>
                           <Input
                             type="url"
                             value={activeInfo.webshop_url ?? ""}
@@ -511,11 +518,11 @@ export default function ProductEditForm({
             </SectionCard>
 
             {/* Pricing */}
-            <SectionCard id="pricing" title="Pricing">
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-3">
+            <SectionCard id="pricing" title="Pricing Structure">
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <Label>From (€)</Label>
+                    <Label>Price From (€)</Label>
                     <Input
                       type="number"
                       min="0"
@@ -525,11 +532,12 @@ export default function ProductEditForm({
                         setPriceFrom(e.target.value);
                         markDirty();
                       }}
-                      placeholder="0"
+                      placeholder="0.00"
+                      className="font-bold text-[var(--green-900)]"
                     />
                   </div>
                   <div>
-                    <Label>To (€)</Label>
+                    <Label>Price To (€)</Label>
                     <Input
                       type="number"
                       min="0"
@@ -543,7 +551,7 @@ export default function ProductEditForm({
                     />
                   </div>
                   <div>
-                    <Label>Unit</Label>
+                    <Label>Pricing Unit</Label>
                     <Select
                       value={pricingUnit}
                       onChange={(e) => {
@@ -553,16 +561,16 @@ export default function ProductEditForm({
                     >
                       {PRICING_UNITS.map((u) => (
                         <option key={u} value={u}>
-                          {u}
+                          {u.charAt(0).toUpperCase() + u.slice(1)}
                         </option>
                       ))}
                     </Select>
                   </div>
                 </div>
                 {priceFrom && (
-                  <div className="rounded-lg bg-neutral-50 border border-neutral-200 px-4 py-3 text-sm text-neutral-600">
-                    Preview:{" "}
-                    <span className="font-semibold text-neutral-900">
+                  <div className="rounded-2xl bg-[var(--cream-50)]/50 border border-[var(--line)] px-6 py-4 text-sm">
+                    <span className="text-[var(--ink-sub)] uppercase text-[10px] font-black tracking-widest opacity-60 mr-4">Preview</span>
+                    <span className="font-black text-[var(--green-900)] text-lg">
                       From €{priceFrom}
                       {priceTo ? `–€${priceTo}` : ""} / {pricingUnit}
                     </span>
@@ -572,11 +580,11 @@ export default function ProductEditForm({
             </SectionCard>
 
             {/* Duration & capacity */}
-            <SectionCard id="logistics" title="Duration & capacity">
-              <div className="space-y-4">
+            <SectionCard id="logistics" title="Duration & Group Size">
+              <div className="space-y-8">
                 <div>
-                  <Label>Duration</Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <Label>Total Duration</Label>
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="relative">
                       <Input
                         type="number"
@@ -587,9 +595,10 @@ export default function ProductEditForm({
                           markDirty();
                         }}
                         placeholder="0"
+                        className="pr-12 font-bold"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 pointer-events-none">
-                        days
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-[var(--ink-sub)] opacity-50 pointer-events-none">
+                        DAYS
                       </span>
                     </div>
                     <div className="relative">
@@ -603,9 +612,10 @@ export default function ProductEditForm({
                           markDirty();
                         }}
                         placeholder="0"
+                        className="pr-12 font-bold"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 pointer-events-none">
-                        hrs
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-[var(--ink-sub)] opacity-50 pointer-events-none">
+                        HRS
                       </span>
                     </div>
                     <div className="relative">
@@ -619,16 +629,17 @@ export default function ProductEditForm({
                           markDirty();
                         }}
                         placeholder="0"
+                        className="pr-12 font-bold"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 pointer-events-none">
-                        min
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-[var(--ink-sub)] opacity-50 pointer-events-none">
+                        MIN
                       </span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <Label>Group size</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <Label>Capacity Limits</Label>
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="relative">
                       <Input
                         type="number"
@@ -639,9 +650,10 @@ export default function ProductEditForm({
                           markDirty();
                         }}
                         placeholder="Min"
+                        className="pr-12 font-bold"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 pointer-events-none">
-                        min
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-[var(--ink-sub)] opacity-50 pointer-events-none">
+                        MIN
                       </span>
                     </div>
                     <div className="relative">
@@ -654,9 +666,10 @@ export default function ProductEditForm({
                           markDirty();
                         }}
                         placeholder="Max"
+                        className="pr-12 font-bold"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 pointer-events-none">
-                        max
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black uppercase text-[var(--ink-sub)] opacity-50 pointer-events-none">
+                        MAX
                       </span>
                     </div>
                   </div>
@@ -665,91 +678,95 @@ export default function ProductEditForm({
             </SectionCard>
 
             {/* Season */}
-            <SectionCard id="season" title="Season">
-              <p className="text-xs text-neutral-500 mb-3">
-                Select the months when this product is available.
-              </p>
-              <div className="grid grid-cols-4 gap-2">
-                {MONTH_ORDER.map((m) => {
-                  const active = months.includes(m);
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => toggleMonth(m)}
-                      className={`rounded-lg py-2.5 text-xs font-semibold uppercase tracking-wide transition-all border ${
-                        active
-                          ? "bg-neutral-900 text-white border-neutral-900"
-                          : "bg-white text-neutral-500 border-neutral-200 hover:border-neutral-400 hover:text-neutral-700"
-                      }`}
-                    >
-                      {m.slice(0, 3)}
-                    </button>
-                  );
-                })}
-              </div>
-              {months.length > 0 && (
-                <p className="mt-3 text-xs text-neutral-500">
-                  Active:{" "}
-                  <span className="font-medium text-neutral-900">
-                    {months
-                      .sort(
-                        (a, b) =>
-                          MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b),
-                      )
-                      .map((m) => m.slice(0, 3))
-                      .join(", ")}
-                  </span>
+            <SectionCard id="season" title="Operational Season">
+              <div className="space-y-6">
+                <p className="text-xs text-[var(--ink-sub)] opacity-70">
+                  Select the months when this experience is available for booking.
                 </p>
-              )}
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                  {MONTH_ORDER.map((m) => {
+                    const active = months.includes(m);
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => toggleMonth(m)}
+                        className={`rounded-xl py-3 text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+                          active
+                            ? "bg-[var(--green-900)] text-white border-[var(--green-900)] shadow-lg shadow-[var(--green-900)]/20 scale-105"
+                            : "bg-white text-[var(--ink-sub)] border-[var(--line)] hover:border-[var(--green-800)]/30 hover:text-[var(--green-900)]"
+                        }`}
+                      >
+                        {m.slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
+                {months.length > 0 && (
+                  <div className="pt-4 border-t border-[var(--line)] flex items-center gap-3">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[var(--ink-sub)] opacity-40">Selection:</span>
+                    <span className="text-xs font-bold text-[var(--green-900)]">
+                      {months
+                        .sort(
+                          (a, b) =>
+                            MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b),
+                        )
+                        .map((m) => m.slice(0, 3))
+                        .join(", ")}
+                    </span>
+                  </div>
+                )}
+              </div>
             </SectionCard>
 
             {/* Tags */}
-            <SectionCard id="tags" title="Tags">
-              <div className="flex flex-wrap gap-2 mb-3">
-                {tags.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-medium text-neutral-700"
-                  >
-                    {t.replace(/_/g, " ")}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(t)}
-                      className="ml-1 text-neutral-400 hover:text-red-500 transition-colors"
-                      aria-label={`Remove ${t}`}
+            <SectionCard id="tags" title="Categorization Tags">
+              <div className="space-y-6">
+                <div className="flex flex-wrap gap-2.5">
+                  {tags.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[var(--cream-50)]/50 px-4 py-2 text-xs font-bold text-[var(--green-900)] shadow-sm animate-in zoom-in-95 duration-200"
                     >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                {tags.length === 0 && (
-                  <p className="text-sm text-neutral-400 italic">No tags.</p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addTag())
-                  }
-                  placeholder="Add tag (press Enter)"
-                  className="flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={addTag}
-                  disabled={!tagInput.trim()}
-                  className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 transition-colors"
-                >
-                  Add
-                </button>
+                      {t.replace(/_/g, " ")}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(t)}
+                        className="h-4 w-4 flex items-center justify-center rounded-full text-[var(--ink-sub)] hover:bg-[var(--terracotta)] hover:text-white transition-all"
+                        aria-label={`Remove ${t}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {tags.length === 0 && (
+                    <p className="text-sm text-[var(--ink-sub)] italic opacity-50 text-center w-full py-4 border-2 border-dashed border-[var(--line)] rounded-2xl">No tags added yet.</p>
+                  )}
+                </div>
+                <div className="flex gap-3 pt-4 border-t border-[var(--line)]">
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addTag())
+                    }
+                    placeholder="Type a tag and press ENTER…"
+                    className="flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={addTag}
+                    disabled={!tagInput.trim()}
+                    className="rounded-xl border border-[var(--line)] bg-white px-6 py-2 text-xs font-black uppercase tracking-widest text-[var(--green-900)] hover:bg-[var(--cream-50)] disabled:opacity-30 transition-all shadow-sm"
+                  >
+                    ADD
+                  </button>
+                </div>
               </div>
             </SectionCard>
 
             {/* Bottom padding */}
-            <div className="h-16" />
+            <div className="h-24" />
           </div>
         </div>
       </div>

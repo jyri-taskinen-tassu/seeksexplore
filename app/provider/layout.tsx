@@ -14,7 +14,7 @@ export default function ProviderLayout({
       <ResourceInventoryProvider>
         <div className="flex min-h-screen">
           <ProviderNav />
-          <div className="flex-1 ml-64">
+          <div className="flex-1 ml-64 bg-[var(--cream-50)]">
             {children}
           </div>
         </div>

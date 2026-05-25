@@ -130,17 +130,17 @@ export function AdminNav() {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-neutral-200 bg-[var(--color-forest)] shadow-sm">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-white/5 bg-[var(--green-900)] shadow-sm">
       <div className="flex h-full flex-col">
         {/* Logo/Brand */}
         <div className="border-b border-white/10 px-6 py-4">
           <Link href="/admin" className="flex items-center gap-3 group">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white shadow-md group-hover:bg-white/20 transition-colors">
-              <span className="text-lg font-bold">A</span>
+              <span className="text-lg font-bold text-[var(--terracotta)]">S</span>
             </div>
             <div>
               <div className="text-sm font-bold text-white tracking-tight">
-                Trailion
+                Seeks <span className="text-[var(--terracotta)]">&amp;</span> Explore
               </div>
               <div className="text-xs text-white/60 font-medium">
                 Super Admin
@@ -177,7 +177,7 @@ export function AdminNav() {
                   </span>
                   <span className="font-medium">{item.label}</span>
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[var(--color-accent)] rounded-r-full" />
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[var(--terracotta)] rounded-r-full" />
                   )}
                 </Link>
               );
