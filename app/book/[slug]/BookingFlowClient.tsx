@@ -1993,7 +1993,7 @@ function SidebarPayButtonInner({
     }
   };
 
-  const ready = !isPaid || (!!clientSecret && !piLoading && !!stripe);
+  const ready = !isPaid || (!!clientSecret && !piLoading);
   const btnLabel = submitting
     ? isPaid
       ? "Processing…"
