@@ -125,13 +125,13 @@ function KPICard({ metric }: { metric: KPIMetric }) {
     <div className="rounded-xl border border-[var(--line)] bg-white p-5 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1">
-          <div className="text-sm font-semibold text-[var(--ink-sub)] mb-1 uppercase tracking-wider text-[10px] opacity-70">
+          <div className="text-[10px] font-bold text-[var(--ink)] mb-1 uppercase tracking-wider opacity-80">
             {metric.label}
           </div>
           <div className="text-2xl font-bold tracking-tight text-[var(--green-900)] mb-2">
             {formattedValue}
           </div>
-          <div className={cx("flex items-center gap-1 text-xs font-bold", isPositive ? "text-emerald-600" : "text-red-600")}>
+          <div className={cx("flex items-center gap-1 text-xs font-bold", isPositive ? "text-emerald-700" : "text-red-700")}>
             {isPositive ? <IconTrendingUp className="h-3 w-3" /> : <IconTrendingDown className="h-3 w-3" />}
             <span>
               {isPositive ? "+" : ""}{metric.change.toFixed(1)}% {metric.changeLabel}
@@ -183,18 +183,18 @@ function RevenueChart({
       <div className="flex items-center gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-[var(--green-900)]"></div>
-          <span className="text-[var(--ink-sub)]">Current period</span>
+          <span className="text-[var(--ink)] font-bold">Current period</span>
         </div>
         {compareData && (
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-[var(--line)]"></div>
-            <span className="text-[var(--ink-sub)]">Previous period</span>
+            <span className="text-[var(--ink)] font-bold">Previous period</span>
           </div>
         )}
       </div>
 
       <div className="flex gap-2 h-64">
-        <div className="flex flex-col justify-between text-[10px] text-[var(--ink-sub)] pb-6 w-14">
+        <div className="flex flex-col justify-between text-[10px] text-[var(--ink)] font-bold pb-6 w-14">
           {yAxisLabels.map((v, i) => (
             <span key={i} className="text-right pr-2">
               {metric === "bookings" ? Math.round(v) : formatCurrency(v).replace(/\s/g, "")}
@@ -211,7 +211,7 @@ function RevenueChart({
           })}
         </div>
       </div>
-      <div className="flex justify-between text-[10px] text-[var(--ink-sub)] ml-16">
+      <div className="flex justify-between text-[10px] text-[var(--ink)] font-bold ml-16">
         <span>{displayData[0]?.date}</span>
         <span>{displayData[displayData.length - 1]?.date}</span>
       </div>
@@ -292,113 +292,127 @@ export default function AnalyticsClient({
           {kpis.map((k, i) => <KPICard key={i} metric={k} />)}
         </section>
 
-        <section className="rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-[var(--green-900)]">Performance Trends</h3>
-            <select
-              value={chartMetric}
-              onChange={(e) => setChartMetric(e.target.value as ChartMetric)}
-              className="text-sm border-none bg-transparent font-medium text-[var(--green-800)]"
-            >
-              <option value="revenue">Revenue</option>
-              <option value="bookings">Bookings</option>
-              <option value="avgBookingValue">Avg Value</option>
-            </select>
-          </div>
-          <RevenueChart currentData={filteredRevenue} metric={chartMetric} />
-        </section>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <section className="rounded-xl border border-[var(--line)] bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-bold text-[var(--green-900)]">Performance Trends</h3>
+                <select
+                  value={chartMetric}
+                  onChange={(e) => setChartMetric(e.target.value as ChartMetric)}
+                  className="text-sm border-none bg-transparent font-bold text-[var(--green-800)]"
+                >
+                  <option value="revenue">Revenue</option>
+                  <option value="bookings">Bookings</option>
+                  <option value="avgBookingValue">Avg Value</option>
+                </select>
+              </div>
+              <RevenueChart currentData={filteredRevenue} metric={chartMetric} />
+            </section>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 rounded-xl border border-[var(--line)] bg-white shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-[var(--line)]">
-              <h3 className="font-semibold text-[var(--green-900)]">Product Performance</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-[var(--cream-50)] text-[var(--ink-sub)] text-left">
-                  <tr>
-                    <th className="px-6 py-3">Product</th>
-                    <th className="px-6 py-3 text-right">Bookings</th>
-                    <th className="px-6 py-3 text-right">Revenue</th>
-                    <th className="px-6 py-3 text-right">Occupancy</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--line)]">
-                  {productPerformance.map((p) => (
-                    <tr key={p.product_id}>
-                      <td className="px-6 py-4 font-medium">{p.product_name}</td>
-                      <td className="px-6 py-4 text-right">{p.bookings}</td>
-                      <td className="px-6 py-4 text-right">{formatCurrency(p.revenue)}</td>
-                      <td className="px-6 py-4 text-right">{formatPercentage(p.occupancy_rate)}</td>
+            <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-[var(--line)] bg-[var(--cream-50)]/30">
+                <h3 className="font-bold text-[var(--green-900)]">Product Performance</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-[var(--cream-50)] text-[var(--ink)] font-bold text-left">
+                    <tr>
+                      <th className="px-6 py-3">Product</th>
+                      <th className="px-6 py-3 text-right">Bookings</th>
+                      <th className="px-6 py-3 text-right">Revenue</th>
+                      <th className="px-6 py-3 text-right">Occupancy</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--line)]">
+                    {productPerformance.map((p) => (
+                      <tr key={p.product_id} className="hover:bg-[var(--cream-50)]/50 transition-colors">
+                        <td className="px-6 py-4 font-semibold text-[var(--ink)]">{p.product_name}</td>
+                        <td className="px-6 py-4 text-right text-[var(--ink)] font-bold">{p.bookings}</td>
+                        <td className="px-6 py-4 text-right text-[var(--ink)] font-bold">{formatCurrency(p.revenue)}</td>
+                        <td className="px-6 py-4 text-right text-[var(--ink)] font-bold">{formatPercentage(p.occupancy_rate)}</td>
+                      </tr>
+                    ))}
+                    {productPerformance.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-10 text-center text-[var(--ink)] font-medium">No product performance data available</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
           <div className="space-y-6">
             <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6 space-y-6">
-              <h3 className="font-semibold text-[var(--green-900)]">Customer Insights</h3>
+              <h3 className="font-bold text-[var(--green-900)]">Customer Insights</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-[var(--cream-50)] rounded-lg">
-                  <div className="text-[10px] uppercase text-[var(--ink-sub)]">New</div>
-                  <div className="text-xl font-bold">{customerSummary.new_customers}</div>
+                  <div className="text-[10px] uppercase font-bold text-[var(--ink)] opacity-70">New</div>
+                  <div className="text-xl font-bold text-[var(--green-900)]">{customerSummary.new_customers}</div>
                 </div>
                 <div className="p-3 bg-[var(--cream-50)] rounded-lg">
-                  <div className="text-[10px] uppercase text-[var(--ink-sub)]">Returning</div>
-                  <div className="text-xl font-bold">{customerSummary.returning_customers}</div>
+                  <div className="text-[10px] uppercase font-bold text-[var(--ink)] opacity-70">Returning</div>
+                  <div className="text-xl font-bold text-[var(--green-900)]">{customerSummary.returning_customers}</div>
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3 pt-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[var(--ink-sub)]">Total Customers</span>
-                  <span className="font-semibold">{customerSummary.total_customers}</span>
+                  <span className="text-[var(--ink)] font-bold">Total Customers</span>
+                  <span className="font-extrabold text-[var(--green-900)]">{customerSummary.total_customers}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-[var(--ink-sub)]">Avg Bookings</span>
-                  <span className="font-semibold">{customerSummary.avg_bookings_per_customer?.toFixed(1) || "0.0"}</span>
+                  <span className="text-[var(--ink)] font-bold">Avg Bookings</span>
+                  <span className="font-extrabold text-[var(--green-900)]">{customerSummary.avg_bookings_per_customer?.toFixed(1) || "0.0"}</span>
                 </div>
               </div>
             </div>
 
             <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6 space-y-4">
-              <h3 className="font-semibold text-[var(--green-900)]">Equipment Usage</h3>
-              <div className="space-y-3">
+              <h3 className="font-bold text-[var(--green-900)]">Equipment Usage</h3>
+              <div className="space-y-4">
                 {resourceUtilization.map((r, i) => (
                   <div key={i}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-[var(--ink)] font-medium">{r.variant_name}</span>
-                      <span className="text-[var(--ink-sub)]">{r.booked_units} / {r.total_units}</span>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="text-[var(--ink)] font-bold">{r.variant_name}</span>
+                      <span className="text-[var(--ink)] font-extrabold">{r.booked_units} / {r.total_units}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-[var(--cream-100)] rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-[var(--cream-100)] rounded-full overflow-hidden shadow-inner border border-[var(--line)]/30">
                       <div 
-                        className="h-full bg-[var(--green-800)]" 
+                        className="h-full bg-[var(--green-800)] rounded-full" 
                         style={{ width: `${Math.min((r.booked_units / (r.total_units || 1)) * 100, 100)}%` }}
                       />
                     </div>
                   </div>
                 ))}
+                {resourceUtilization.length === 0 && (
+                  <div className="text-center py-4 text-xs text-[var(--ink)] font-medium">No equipment data</div>
+                )}
               </div>
             </div>
 
             <div className="rounded-xl border border-[var(--line)] bg-white shadow-sm p-6">
-              <h3 className="font-semibold text-[var(--green-900)] mb-4">Daily Trends</h3>
-              <div className="space-y-3">
+              <h3 className="font-bold text-[var(--green-900)] mb-4">Daily Trends</h3>
+              <div className="space-y-4">
                 {bookingTrends.slice(-5).reverse().map((t, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs py-2 border-b border-[var(--line)] last:border-0">
-                    <span className="text-[var(--ink-sub)]">{t.date}</span>
+                  <div key={i} className="flex items-center justify-between text-xs py-2 border-b border-[var(--line)] last:border-0 last:pb-0">
+                    <span className="text-[var(--ink)] font-bold">{t.date}</span>
                     <div className="flex gap-3">
-                      <span className="text-emerald-600 font-bold">+{t.confirmed_bookings}</span>
-                      {t.cancellations > 0 && <span className="text-red-500">-{t.cancellations}</span>}
+                      <span className="text-emerald-700 font-extrabold">+{t.confirmed_bookings}</span>
+                      {t.cancellations > 0 && <span className="text-red-700 font-extrabold">-{t.cancellations}</span>}
                     </div>
                   </div>
                 ))}
+                {bookingTrends.length === 0 && (
+                  <div className="text-center py-4 text-xs text-[var(--ink)] font-medium">No trend data</div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </main>
+
 
     </div>
   );
