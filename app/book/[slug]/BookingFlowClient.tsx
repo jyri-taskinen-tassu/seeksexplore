@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js";
 import {
   Elements,
   PaymentElement,
@@ -1844,17 +1844,26 @@ function StepDetails({
   return formContent;
 }
 
-function SidebarPayButton({
-  slug,
-  product,
-  slot,
-  form,
-  isPaid,
-  total,
-  paymentIntentId,
-  clientSecret,
-  piLoading,
-}: {
+function SidebarPayButton(props: {
+  slug: string;
+  product: ProductData;
+  slot: SelectedSlot;
+  form: Form;
+  isPaid: boolean;
+  total: number | null;
+  paymentIntentId: string | null;
+  clientSecret: string | null;
+  piLoading: boolean;
+}) {
+  // We only render the component that uses Stripe hooks if we are in a paid flow
+  // AND we have a clientSecret, which means StepDetails will have wrapped us in <Elements>.
+  if (props.isPaid && props.clientSecret) {
+    return <SidebarPayButtonPaid {...props} />;
+  }
+  return <SidebarPayButtonInner {...props} stripe={null} elements={null} />;
+}
+
+function SidebarPayButtonPaid(props: {
   slug: string;
   product: ProductData;
   slot: SelectedSlot;
@@ -1867,6 +1876,40 @@ function SidebarPayButton({
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  return (
+    <SidebarPayButtonInner
+      {...props}
+      stripe={stripe}
+      elements={elements}
+    />
+  );
+}
+
+function SidebarPayButtonInner({
+  slug,
+  product,
+  slot,
+  form,
+  isPaid,
+  total,
+  paymentIntentId,
+  clientSecret,
+  piLoading,
+  stripe,
+  elements,
+}: {
+  slug: string;
+  product: ProductData;
+  slot: SelectedSlot;
+  form: Form;
+  isPaid: boolean;
+  total: number | null;
+  paymentIntentId: string | null;
+  clientSecret: string | null;
+  piLoading: boolean;
+  stripe: Stripe | null;
+  elements: StripeElements | null;
+}) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
