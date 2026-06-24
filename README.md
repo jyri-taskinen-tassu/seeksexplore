@@ -1,4 +1,4 @@
-# Seeks & Explore - Landing Page
+# Seeks & Explore - Landing Pages
 
 Landing page for Seeks & Explore, an infrastructure platform for experience and activity providers.
 
