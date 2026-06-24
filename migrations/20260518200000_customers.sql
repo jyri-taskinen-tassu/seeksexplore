@@ -1,7 +1,7 @@
 -- customers: per-provider customer records
-CREATE TABLE seeks_and_explore_demo.customers (
+CREATE TABLE customers (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  provider_id uuid NOT NULL REFERENCES seeks_and_explore_demo.providers(id) ON DELETE CASCADE,
+  provider_id uuid NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
   first_name text NOT NULL,
   last_name text NOT NULL,
   email text NOT NULL,
@@ -18,17 +18,17 @@ CREATE TABLE seeks_and_explore_demo.customers (
   updated_at timestamptz DEFAULT now()
 );
 
-ALTER TABLE seeks_and_explore_demo.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 
 CREATE TRIGGER set_updated_at_customers
-  BEFORE UPDATE ON seeks_and_explore_demo.customers
-  FOR EACH ROW EXECUTE FUNCTION seeks_and_explore_demo.set_updated_at();
+  BEFORE UPDATE ON customers
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- sales_opportunities: sales pipeline per provider
-CREATE TABLE seeks_and_explore_demo.sales_opportunities (
+CREATE TABLE sales_opportunities (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  provider_id uuid NOT NULL REFERENCES seeks_and_explore_demo.providers(id) ON DELETE CASCADE,
-  customer_id uuid REFERENCES seeks_and_explore_demo.customers(id) ON DELETE SET NULL,
+  provider_id uuid NOT NULL REFERENCES providers(id) ON DELETE CASCADE,
+  customer_id uuid REFERENCES customers(id) ON DELETE SET NULL,
   customer_name text NOT NULL,
   customer_email text NOT NULL,
   product_name text NOT NULL,
@@ -42,74 +42,74 @@ CREATE TABLE seeks_and_explore_demo.sales_opportunities (
   updated_at timestamptz DEFAULT now()
 );
 
-ALTER TABLE seeks_and_explore_demo.sales_opportunities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales_opportunities ENABLE ROW LEVEL SECURITY;
 
 CREATE TRIGGER set_updated_at_sales_opportunities
-  BEFORE UPDATE ON seeks_and_explore_demo.sales_opportunities
-  FOR EACH ROW EXECUTE FUNCTION seeks_and_explore_demo.set_updated_at();
+  BEFORE UPDATE ON sales_opportunities
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- RLS: customers
 CREATE POLICY "provider_select_customers"
-ON seeks_and_explore_demo.customers FOR SELECT TO authenticated
+ON customers FOR SELECT TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = customers.provider_id AND pu.profile_id = auth.uid()
 ));
 
 CREATE POLICY "provider_insert_customers"
-ON seeks_and_explore_demo.customers FOR INSERT TO authenticated
+ON customers FOR INSERT TO authenticated
 WITH CHECK (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = customers.provider_id AND pu.profile_id = auth.uid()
 ));
 
 CREATE POLICY "provider_update_customers"
-ON seeks_and_explore_demo.customers FOR UPDATE TO authenticated
+ON customers FOR UPDATE TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = customers.provider_id AND pu.profile_id = auth.uid()
 ))
 WITH CHECK (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = customers.provider_id AND pu.profile_id = auth.uid()
 ));
 
 CREATE POLICY "provider_delete_customers"
-ON seeks_and_explore_demo.customers FOR DELETE TO authenticated
+ON customers FOR DELETE TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = customers.provider_id AND pu.profile_id = auth.uid()
 ));
 
 -- RLS: sales_opportunities
 CREATE POLICY "provider_select_sales_opportunities"
-ON seeks_and_explore_demo.sales_opportunities FOR SELECT TO authenticated
+ON sales_opportunities FOR SELECT TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = sales_opportunities.provider_id AND pu.profile_id = auth.uid()
 ));
 
 CREATE POLICY "provider_insert_sales_opportunities"
-ON seeks_and_explore_demo.sales_opportunities FOR INSERT TO authenticated
+ON sales_opportunities FOR INSERT TO authenticated
 WITH CHECK (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = sales_opportunities.provider_id AND pu.profile_id = auth.uid()
 ));
 
 CREATE POLICY "provider_update_sales_opportunities"
-ON seeks_and_explore_demo.sales_opportunities FOR UPDATE TO authenticated
+ON sales_opportunities FOR UPDATE TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = sales_opportunities.provider_id AND pu.profile_id = auth.uid()
 ))
 WITH CHECK (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = sales_opportunities.provider_id AND pu.profile_id = auth.uid()
 ));
 
 CREATE POLICY "provider_delete_sales_opportunities"
-ON seeks_and_explore_demo.sales_opportunities FOR DELETE TO authenticated
+ON sales_opportunities FOR DELETE TO authenticated
 USING (EXISTS (
-  SELECT 1 FROM seeks_and_explore_demo.provider_users pu
+  SELECT 1 FROM provider_users pu
   WHERE pu.provider_id = sales_opportunities.provider_id AND pu.profile_id = auth.uid()
 ));

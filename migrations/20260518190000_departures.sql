@@ -4,7 +4,7 @@
 -- Note: Table already exists in production with 40 seeded rows.
 -- This file records the DDL for repo history.
 
-CREATE TABLE IF NOT EXISTS seeks_and_explore_demo.departures (
+CREATE TABLE IF NOT EXISTS departures (
   id               uuid        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   provider_id      uuid        NOT NULL,
   product_id       uuid,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS seeks_and_explore_demo.departures (
 
 -- Index for provider+date range queries
 CREATE INDEX IF NOT EXISTS departures_provider_date_idx
-  ON seeks_and_explore_demo.departures (provider_id, departure_date);
+  ON departures (provider_id, departure_date);
 
 -- Resource JSONB shape (for reference):
 -- {
