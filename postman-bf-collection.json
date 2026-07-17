@@ -3,6 +3,13 @@
     "name": "Business Finland API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "BF_API_KEY",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "item": [
     {
       "name": "Import Company - Tahko Adventure Oy",
@@ -13,14 +20,14 @@
           { "key": "User-Agent", "value": "Mozilla/5.0" }
         ],
         "url": {
-          "raw": "https://api.businessfinland.fi/traveldatahub?subscription-key=f2b65d6fa6d547a08cd0457eaa841df1",
+          "raw": "https://api.businessfinland.fi/traveldatahub?subscription-key={{BF_API_KEY}}",
           "protocol": "https",
           "host": ["api", "businessfinland", "fi"],
           "path": ["traveldatahub"],
           "query": [
             {
               "key": "subscription-key",
-              "value": "f2b65d6fa6d547a08cd0457eaa841df1"
+              "value": "{{BF_API_KEY}}"
             }
           ]
         },
