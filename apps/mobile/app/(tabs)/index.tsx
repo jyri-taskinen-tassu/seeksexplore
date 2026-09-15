@@ -1,10 +1,8 @@
-import { useEffect } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useActiveDestination } from '../../src/api/destination';
 import { useRoutes } from '../../src/api/routes';
-import { useDestinationStore } from '../../src/state/useDestinationStore';
 import { isSupabaseConfigured } from '../../src/lib/supabase';
 
 function RouteCard({ id, name, distanceKm, difficulty, activityType, onPress }: {
@@ -37,27 +35,18 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { data: destination, isLoading: destinationLoading } = useActiveDestination();
-  const setActiveDestination = useDestinationStore((s) => s.setActiveDestination);
   const { data: routes, isLoading: routesLoading } = useRoutes(destination?.id);
-
-  useEffect(() => {
-    if (destination) setActiveDestination(destination);
-  }, [destination, setActiveDestination]);
-
-  if (!isSupabaseConfigured) {
-    return (
-      <View style={{ paddingTop: insets.top }} className="flex-1 items-center justify-center bg-white px-8">
-        <Text className="text-center text-base text-gray-600">
-          Supabase is not configured yet. Set EXPO_PUBLIC_SUPABASE_URL and
-          EXPO_PUBLIC_SUPABASE_ANON_KEY (see .env.example) to load destination
-          content.
-        </Text>
-      </View>
-    );
-  }
 
   return (
     <ScrollView style={{ paddingTop: insets.top }} className="flex-1 bg-white">
+      {!isSupabaseConfigured && (
+        <View className="bg-amber-50 px-4 py-2">
+          <Text className="text-center text-xs text-amber-800">
+            Demo data — Supabase isn't linked yet (see .env.example)
+          </Text>
+        </View>
+      )}
+
       <View className="flex-row items-center justify-between px-4 pt-2">
         <View className="flex-row items-center gap-2">
           {destination?.logo_url && (

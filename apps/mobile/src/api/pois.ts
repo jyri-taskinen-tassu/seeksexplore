@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { MOCK_POIS } from '../lib/mockData';
 import type { PointOfInterest } from '../types/database';
 
 async function fetchPoisForDestination(destinationId: string): Promise<PointOfInterest[]> {
@@ -23,7 +24,8 @@ async function fetchPoisForDestination(destinationId: string): Promise<PointOfIn
 export function usePois(destinationId: string | undefined) {
   return useQuery({
     queryKey: ['pois', destinationId],
-    queryFn: () => fetchPoisForDestination(destinationId as string),
+    queryFn: () =>
+      isSupabaseConfigured ? fetchPoisForDestination(destinationId as string) : Promise.resolve(MOCK_POIS),
     enabled: Boolean(destinationId),
   });
 }

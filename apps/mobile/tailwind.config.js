@@ -1,6 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
+  // 'class' avoids a react-native-web crash ("Cannot manually set color
+  // scheme, as dark mode is type 'media'") on the version of RNW this Expo
+  // SDK pulls in — see https://www.nativewind.dev/guides/dark-mode.
+  darkMode: 'class',
   presets: [require('nativewind/preset')],
   theme: {
     extend: {

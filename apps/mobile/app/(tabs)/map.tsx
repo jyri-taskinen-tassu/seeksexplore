@@ -17,18 +17,15 @@ export default function MapScreen() {
   const { data: routes } = useRoutes(destination?.id);
   const { data: pois } = usePois(destination?.id);
 
-  if (!isSupabaseConfigured) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white px-8">
-        <Text className="text-center text-gray-600">
-          Supabase is not configured yet — the map has no route/POI data to show.
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1">
+      {!isSupabaseConfigured && (
+        <View className="absolute top-0 left-0 right-0 z-10 bg-amber-50 px-4 py-2">
+          <Text className="text-center text-xs text-amber-800">
+            Demo data — Supabase isn't linked yet (see .env.example)
+          </Text>
+        </View>
+      )}
       <MapView>
         <MapCamera
           center={

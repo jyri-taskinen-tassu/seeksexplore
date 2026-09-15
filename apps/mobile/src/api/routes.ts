@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { MOCK_ROUTES } from '../lib/mockData';
 import type { Route, RouteFilters } from '../types/database';
 
 async function fetchRoutes(destinationId: string, filters: RouteFilters): Promise<Route[]> {
@@ -22,9 +23,14 @@ async function fetchRoutes(destinationId: string, filters: RouteFilters): Promis
 export function useRoutes(destinationId: string | undefined, filters: RouteFilters = {}) {
   return useQuery({
     queryKey: ['routes', destinationId, filters],
-    queryFn: () => fetchRoutes(destinationId as string, filters),
+    queryFn: () =>
+      isSupabaseConfigured ? fetchRoutes(destinationId as string, filters) : Promise.resolve(MOCK_ROUTES),
     enabled: Boolean(destinationId),
   });
+}
+
+function findMockRoute(slug: string): Route | null {
+  return MOCK_ROUTES.find((r) => r.slug === slug) ?? null;
 }
 
 async function fetchRouteBySlug(destinationId: string, slug: string): Promise<Route | null> {
@@ -43,7 +49,10 @@ async function fetchRouteBySlug(destinationId: string, slug: string): Promise<Ro
 export function useRoute(destinationId: string | undefined, slug: string | undefined) {
   return useQuery({
     queryKey: ['route', destinationId, slug],
-    queryFn: () => fetchRouteBySlug(destinationId as string, slug as string),
+    queryFn: () =>
+      isSupabaseConfigured
+        ? fetchRouteBySlug(destinationId as string, slug as string)
+        : Promise.resolve(findMockRoute(slug as string)),
     enabled: Boolean(destinationId && slug),
   });
 }

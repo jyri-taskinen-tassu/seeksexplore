@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { MOCK_DESTINATION } from '../lib/mockData';
 import type { Destination } from '../types/database';
 
 /**
@@ -24,6 +25,7 @@ async function fetchDestination(slug: string): Promise<Destination | null> {
 export function useActiveDestination() {
   return useQuery({
     queryKey: ['destination', ACTIVE_DESTINATION_SLUG],
-    queryFn: () => fetchDestination(ACTIVE_DESTINATION_SLUG),
+    queryFn: () =>
+      isSupabaseConfigured ? fetchDestination(ACTIVE_DESTINATION_SLUG) : Promise.resolve(MOCK_DESTINATION),
   });
 }
