@@ -88,7 +88,15 @@ Commercial layer → AI).
 
 ## Status
 
-**Phase 1 — Foundation.** This commit adds: architecture docs, full
-database schema as SQL migrations, and the monorepo folder skeleton.
-No UI code yet, by design (see project instructions: schema and domain
-architecture must land before UI work starts).
+**Phase 1 — Foundation: done.** Architecture docs, full database schema as
+SQL migrations (validated against a local Postgres+PostGIS instance —
+geometry, `ST_DWithin` proximity queries, full-text search, and RLS all
+confirmed working), and the monorepo folder skeleton.
+
+**Phase 2 — Map: scaffolded.** `apps/mobile` is a working Expo Router app
+(bottom tabs + route detail) with the `MapProvider` abstraction over
+MapLibre, Supabase-backed data hooks, and the first end-to-end vertical
+slice (destination → route list → route detail → START ROUTE → live
+position on the route). Not yet verified on a real device/simulator — see
+`apps/mobile/README.md`. Not yet connected to a live Supabase project;
+migrations are validated locally and ready to run once a project exists.
